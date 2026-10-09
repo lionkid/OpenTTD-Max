@@ -23,12 +23,14 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import balance  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA, SRC, GFX, LANG, BUILD = ROOT / "data", ROOT / "src", ROOT / "gfx", ROOT / "lang", ROOT / "build"
 LANGS = {"english": "name_en", "traditional_chinese": "name_zh_tw", "japanese": "name_ja"}
 ZOOM_CONST = {"1x": "ZOOM_LEVEL_NORMAL", "2x": "ZOOM_LEVEL_IN_2X", "4x": "ZOOM_LEVEL_IN_4X"}
 TAIL_ORDER = [4, 5, 6, 7, 0, 1, 2, 3]   # a tail car shows the head car facing the other way
-COST_SCALE = 0.6                        # CSV costs are relative (reference vehicle = 100); property is one byte
 SOUND = {"jet": "SOUND_TAKEOFF_JET", "jet_big": "SOUND_TAKEOFF_JET_BIG", "jet_fast": "SOUND_TAKEOFF_JET_FAST"}
 FREIGHT_CLASSES = "bitmask(CC_MAIL, CC_EXPRESS, CC_ARMOURED, CC_PIECE_GOODS, CC_REFRIGERATED)"
 
@@ -97,16 +99,17 @@ def life(v: str) -> str:
     return "VEHICLE_NEVER_EXPIRES" if int(v) == 0 else str(max(int(v), MIN_MODEL_LIFE))
 
 
+# OpenTTD keeps an engine on sale for model_life + phase 1 (0.6-3.2 y) + phase 3 (10-20.6 y). Retiring
+# 8 years "early" (negative = after the end of phase 2) cuts most of phase 3, so the on-sale window is
+# model_life + about 0.6-4.4 years, close to the real production span (see docs/TIMELINE.md).
+RETIRE_EARLY = -8
+
+
 def model_life(r: dict) -> str:
     """In-game model life: the optional game_model_life override, else the real production years."""
     return life(r.get("game_model_life") or r["model_life"])
 
 
-def cost(v: str) -> int:
-    c = round(float(v) * COST_SCALE)
-    if not 1 <= c <= 255:
-        die(f"cost {v} out of range after scaling")
-    return c
 
 
 def car_units(r: dict) -> int:
@@ -144,12 +147,13 @@ def gen_aircraft(rows: list[dict], badges: bool, strict: bool, missing: list[str
             "climates_available: ALL_CLIMATES;",
             f"introduction_date: {nml_date(r['intro_date'])};",
             f"model_life: {model_life(r)};",
+            f"retire_early: {RETIRE_EARLY if model_life(r) != 'VEHICLE_NEVER_EXPIRES' else 0};",
             f"vehicle_life: {int(r['vehicle_life'])};",
             "reliability_decay: 20;",
             "sprite_id: SPRITE_ID_NEW_AIRCRAFT;",
             "aircraft_type: AIRCRAFT_TYPE_LARGE;",
-            f"cost_factor: {cost(r['cost_factor'])};",
-            f"running_cost_factor: {cost(r['running_cost_factor'])};",
+            f"cost_factor: {balance.aircraft_props(r)[0]};",
+            f"running_cost_factor: {balance.aircraft_props(r)[1]};",
             f"speed: {int(r['speed_kmh'])} km/h;",
             f"acceleration: {90 if supersonic else 60};",
             f"passenger_capacity: {round(payload * 4) if freighter else int(r['pax'])};",  # freighters: mail bags of 1/4 t
@@ -243,6 +247,7 @@ def gen_trains(rows: list[dict], badges: bool, strict: bool, missing: list[str])
             "climates_available: ALL_CLIMATES;",
             f"introduction_date: {nml_date(r['intro_date'])};",
             f"model_life: {model_life(r)};",
+            f"retire_early: {RETIRE_EARLY if model_life(r) != 'VEHICLE_NEVER_EXPIRES' else 0};",
             f"vehicle_life: {int(r['vehicle_life'])};",
             "reliability_decay: 20;",
             "sprite_id: SPRITE_ID_NEW_TRAIN;",
@@ -256,8 +261,8 @@ def gen_trains(rows: list[dict], badges: bool, strict: bool, missing: list[str])
             f"length: {units};",
             "dual_headed: 0;",
             f"cargo_capacity: {int(r['pax_per_car'])};",     # per car: every articulated part gets this
-            f"cost_factor: {cost(r['cost_factor'])};",
-            f"running_cost_factor: {cost(r['running_cost_factor'])};",
+            f"cost_factor: {balance.train_props(r)[0]};",
+            f"running_cost_factor: {balance.train_props(r)[1]};",
             "refittable_cargo_classes: bitmask(CC_PASSENGERS);",
             "non_refittable_cargo_classes: NO_CARGO_CLASS;",
             f"misc_flags: bitmask({', '.join(flags)});",

@@ -101,6 +101,11 @@ def main() -> None:
     ap.add_argument("--grf-param", action="append", default=[], metavar="GRF=VALUES",
                     help="NewGRF parameters, e.g. max-air.grf=1 (repeatable)")
     ap.add_argument("--start-year", type=int, default=0)
+    ap.add_argument("--never-expire", action="store_true", help="keep every engine ever introduced on sale")
+    ap.add_argument("--ai-settings", default="", help="settings for start_ai, e.g. timeline=1")
+    ap.add_argument("--fast-forward", action="store_true", help="run at unlimited fast-forward after setup")
+    ap.add_argument("--until-year", type=int, default=0, help="keep running until the AI logs this year")
+    ap.add_argument("--max-minutes", type=float, default=90.0, help="give up --until-year after this long")
     ap.add_argument("--hold", type=float, default=0.0,
                     help="keep the game running this many seconds after the screenshots (drive it with xdotool)")
     args = ap.parse_args()
@@ -123,6 +128,8 @@ def main() -> None:
     shutil.copytree(HERE / "ai" / "MaxTest", data / "ai" / "MaxTest")
     for scr in (HERE / "scripts").glob("*.scr"):
         shutil.copy(scr, data / "scripts" / scr.name)
+    if args.ai_settings:
+        (data / "scripts" / "game_start.scr").write_text(f"start_ai MaxTest {args.ai_settings}\n")
     cfg = home / "openttd.cfg"
     text = (HERE / "openttd.cfg.in").read_text()
     for spec in args.grf_param:
@@ -130,6 +137,10 @@ def main() -> None:
         text = text.replace(f"{grf} =\n", f"{grf} = {values}\n")
     if args.start_year:
         text = text.replace("starting_year = 2016", f"starting_year = {args.start_year}")
+    if args.fast_forward:
+        text = text.replace("[gui]\n", "[gui]\nfast_forward_speed_limit = 0\n")
+    if args.never_expire:
+        text = text.replace("[vehicle]\n", "[vehicle]\nnever_expire_vehicles = true\n")
     cfg.write_text(text)
     out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -156,6 +167,24 @@ def main() -> None:
             if wid:
                 subprocess.run(["xdotool", "windowfocus", "--sync", wid[0]], env=env_x, check=False)
             zoom_in(3)                           # viewport to 4x
+            if args.fast_forward:
+                env_x = dict(os.environ, DISPLAY=DISPLAY)
+                subprocess.run(["xdotool", "mousemove", "62", "22", "click", "1"], env=env_x, check=False)
+                print("fast-forward on", flush=True)
+            if args.until_year:
+                deadline = time.time() + args.max_minutes * 60
+                last = None
+                while time.time() < deadline:
+                    years = re.findall(r"MAXTEST year (\d+)", log.read_text(errors="replace"))
+                    if years and years[-1] != last:
+                        last = years[-1]
+                        print(f"game year {last}", flush=True)
+                    if years and int(years[-1]) >= args.until_year:
+                        break
+                    if game.poll() is not None:
+                        print(f"OpenTTD exited with code {game.returncode}", flush=True)
+                        break
+                    time.sleep(5)
             names = vehicle_names(log)
             (out / "vehicles.txt").write_text("\n".join(f"{k}\t{v}" for k, v in sorted(names.items())) + "\n")
             for i in range(args.shots):

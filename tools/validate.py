@@ -20,11 +20,11 @@ AIRCRAFT_SPEED_MAX_KMH = 255 * 8 * 1.609  # property is one byte in units of 8 m
 TRAIN_SPEED_MAX_KMH = 1000                # practical sanity limit, property allows far more
 REQUIRED = {
     "aircraft.csv": ["id", "name_en", "manufacturer", "role", "priority", "variant_of", "intro_date", "model_life",
-                     "vehicle_life", "speed_kmh", "pax", "mail", "cost_factor", "running_cost_factor", "sound",
+                     "vehicle_life", "speed_kmh", "pax", "mail", "price_adj", "running_adj", "sound",
                      "length_m", "wingspan_m", "art"],
     "trains.csv": ["id", "name_en", "manufacturer", "kind", "priority", "variant_of", "intro_date", "model_life",
                    "vehicle_life", "cars", "speed_kmh", "power_kw", "weight_t", "te_coeff", "pax_per_car", "tilt",
-                   "track", "cost_factor", "running_cost_factor", "car_length_m", "art"],
+                   "track", "price_adj", "running_adj", "car_length_m", "art"],
 }
 errors: list[str] = []
 
@@ -49,13 +49,13 @@ def check_common(name: str, r: dict) -> None:
             err(f"{name}:{rid}: {col} must be 0..255")
     if r.get("game_model_life") and (not r["game_model_life"].isdigit() or not 0 <= int(r["game_model_life"]) <= 255):
         err(f"{name}:{rid}: game_model_life must be empty or 0..255")
-    for col in ("cost_factor", "running_cost_factor"):
-        try:
-            v = float(r[col])
-            if not 1 <= round(v * 0.6) <= 255:
-                err(f"{name}:{rid}: {col} out of range after scaling")
-        except ValueError:
-            err(f"{name}:{rid}: {col} not a number")
+    for col in ("price_adj", "running_adj"):
+        if r[col].strip():
+            try:
+                if not 0.2 <= float(r[col]) <= 5.0:
+                    err(f"{name}:{rid}: {col} should be 0.2..5.0 (empty = 1.0)")
+            except ValueError:
+                err(f"{name}:{rid}: {col} not a number")
 
 
 def check_csv(name: str) -> list[dict]:
@@ -157,11 +157,26 @@ def check_gfx_dir(d: Path) -> None:
                     err(f"{fb}: palette is not the OpenTTD DOS palette")
 
 
+def check_costs(aircraft: list[dict], trains: list[dict]) -> None:
+    """Warn when a target cost hits the one-byte property limit (the vehicle is then cheaper than intended)."""
+    import balance
+    for r in aircraft:
+        price, run = balance.aircraft_targets(r)
+        if price / balance.AIR_PRICE_UNIT > 255.5 or run / balance.AIR_RUN_UNIT > 255.5:
+            print(f"validate: note: aircraft:{r['id']} cost target clamped to the property limit")
+    for r in trains:
+        price, run = balance.train_targets(r)
+        if price / balance.TRAIN_PRICE_UNIT > 255.5 or run / balance.TRAIN_RUN_UNIT > 255.5:
+            print(f"validate: note: trains:{r['id']} cost target clamped to the property limit")
+
+
 def main() -> None:
     aircraft = check_csv("aircraft.csv")
     trains = check_csv("trains.csv")
     check_aircraft(aircraft)
     check_trains(trains)
+    if not errors:
+        check_costs(aircraft, trains)
     gfx = ROOT / "gfx"
     for cat in ("aircraft", "trains"):
         for d in sorted((gfx / cat).glob("*/")) if (gfx / cat).exists() else []:

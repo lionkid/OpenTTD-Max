@@ -8,9 +8,13 @@
 | [docs/M0-REPORT.md](docs/M0-REPORT.md) | M0 技術驗證報告 |
 | [docs/M1-REPORT.md](docs/M1-REPORT.md) | M1 管線定稿報告（比例校正、參數化產生器、OpenTTD 15.3 實機驗證） |
 | [docs/M3-REPORT.md](docs/M3-REPORT.md) | M3 內容報告（全部車種完成、GRF 參數） |
+| [docs/M4-REPORT.md](docs/M4-REPORT.md) | M4 報告（平衡、1950–2050 完整一局測試、發布準備） |
+| [docs/CATALOG.md](docs/CATALOG.md) | 車種型錄（縮圖、三語名稱、數值） |
+| [docs/BALANCE.md](docs/BALANCE.md) · [docs/TIMELINE.md](docs/TIMELINE.md) | 平衡對照表 · 可購時間軸 |
+| [docs/RELEASE.md](docs/RELEASE.md) | 發布與 BaNaNaS 上架步驟 |
 | [data/README.md](data/README.md) | CSV 欄位定義 |
 
-**目前狀態：M3 完成**。49 款飛機與 24 款列車模型（共 80 筆車種資料）全部完成 32bpp、最高 4x 的正式算圖，並在 OpenTTD 15.3 驗證。下一步是 M4 平衡與發布。
+**目前狀態：M4 完成，1.0 就緒**。49 款飛機與 24 款列車模型（共 80 筆車種資料）全部完成 32bpp、最高 4x 的正式算圖；成本已對照原版車輛平衡，並在 OpenTTD 15.3 跑完 1950–2050 完整一局。發布步驟見 docs/RELEASE.md。
 
 ![Aircraft](docs/qa/gallery_aircraft.png)
 
@@ -29,6 +33,7 @@
 pip install nml==0.9.0 pillow numpy
 make            # 驗證資料 -> 產生 NML -> max-air.grf + max-rail.grf
 make test-grf   # 無 badges 版本（OpenTTD 13 / 14 測試用），輸出到 build/test/
+make bundle     # BaNaNaS 格式 tar，輸出到 build/bundle/
 ```
 
 產出的 `max-air.grf`、`max-rail.grf` 複製到 OpenTTD 的 `newgrf/` 目錄即可使用（需 OpenTTD 15.0+、32bpp blitter）。
@@ -55,6 +60,7 @@ tools/ingame/build_openttd.sh 15.3 /opt/openttd-15.3     # 或 apt install opent
 make && python3 tools/ingame/run.py --openttd /opt/openttd-15.3/build/openttd --grf-dir .
 python3 tools/calibrate.py trains/n700:mid=2953            # 與 OpenGFX 原版 sprite 比對尺寸
 python3 tools/gallery.py trains -o build/gallery.png        # 由 sprite sheet 產生圖鑑
+python3 tools/balance.py && python3 tools/catalog.py         # 平衡表、型錄
 ```
 
 ## 目錄

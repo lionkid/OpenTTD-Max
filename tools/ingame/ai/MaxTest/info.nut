@@ -9,5 +9,10 @@ class MaxTest extends AIInfo {
     function CreateInstance() { return "MaxTest"; }
     function GetShortName()   { return "MAXT"; }
     function GetAPIVersion()  { return "13"; }
+    function GetSettings() {
+        AddSetting({name = "timeline", description = "Only log the available OpenTTD-Max vehicles every year",
+                    min_value = 0, max_value = 1, easy_value = 0, medium_value = 0, hard_value = 0, custom_value = 0,
+                    flags = CONFIG_BOOLEAN});
+    }
 }
 RegisterAI(MaxTest());

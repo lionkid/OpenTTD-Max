@@ -14,11 +14,11 @@
 | variant_of | 變體群組的父項目 id，空白表示自己是父項目或獨立 |
 | intro_date | 引入日期 YYYY-MM-DD |
 | model_life / vehicle_life | model_life：該型號實際生產年數（0 = 2026 年仍在生產）；遊戲內至少 8 年可購買。vehicle_life：單機使用年限 |
-| game_model_life | 選填：遊戲內可購年數，覆蓋 model_life（協和號 27 = 1976–2003 服役期） |
+| game_model_life | 選填：遊戲內可購年數，覆蓋 model_life（協和號 25：約 1978–2005 年可購，對應 1976–2003 服役期） |
 | speed_kmh | 巡航速度，NML 自動換算（屬性上限約 3,280 km/h） |
 | pax / mail | 載客 / 郵件容量（典型兩艙等；部分廣體機只有三艙等數據）；貨機填 0 |
 | payload_t | 貨機酬載（公噸），客機留空；遊戲內依各貨物單位重量換算容量 |
-| cost_factor / running_cost_factor | 相對成本，737-800 = 100 |
+| price_adj / running_adj | 選填：價格 / 營運成本微調倍率（空白 = 1.0）。基準值由 `tools/balance.py` 依座位數、年代、速度計算，見 docs/BALANCE.md |
 | sound | `jet`、`jet_big`、`jet_fast` |
 | length_m / wingspan_m | 建模與比例校正用 |
 | art | 圖檔目錄名（`gfx/aircraft/<art>/`），空白表示用佔位圖 |
@@ -28,7 +28,7 @@
 
 | 欄位 | 說明 |
 |---|---|
-| id, name_*, priority, variant_of, intro_date, model_life, vehicle_life, cost_factor, running_cost_factor, art, notes | 同上 |
+| id, name_*, priority, variant_of, intro_date, model_life, game_model_life, vehicle_life, price_adj, running_adj, art, notes | 同上 |
 | manufacturer | badge：`jr`、`transrapid`、`crrc`、`hsst` |
 | kind | badge：`shinkansen`、`maglev` |
 | cars | 固定編組節數（articulated） |

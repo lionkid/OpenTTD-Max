@@ -124,7 +124,9 @@ function MaxTest::DumpEngines() {
             local cargo = AIEngine.GetCargoType(e);
             Log("engine " + (vt == AIVehicle.VT_AIR ? "air" : "rail") + " | " + AIEngine.GetName(e) +
                 " | speed " + AIEngine.GetMaxSpeed(e) + " | capacity " + AIEngine.GetCapacity(e) + " " + AICargo.GetCargoLabel(cargo) +
-                " | power " + AIEngine.GetPower(e) + " | weight " + AIEngine.GetWeight(e) + " | price " + AIEngine.GetPrice(e));
+                " | power " + AIEngine.GetPower(e) + " | weight " + AIEngine.GetWeight(e) + " | price " + AIEngine.GetPrice(e) +
+                " | running " + AIEngine.GetRunningCost(e) + " | intro " + AIDate.GetYear(AIEngine.GetDesignDate(e)) +
+                " | id " + e);
         }
     }
 }
@@ -140,7 +142,52 @@ function MaxTest::CheckFreighter() {
     }
 }
 
+function IsOurs(name) {
+    foreach (key in ["Boeing", "Airbus", "Aerospatiale", "Shinkansen", "Transrapid", "SCMaglev", "CRRC", "Linimo",
+                     "Beijing", "Doctor Yellow"]) {
+        if (name.find(key) != null) return true;
+    }
+    return false;
+}
+
+// Timeline mode (AI setting timeline=1): no building, no loan; one line per game year:
+//   MAXTEST year <y> air <n> rail <n> orig_air <n> orig_rail <n> | air: a; b | rail: c; d
+function MaxTest::Timeline() {
+    AICompany.SetName("OpenTTD-Max Timeline");
+    AICompany.SetLoanAmount(0);
+    Log("ready");
+    local last = -1;
+    while (true) {
+        local y = AIDate.GetYear(AIDate.GetCurrentDate());
+        if (y != last) {
+            last = y;
+            local counts = [0, 0, 0, 0];
+            local names = ["", ""];
+            foreach (k, vt in [AIVehicle.VT_AIR, AIVehicle.VT_RAIL]) {
+                foreach (e, _ in AIEngineList(vt)) {
+                    if (!AIEngine.IsBuildable(e)) continue;
+                    if (vt == AIVehicle.VT_RAIL && AIEngine.IsWagon(e)) continue;
+                    local n = AIEngine.GetName(e);
+                    if (IsOurs(n)) {
+                        counts[k] += 1;
+                        names[k] += n + "; ";
+                    } else {
+                        counts[k + 2] += 1;
+                    }
+                }
+            }
+            Log("year " + y + " air " + counts[0] + " rail " + counts[1] + " orig_air " + counts[2] + " orig_rail " +
+                counts[3] + " | air: " + names[0] + "| rail: " + names[1]);
+        }
+        this.Sleep(30);
+    }
+}
+
 function MaxTest::Start() {
+    if (AIController.GetSetting("timeline") == 1) {
+        this.Timeline();
+        return;
+    }
     AICompany.SetName("OpenTTD-Max QA");
     AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
     this.vehicles = [];

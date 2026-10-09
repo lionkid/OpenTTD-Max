@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.0 (prepared 2026-10-09, not yet tagged)
+
+- Balance: purchase price and running cost are now computed from seats, introduction year and speed
+  (tools/balance.py) and checked against the original vehicles in game. Aircraft cost 200-290 GBP per
+  seat like the original jets; supersonic aircraft 4.5x to buy and 2.5x to run; Shinkansen sets are
+  priced per seat below the original high-speed trains and run at the cost of an original electric
+  locomotive; maglev costs up to 1.6x, scaled by speed. See docs/BALANCE.md.
+- Vehicles now retire at the end of their real production span instead of about ten years later
+  (retire_early); Concorde is on sale for its 1976-2003 service life.
+- Verified in a full 1950-2050 game on OpenTTD 15.3: every vehicle goes on sale within 3.5 years of
+  its real introduction, no gaps, no NewGRF warnings. See docs/TIMELINE.md.
+- Vehicle catalogue with thumbnails in English, Traditional Chinese and Japanese (docs/CATALOG.md).
+- NewGRF version 2 (savegames from 0.1.0-alpha stay compatible).
+
 ## 0.1.0-alpha (2026-10-09)
 
 First public test build of both NewGRFs.
