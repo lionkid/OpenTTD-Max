@@ -98,6 +98,9 @@ def main() -> None:
     ap.add_argument("--shots", type=int, default=4, help="screenshot rounds per vehicle")
     ap.add_argument("--interval", type=float, default=12.0, help="seconds between rounds")
     ap.add_argument("--openttd", default=shutil.which("openttd") or "/usr/games/openttd")
+    ap.add_argument("--grf-param", action="append", default=[], metavar="GRF=VALUES",
+                    help="NewGRF parameters, e.g. max-air.grf=1 (repeatable)")
+    ap.add_argument("--start-year", type=int, default=0)
     ap.add_argument("--hold", type=float, default=0.0,
                     help="keep the game running this many seconds after the screenshots (drive it with xdotool)")
     args = ap.parse_args()
@@ -121,7 +124,13 @@ def main() -> None:
     for scr in (HERE / "scripts").glob("*.scr"):
         shutil.copy(scr, data / "scripts" / scr.name)
     cfg = home / "openttd.cfg"
-    cfg.write_text((HERE / "openttd.cfg.in").read_text())
+    text = (HERE / "openttd.cfg.in").read_text()
+    for spec in args.grf_param:
+        grf, values = spec.split("=", 1)
+        text = text.replace(f"{grf} =\n", f"{grf} = {values}\n")
+    if args.start_year:
+        text = text.replace("starting_year = 2016", f"starting_year = {args.start_year}")
+    cfg.write_text(text)
     out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
     log = out / "openttd.log"

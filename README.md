@@ -7,11 +7,21 @@
 | [docs/PLAN.md](docs/PLAN.md) | 企劃書（範圍、內容清單、機制設計、美術管線、時程） |
 | [docs/M0-REPORT.md](docs/M0-REPORT.md) | M0 技術驗證報告 |
 | [docs/M1-REPORT.md](docs/M1-REPORT.md) | M1 管線定稿報告（比例校正、參數化產生器、OpenTTD 15.3 實機驗證） |
+| [docs/M3-REPORT.md](docs/M3-REPORT.md) | M3 內容報告（全部車種完成、GRF 參數） |
 | [data/README.md](data/README.md) | CSV 欄位定義 |
 
-**目前狀態：M1 完成**。P0 共 12 款（協和號、737-800、747-400、747-8F、777-300ER、A320、A380、0 系、N700、E5、Transrapid、L0）已完成 32bpp 4x 算圖並在 OpenTTD 15.3 驗證；其餘 P1 / P2 車種暫用佔位圖。
+**目前狀態：M3 完成**。49 款飛機與 24 款列車模型（共 80 筆車種資料）全部完成 32bpp、最高 4x 的正式算圖，並在 OpenTTD 15.3 驗證。下一步是 M4 平衡與發布。
 
-![P0 vehicles at 4x](docs/qa/m1_rail_n700_4x.png)
+![Aircraft](docs/qa/gallery_aircraft.png)
+
+![Trains](docs/qa/gallery_trains.png)
+
+## GRF 參數
+
+| 套件 | 參數 | 預設 |
+|---|---|---|
+| `max-air.grf` | 停用原版飛機 | 關 |
+| `max-rail.grf` | 停用原版磁浮機車 | 關 |
 
 ## 建置
 
@@ -44,6 +54,7 @@ make                                             # 重新編譯 GRF
 tools/ingame/build_openttd.sh 15.3 /opt/openttd-15.3     # 或 apt install openttd（13.4，需 make test-grf）
 make && python3 tools/ingame/run.py --openttd /opt/openttd-15.3/build/openttd --grf-dir .
 python3 tools/calibrate.py trains/n700:mid=2953            # 與 OpenGFX 原版 sprite 比對尺寸
+python3 tools/gallery.py trains -o build/gallery.png        # 由 sprite sheet 產生圖鑑
 ```
 
 ## 目錄
