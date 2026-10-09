@@ -4,6 +4,7 @@
 #   make gfx        post-process build/render into gfx/ sprite sheets
 #   make placeholder regenerate the placeholder sprites used for vehicles without art
 #   make test-grf   build without badges for OpenTTD < 15 (used by tools/ingame)
+#   make bundle     BaNaNaS-style tar files in build/bundle/ (VERSION_LABEL=0.1.0-alpha)
 #   make clean
 PY         ?= python3
 BPY_PYTHON ?= /opt/bpyvenv/bin/python
@@ -15,7 +16,7 @@ GRFS   = max-air.grf max-rail.grf
 INPUTS = $(wildcard data/*.csv) $(wildcard src/*.pnml) $(wildcard src/common/*.pnml) $(wildcard lang/*.lng) \
          $(wildcard gfx/*/*/manifest.json) tools/gen_nml.py VERSION
 
-.PHONY: all check nml grf render gfx placeholder test-grf clean
+.PHONY: all check nml grf render gfx placeholder test-grf bundle clean
 
 all: check grf
 
@@ -52,6 +53,9 @@ test-grf:
 	$(NMLC) $(NMLFLAGS) --grf build/test/max-air.grf build/max-air.nml
 	$(NMLC) $(NMLFLAGS) --grf build/test/max-rail.grf build/max-rail.nml
 	@rm -f build/.nml-stamp
+
+bundle: grf
+	$(PY) tools/bundle.py $(if $(VERSION_LABEL),--version $(VERSION_LABEL),)
 
 clean:
 	rm -rf build $(GRFS) .nmlcache

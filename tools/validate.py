@@ -47,6 +47,8 @@ def check_common(name: str, r: dict) -> None:
     for col in ("model_life", "vehicle_life"):
         if not r[col].isdigit() or not 0 <= int(r[col]) <= 255:
             err(f"{name}:{rid}: {col} must be 0..255")
+    if r.get("game_model_life") and (not r["game_model_life"].isdigit() or not 0 <= int(r["game_model_life"]) <= 255):
+        err(f"{name}:{rid}: game_model_life must be empty or 0..255")
     for col in ("cost_factor", "running_cost_factor"):
         try:
             v = float(r[col])

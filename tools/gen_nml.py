@@ -97,6 +97,11 @@ def life(v: str) -> str:
     return "VEHICLE_NEVER_EXPIRES" if int(v) == 0 else str(max(int(v), MIN_MODEL_LIFE))
 
 
+def model_life(r: dict) -> str:
+    """In-game model life: the optional game_model_life override, else the real production years."""
+    return life(r.get("game_model_life") or r["model_life"])
+
+
 def cost(v: str) -> int:
     c = round(float(v) * COST_SCALE)
     if not 1 <= c <= 255:
@@ -138,7 +143,7 @@ def gen_aircraft(rows: list[dict], badges: bool, strict: bool, missing: list[str
             f"name: string(STR_NAME_{rid.upper()});",
             "climates_available: ALL_CLIMATES;",
             f"introduction_date: {nml_date(r['intro_date'])};",
-            f"model_life: {life(r['model_life'])};",
+            f"model_life: {model_life(r)};",
             f"vehicle_life: {int(r['vehicle_life'])};",
             "reliability_decay: 20;",
             "sprite_id: SPRITE_ID_NEW_AIRCRAFT;",
@@ -237,7 +242,7 @@ def gen_trains(rows: list[dict], badges: bool, strict: bool, missing: list[str])
             f"name: string(STR_NAME_{rid.upper()});",
             "climates_available: ALL_CLIMATES;",
             f"introduction_date: {nml_date(r['intro_date'])};",
-            f"model_life: {life(r['model_life'])};",
+            f"model_life: {model_life(r)};",
             f"vehicle_life: {int(r['vehicle_life'])};",
             "reliability_decay: 20;",
             "sprite_id: SPRITE_ID_NEW_TRAIN;",

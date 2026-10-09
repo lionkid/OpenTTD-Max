@@ -5,6 +5,9 @@ on:
     tags: ["v*"]
   pull_request:
 
+permissions:
+  contents: write   # create GitHub Releases for v* tags
+
 jobs:
   grf:
     runs-on: ubuntu-latest
@@ -15,18 +18,30 @@ jobs:
           python-version: "3.12"
       - run: pip install nml==0.9.0 pillow numpy
       - run: make check
-      - run: make grf
+      - run: make grf GEN_FLAGS=--strict
       - run: make test-grf
+      - name: Bundle
+        run: make bundle VERSION_LABEL=${GITHUB_REF_NAME#v}
+        if: startsWith(github.ref, 'refs/tags/v')
       - uses: actions/upload-artifact@v4
         with:
           name: grf
           path: |
             max-air.grf
             max-rail.grf
+      - name: Release notes
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          if [ -f "docs/release-notes/${GITHUB_REF_NAME}.md" ]; then cp "docs/release-notes/${GITHUB_REF_NAME}.md" build/notes.md;
+          else echo "OpenTTD-Max ${GITHUB_REF_NAME}" > build/notes.md; fi
       - name: Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          name: OpenTTD-Max ${{ github.ref_name }}
+          body_path: build/notes.md
+          prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
             max-air.grf
             max-rail.grf
+            build/bundle/*.tar
