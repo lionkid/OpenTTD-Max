@@ -1,0 +1,2 @@
+// HSR: dedicated high-speed railtype label if a track set provides one, otherwise plain electrified rail.
+railtypetable { RAIL, ELRL, MONO, MGLV, HSR: [HSTR, ELRL] }

@@ -1,0 +1,6 @@
+build/
+*.grf
+.nmlcache/
+__pycache__/
+*.pyc
+docs/examples/compile-test/gfx/

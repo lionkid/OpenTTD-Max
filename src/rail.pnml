@@ -1,0 +1,16 @@
+// OpenTTD-Max High-Speed Rail. Assembled into build/max-rail.nml by tools/gen_nml.py.
+grf {
+    grfid: "MAX\02";
+    name: string(STR_GRF_RAIL_NAME);
+    desc: string(STR_GRF_RAIL_DESC);
+    url: string(STR_GRF_URL);
+    version: @VERSION@;
+    min_compatible_version: 1;
+}
+
+#include "common/templates.pnml"
+#include "common/railtypes.pnml"
+#if BADGES
+#include "common/badges.pnml"
+#endif
+#include "generated/rail_items.pnml"

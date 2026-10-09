@@ -2,11 +2,11 @@
 
 | 項目 | 內容 |
 |---|---|
-| 文件版本 | v0.1（2026-10-09，初稿） |
+| 文件版本 | v0.2（2026-10-09，M0 完成後更新） |
 | 專案代號 | OpenTTD-Max |
 | 交付物 | 兩個 NewGRF：`max-air.grf`（協和號、Airbus、Boeing 客貨機）與 `max-rail.grf`（新幹線、磁浮） |
 | 技術基準 | OpenTTD 15.3（現行穩定版，16.0 beta 進行中）、NML 0.9.0、32bpp + 4x extra zoom |
-| 狀態 | 企劃階段，尚未開工 |
+| 狀態 | M0 完成，進入 M1（見 docs/M0-REPORT.md） |
 
 ---
 
@@ -81,11 +81,11 @@ OpenTTD 的 sprite 可同時提供多個 zoom 等級與兩種色深。NML 以 `a
 | 物件 | 1x | 2x | 4x |
 |---|---|---|---|
 | 地面一格（菱形寬度） | 64 px | 128 px | 256 px |
-| 列車一節 8/8（斜向視角長度） | 約 32 px | 約 64 px | 約 128 px |
-| 大型客機（747 / A380 / 777-9，設計值） | 約 80 px | 約 160 px | 約 320 px |
-| 窄體客機（737 / A320，設計值） | 約 48 px | 約 96 px | 約 192 px |
+| 列車一節 8/8（E/W 視角長度，= 半格沿對角線） | 約 23 px | 約 45 px | 約 90 px |
+| 大型客機（747 / A380，同一世界比例） | 約 64 px | 約 128 px | 約 256 px |
+| 窄體客機（737 / A320，同一世界比例） | 約 36 px | 約 72 px | 約 144 px |
 
-飛機沒有引擎強制的長度限制，但要與原版 / 常見機場套件的停機坪比例協調。列車受 8/8 限制，一節 25 m 的新幹線車廂對應 8/8，16 輛編組即 8 格長。
+世界比例由 `tools/ottd_scale.py` 統一定義：一節 25 m 車廂 = 8/8 = 8 個世界單位 = 22.6 px（1x，E/W 視角），即 **0.905 px/m**。飛機沿用同一比例，與停機坪、列車互相協調。列車受 8/8 限制，16 輛編組即 8 格長。M1 再以原版 sprite 校正 Z 軸比例（`Z_SCALE`）。
 
 ### 4.3 玩家端需求
 
@@ -245,51 +245,43 @@ OpenTTD-Max/
 ├── data/
 │   ├── aircraft.csv                 # 數值唯一來源（型號、年份、速度、容量、成本...）
 │   └── trains.csv
-├── models/                          # Blender 原始檔
-│   ├── lighting.blend
-│   ├── aircraft/
-│   └── trains/
-├── gfx/{1x,2x,4x}/{aircraft,trains}/  # 算圖輸出（由 tools 產生，提交至 repo 以便 CI 編譯）
+├── models/                          # Blender 模型（程序化 .py 或 .blend）
+│   ├── maxlib.py                    # 幾何 / 材質 helper
+│   └── proxy/                       # M0 代理模型（b737_800.py、n700.py）
+├── gfx/{aircraft,trains}/<id>/      # 算圖輸出：<part>_{1x,2x,4x}.png + mask + 8bpp + manifest.json（提交至 repo）
 ├── src/
-│   ├── common/                      # grf block、templates、badges、cargo table、railtype table
-│   ├── air/                         # 每款飛機一個 .pnml（由產生器輸出）
-│   ├── rail/
-│   ├── max-air.pnml
-│   └── max-rail.pnml
+│   ├── common/                      # templates、badges、railtype table
+│   ├── air.pnml                     # grf block + include（產生器組譯成 build/max-air.nml）
+│   └── rail.pnml
 ├── lang/
 │   ├── english.lng                  # ##grflangid 0x01
 │   ├── traditional_chinese.lng      # ##grflangid 0x0C
 │   └── japanese.lng                 # ##grflangid 0x39
 ├── tools/
-│   ├── render.py                    # blender -b models/x.blend -P tools/render.py
-│   ├── postprocess.py               # 縮圖、mask、8bpp 量化、sprite sheet、offset JSON
-│   └── gen_nml.py                   # data/*.csv + offset JSON -> src/air/*.pnml, src/rail/*.pnml
+│   ├── render.py                    # bpy 無頭算圖 -> build/render/
+│   ├── postprocess.py               # 縮圖、mask、8bpp 量化、sprite sheet、manifest.json
+│   ├── gen_nml.py                   # data/*.csv + manifest -> build/*.nml、build/lang/*.lng
+│   ├── validate.py                  # CSV 與圖檔檢查
+│   ├── make_placeholder_gfx.py      # 佔位圖
+│   └── ingame/                      # Xvfb + OpenTTD + 測試 AI 自動截圖
 ├── Makefile
 └── .github/workflows/build.yml      # pip install nml -> nmlc -> 上傳 .grf artifact；tag 時建 release
 ```
 
-- `.pnml` 以 C 前處理器（`cpp`）合併為單一 `.nml` 再交給 `nmlc`，是 OpenGFX、FIRS 等大型套件的慣例。
-- **資料驅動**：數值只存在 `data/*.csv`，NML 由 `gen_nml.py` 產生，避免上百個項目手改出錯；平衡調整只改 CSV。
+- `.pnml` 由 `tools/gen_nml.py` 內建的小型組譯器合併（支援 `#include`、`#if BADGES`、`@VERSION@`），不依賴 C 前處理器，Windows 上也能建置。
+- **資料驅動**：數值只存在 `data/*.csv`，NML 由 `gen_nml.py` 產生，避免上百個項目手改出錯；平衡調整只改 CSV。沒有圖的車輛自動使用 `gfx/_placeholder/` 的佔位圖，整套隨時可編譯。
+- `make test-grf` 產生無 badges 版本，供 OpenTTD 13 / 14 與自動截圖工具使用。
 
 ### 8.2 建置
 
 ```makefile
-# Makefile (excerpt)
-NMLC   ?= nmlc
-CPP    ?= cpp -P -C -nostdinc -x c-header
-GRFS    = max-air.grf max-rail.grf
-
-all: $(GRFS)
-
-build/%.nml: src/%.pnml $(wildcard src/**/*.pnml)
-	@mkdir -p build
-	$(CPP) -I src $< -o $@
-
-%.grf: build/%.nml $(wildcard gfx/**/*.png) $(wildcard lang/*.lng)
-	$(NMLC) -c --grf $@ $<
-
-clean:
-	rm -rf build *.grf .nmlcache
+# Makefile targets (see the file for details)
+make            # validate -> gen_nml -> nmlc : max-air.grf, max-rail.grf
+make test-grf   # badge-free build for OpenTTD 13/14 -> build/test/
+make render     # bpy renders -> build/render/      (BPY_PYTHON=/opt/bpyvenv/bin/python)
+make gfx        # build/render -> gfx/<cat>/<id>/
+make placeholder
+make clean
 ```
 
 ```yaml
@@ -487,16 +479,16 @@ disable_item(FEAT_TRAINS, 54, 57);
 | 飛機速度被遊戲設定除以 4，協和號優勢被稀釋 | 低 | 相對速度仍正確；README 建議玩家調整飛機速度係數 |
 | 單人專案中斷 | 中 | 資料驅動 + 完整文件，確保任何人可接手；每個里程碑都可獨立發布 |
 
-## 13. 待決事項（M0 前決定）
+## 13. 已決定事項（2026-10-09）
 
-1. **一個 grf 還是兩個**：建議兩個（航空 / 鐵路分開），方便玩家與其他套件混搭；若偏好單一安裝體驗則合併，build 系統兩者皆支援。
-2. **編組變體實作**：`variant_group`（建議）或 refit subtype。
-3. **主美術方案**：Blender（建議）或 MagicaVoxel + gorender；M0 以 Blender 做 PoC，若工時不可接受再切換。
-4. **新幹線軌道**：只用 ELRL，或額外相容社群高速軌道 label（本文件採 fallback 清單，兩者皆可）。
-5. **協和號航程**：是否在 1.0 就啟用 range 限制，讓超音速機只適合長程航線。
+| 項目 | 決定 |
+|---|---|
+| grf 數量 | 兩個：`max-air.grf`、`max-rail.grf` |
+| 編組變體 | `variant_group`（例：`n700_8` 掛在 `n700` 之下） |
+| 主美術方案 | Blender（以 bpy 無頭算圖，`tools/render.py`） |
+| 新幹線軌道 | `HSR` label，fallback 至 `ELRL` |
+| 協和號航程 | 1.0 不啟用 `range` 限制（屬性填 0），列為 M5 選項 |
 
-## 14. 下一步
+## 14. 下一步（M1）
 
-1. 確認第 13 節的決定。
-2. 建立 `data/aircraft.csv`、`data/trains.csv` 欄位定義，開始填 P0 數值。
-3. 以 737-800 與 N700 做 M0 的 Blender 管線 PoC。
+見 docs/M0-REPORT.md 的「M1 待辦」。

@@ -1,0 +1,22 @@
+##grflangid 0x01
+STR_GRF_AIR_NAME        :OpenTTD-Max Aviation
+STR_GRF_AIR_DESC        :High-resolution (32bpp, up to 4x zoom) airliners and freighters: Concorde, Airbus and Boeing. {}Part of the OpenTTD-Max project.
+STR_GRF_RAIL_NAME       :OpenTTD-Max High-Speed Rail
+STR_GRF_RAIL_DESC       :High-resolution (32bpp, up to 4x zoom) Shinkansen and maglev trains. {}Part of the OpenTTD-Max project.
+STR_GRF_URL             :https://github.com/lionkid/OpenTTD-Max
+
+STR_BADGE_MANUFACTURER  :Manufacturer
+STR_BADGE_BOEING        :Boeing
+STR_BADGE_AIRBUS        :Airbus
+STR_BADGE_AEROSPATIALE  :Aerospatiale/BAC
+STR_BADGE_JR            :JR Group
+STR_BADGE_TRANSRAPID    :Transrapid
+STR_BADGE_CRRC          :CRRC
+STR_BADGE_HSST          :HSST
+STR_BADGE_ROLE          :Role
+STR_BADGE_PASSENGER     :Passenger
+STR_BADGE_FREIGHTER     :Freighter
+STR_BADGE_SUPERSONIC    :Supersonic
+STR_BADGE_KIND          :Type
+STR_BADGE_SHINKANSEN    :Shinkansen
+STR_BADGE_MAGLEV        :Maglev

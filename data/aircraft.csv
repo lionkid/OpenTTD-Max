@@ -1,0 +1,8 @@
+id,name_en,name_zh_tw,name_ja,manufacturer,role,priority,variant_of,intro_date,model_life,vehicle_life,speed_kmh,pax,mail,cost_factor,running_cost_factor,sound,length_m,wingspan_m,art,notes
+concorde,Aerospatiale/BAC Concorde,協和號 Concorde,コンコルド,aerospatiale,passenger+supersonic,P0,,1976-01-21,27,25,2179,100,8,300,400,jet_fast,61.7,25.6,,retired 2003
+b737_800,Boeing 737-800,波音 737-800,ボーイング737-800,boeing,passenger,P0,,1998-04-01,40,30,842,189,10,100,100,jet,39.5,35.8,b737_800,M0 PoC vehicle
+b747_400,Boeing 747-400,波音 747-400,ボーイング747-400,boeing,passenger,P0,,1989-02-09,35,30,913,416,12,230,220,jet_big,70.6,64.4,,
+b747_8f,Boeing 747-8F,波音 747-8F,ボーイング747-8F,boeing,freighter,P0,,2011-10-12,40,30,917,137,0,260,230,jet_big,76.3,68.4,,capacity in tonnes
+b777_300er,Boeing 777-300ER,波音 777-300ER,ボーイング777-300ER,boeing,passenger,P0,,2004-04-29,40,30,905,396,14,240,210,jet_big,73.9,64.8,,
+a320_200,Airbus A320-200,空中巴士 A320-200,エアバスA320-200,airbus,passenger,P0,,1988-03-28,45,30,840,180,10,100,100,jet,37.6,35.8,,
+a380_800,Airbus A380-800,空中巴士 A380-800,エアバスA380-800,airbus,passenger,P0,,2007-10-15,30,30,903,525,20,330,300,jet_big,72.7,79.8,,

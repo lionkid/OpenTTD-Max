@@ -1,0 +1,2 @@
+# Executed by OpenTTD at startup: go straight into a new game with a fixed seed (reproducible map).
+newgame 20261009

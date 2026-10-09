@@ -1,0 +1,22 @@
+##grflangid 0x39
+##plural 1
+STR_GRF_AIR_NAME        :OpenTTD-Max 航空セット
+STR_GRF_AIR_DESC        :高解像度（32bpp、最大4倍ズーム）の旅客機・貨物機：コンコルド、エアバス、ボーイング。{}OpenTTD-Max プロジェクトの一部。
+STR_GRF_RAIL_NAME       :OpenTTD-Max 高速鉄道セット
+STR_GRF_RAIL_DESC       :高解像度（32bpp、最大4倍ズーム）の新幹線とリニアモーターカー。{}OpenTTD-Max プロジェクトの一部。
+
+STR_BADGE_MANUFACTURER  :メーカー
+STR_BADGE_BOEING        :ボーイング
+STR_BADGE_AIRBUS        :エアバス
+STR_BADGE_AEROSPATIALE  :アエロスパシアル/BAC
+STR_BADGE_JR            :JRグループ
+STR_BADGE_TRANSRAPID    :トランスラピッド
+STR_BADGE_CRRC          :中国中車
+STR_BADGE_HSST          :HSST
+STR_BADGE_ROLE          :用途
+STR_BADGE_PASSENGER     :旅客
+STR_BADGE_FREIGHTER     :貨物
+STR_BADGE_SUPERSONIC    :超音速
+STR_BADGE_KIND          :種類
+STR_BADGE_SHINKANSEN    :新幹線
+STR_BADGE_MAGLEV        :リニア

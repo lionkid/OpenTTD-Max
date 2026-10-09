@@ -1,0 +1,15 @@
+// OpenTTD-Max Aviation. Assembled into build/max-air.nml by tools/gen_nml.py.
+grf {
+    grfid: "MAX\01";
+    name: string(STR_GRF_AIR_NAME);
+    desc: string(STR_GRF_AIR_DESC);
+    url: string(STR_GRF_URL);
+    version: @VERSION@;
+    min_compatible_version: 1;
+}
+
+#include "common/templates.pnml"
+#if BADGES
+#include "common/badges.pnml"
+#endif
+#include "generated/air_items.pnml"

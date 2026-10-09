@@ -1,0 +1,7 @@
+id,name_en,name_zh_tw,name_ja,manufacturer,kind,priority,variant_of,intro_date,model_life,vehicle_life,cars,speed_kmh,power_kw,weight_t,te_coeff,pax_per_car,tilt,track,cost_factor,running_cost_factor,car_length_m,art,notes
+shinkansen_0,0 Series Shinkansen,0 系新幹線,0系新幹線,jr,shinkansen,P0,,1964-10-01,35,25,16,220,11840,967,0.25,84,0,HSR,100,100,25,,
+n700,N700 Series Shinkansen,N700 系新幹線,N700系新幹線,jr,shinkansen,P0,,2007-07-01,30,25,16,300,17080,715,0.25,83,1,HSR,140,130,25,n700,M0 PoC vehicle
+n700_8,N700 Series Shinkansen (8 cars),N700 系新幹線（8 輛）,N700系新幹線（8両）,jr,shinkansen,P0,n700,2007-07-01,30,25,8,300,8540,360,0.25,83,1,HSR,75,70,25,n700,
+e5,E5 Series Shinkansen,E5 系新幹線,E5系新幹線,jr,shinkansen,P0,,2011-03-05,30,25,10,320,9960,453,0.25,73,1,HSR,120,110,25,,
+transrapid_smt,Transrapid SMT,Transrapid 上海磁浮,トランスラピッドSMT,transrapid,maglev,P0,,2004-01-01,30,25,5,430,10000,265,0.4,89,0,MGLV,160,150,25,,unlocks maglev track
+l0,L0 Series SCMaglev,L0 系超導磁浮,L0系,jr,maglev,P0,,2027-01-01,0,30,12,500,20000,400,0.4,68,0,MGLV,260,220,25,,never expires

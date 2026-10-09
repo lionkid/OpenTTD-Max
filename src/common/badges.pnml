@@ -1,0 +1,23 @@
+// Badges (OpenTTD 15+ / NML 0.9+): filterable tags in the purchase list.
+// Built only when badges are enabled; tools/gen_nml.py --no-badges drops this file for older OpenTTD.
+badgetable {
+    "manufacturer", "manufacturer/boeing", "manufacturer/airbus", "manufacturer/aerospatiale",
+    "manufacturer/jr", "manufacturer/transrapid", "manufacturer/crrc", "manufacturer/hsst",
+    "role", "role/passenger", "role/freighter", "role/supersonic",
+    "kind", "kind/shinkansen", "kind/maglev"
+}
+item(FEAT_BADGES, badge_manufacturer)  { property { label: "manufacturer";              name: string(STR_BADGE_MANUFACTURER); } }
+item(FEAT_BADGES, badge_boeing)        { property { label: "manufacturer/boeing";       name: string(STR_BADGE_BOEING); } }
+item(FEAT_BADGES, badge_airbus)        { property { label: "manufacturer/airbus";       name: string(STR_BADGE_AIRBUS); } }
+item(FEAT_BADGES, badge_aerospatiale)  { property { label: "manufacturer/aerospatiale"; name: string(STR_BADGE_AEROSPATIALE); } }
+item(FEAT_BADGES, badge_jr)            { property { label: "manufacturer/jr";           name: string(STR_BADGE_JR); } }
+item(FEAT_BADGES, badge_transrapid)    { property { label: "manufacturer/transrapid";   name: string(STR_BADGE_TRANSRAPID); } }
+item(FEAT_BADGES, badge_crrc)          { property { label: "manufacturer/crrc";         name: string(STR_BADGE_CRRC); } }
+item(FEAT_BADGES, badge_hsst)          { property { label: "manufacturer/hsst";         name: string(STR_BADGE_HSST); } }
+item(FEAT_BADGES, badge_role)          { property { label: "role";                      name: string(STR_BADGE_ROLE); } }
+item(FEAT_BADGES, badge_passenger)     { property { label: "role/passenger";            name: string(STR_BADGE_PASSENGER); } }
+item(FEAT_BADGES, badge_freighter)     { property { label: "role/freighter";            name: string(STR_BADGE_FREIGHTER); } }
+item(FEAT_BADGES, badge_supersonic)    { property { label: "role/supersonic";           name: string(STR_BADGE_SUPERSONIC); } }
+item(FEAT_BADGES, badge_kind)          { property { label: "kind";                      name: string(STR_BADGE_KIND); } }
+item(FEAT_BADGES, badge_shinkansen)    { property { label: "kind/shinkansen";           name: string(STR_BADGE_SHINKANSEN); } }
+item(FEAT_BADGES, badge_maglev)        { property { label: "kind/maglev";               name: string(STR_BADGE_MAGLEV); } }

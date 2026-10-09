@@ -1,0 +1,2 @@
+# Executed when a new game starts: launch the QA helper AI immediately.
+start_ai MaxTest

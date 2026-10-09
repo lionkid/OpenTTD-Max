@@ -1,0 +1,3 @@
+// Sprite templates shared by every vehicle. Coordinates come from gfx/<cat>/<id>/manifest.json
+// and are expanded by tools/gen_nml.py, so there is nothing to edit here for a new vehicle.
+// View order is OpenTTD's direction order: N, NE, E, SE, S, SW, W, NW.
