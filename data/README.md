@@ -15,7 +15,8 @@
 | intro_date | 引入日期 YYYY-MM-DD |
 | model_life / vehicle_life | 年 |
 | speed_kmh | 巡航速度，NML 自動換算（屬性上限約 3,280 km/h） |
-| pax / mail | 載客 / 郵件容量；貨機 pax 填噸數 x 1，role 含 freighter 時不開放載客 |
+| pax / mail | 載客 / 郵件容量；貨機填 0 |
+| payload_t | 貨機酬載（公噸），客機留空；遊戲內依各貨物單位重量換算容量 |
 | cost_factor / running_cost_factor | 相對成本，737-800 = 100 |
 | sound | `jet`、`jet_big`、`jet_fast` |
 | length_m / wingspan_m | 建模與比例校正用 |

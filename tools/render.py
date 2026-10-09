@@ -9,8 +9,11 @@
 A model module defines:
     CATEGORY  = "aircraft" | "trains"
     VEHICLE   = "b737_800"                 -> build/render/<CATEGORY>/<VEHICLE>/<part>/
-    CANVAS_1X = (width, height)            1x canvas in px, scaled by the zoom factor
+    CANVAS_1X = (width, height)            optional 1x canvas in px (scaled by the zoom factor)
     PARTS     = {"body": build_body, ...}  each builds objects facing +X, resting on z = 0, in metres
+Train parts are dicts instead of bare functions:
+    PARTS     = {"head": {"build": fn, "length_m": 27.35, "units": 8}, ...}
+so the renderer can squeeze the part to its in-game length (see tools/ottd_scale.py).
 Materials whose name starts with MAX_CC1 / MAX_CC2 are company-colour materials: they render as
 mid grey and the material-id pass marks them red / green for tools/postprocess.py.
 
@@ -33,9 +36,12 @@ from mathutils import Vector
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "models"))
-from ottd_scale import CAMERA_ELEVATION_DEG, PX_PER_M_1X, Z_SCALE  # noqa: E402
+sys.path.insert(0, str(ROOT / "models" / "lib"))
+from ottd_scale import (AIRCRAFT_PX_PER_M_1X, CAMERA_ELEVATION_DEG, DIAGONAL_STRETCH,  # noqa: E402
+                        TRAIN_CROSS_PX_PER_M_1X, TRAIN_Y_SHIFT_1X, train_length_scale)
 
 ZOOM = 4
+Z_SCALE = 1.0          # vertical exaggeration; OpenGFX calibration found none needed
 SUN_DIRECTION = Vector((-0.55, -0.35, 0.76))   # from the scene towards the sun: upper-left, slightly in front
 SUN_ENERGY = 3.2
 AMBIENT = 0.35
@@ -45,7 +51,7 @@ def load_model(path: Path):
     spec = importlib.util.spec_from_file_location(path.stem, path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    for attr in ("CATEGORY", "VEHICLE", "CANVAS_1X", "PARTS"):
+    for attr in ("CATEGORY", "VEHICLE", "PARTS"):
         if not hasattr(mod, attr):
             raise SystemExit(f"{path}: missing {attr}")
     return mod
@@ -70,13 +76,13 @@ def reset_scene() -> bpy.types.Scene:
     return scene
 
 
-def setup_camera(scene, canvas_1x, zoom):
+def setup_camera(scene, canvas_1x, zoom, px_per_m_1x):
     w, h = canvas_1x[0] * zoom, canvas_1x[1] * zoom
     scene.render.resolution_x, scene.render.resolution_y = w, h
     cam = bpy.data.cameras.new("cam")
     cam.type = "ORTHO"
     cam.sensor_fit = "HORIZONTAL"
-    cam.ortho_scale = w / (PX_PER_M_1X * zoom)   # metres across the full image width
+    cam.ortho_scale = w / (px_per_m_1x * zoom)   # metres across the full image width
     cam.clip_start, cam.clip_end = 0.1, 1000.0
     obj = bpy.data.objects.new("cam", cam)
     elev = math.radians(CAMERA_ELEVATION_DEG)
@@ -144,25 +150,47 @@ def restore_materials(backup):
         slot.material = m
 
 
-def render_part(mod, part: str, build, out_root: Path, samples: int) -> Path:
+def part_spec(mod, part):
+    """Normalise a PARTS entry to (build_fn, length_m or None, units)."""
+    spec = mod.PARTS[part]
+    if callable(spec):
+        return spec, None, 8
+    return spec["build"], spec.get("length_m"), int(spec.get("units", 8))
+
+
+def render_part(mod, part: str, out_root: Path, samples: int, views=None) -> Path:
+    build, length_m, units = part_spec(mod, part)
+    is_train = mod.CATEGORY == "trains"
+    if is_train and not length_m:
+        raise SystemExit(f"{mod.VEHICLE}/{part}: train parts need length_m")
+    px_per_m = TRAIN_CROSS_PX_PER_M_1X if is_train else AIRCRAFT_PX_PER_M_1X
+    canvas = getattr(mod, "CANVAS_1X", (96, 72) if is_train else (180, 130))
+
     out = out_root / mod.CATEGORY / mod.VEHICLE / part
     out.mkdir(parents=True, exist_ok=True)
     scene = reset_scene()
-    w, h = setup_camera(scene, mod.CANVAS_1X, ZOOM)
+    w, h = setup_camera(scene, canvas, ZOOM, px_per_m)
     setup_lighting(scene, AMBIENT, sun=True)
 
-    rig = bpy.data.objects.new("rig", None)
-    rig.scale = (1.0, 1.0, Z_SCALE)
-    scene.collection.objects.link(rig)
+    # Two-level rig: the inner empty squeezes the model along its own length (trains), the outer
+    # one rotates it to each view heading. Lights and camera never move.
+    turn = bpy.data.objects.new("turn", None)
+    squeeze = bpy.data.objects.new("squeeze", None)
+    scene.collection.objects.link(turn)
+    scene.collection.objects.link(squeeze)
+    squeeze.parent = turn
     objects = build()
     for obj in objects:
         if obj.name not in scene.collection.objects:
             scene.collection.objects.link(obj)
-        obj.parent = rig
+        obj.parent = squeeze
+    length_scale = train_length_scale(length_m, units) if is_train else 1.0
 
-    for k in range(8):
+    for k in (views if views is not None else range(8)):
         heading = math.radians(90.0 - 45.0 * k)   # N, NE, E, SE, S, SW, W, NW
-        rig.rotation_euler = (0.0, 0.0, heading)
+        turn.rotation_euler = (0.0, 0.0, heading)
+        sx = length_scale * (DIAGONAL_STRETCH if (is_train and k % 2 == 0) else 1.0)
+        squeeze.scale = (sx, 1.0, Z_SCALE)
 
         scene.cycles.samples = samples
         scene.world.node_tree.nodes["Background"].inputs[1].default_value = AMBIENT
@@ -177,8 +205,10 @@ def render_part(mod, part: str, build, out_root: Path, samples: int) -> Path:
         restore_materials(backup)
         print(f"  {mod.VEHICLE}/{part}: view {k} done", flush=True)
 
+    y_shift = int(round(TRAIN_Y_SHIFT_1X * ZOOM)) if is_train else 0
     (out / "render.json").write_text(json.dumps({
-        "zoom": ZOOM, "anchor": [w // 2, h // 2], "px_per_m_1x": PX_PER_M_1X, "z_scale": Z_SCALE,
+        "zoom": ZOOM, "anchor": [w // 2, h // 2 - y_shift], "px_per_m_1x": px_per_m,
+        "length_scale": length_scale, "units": units if is_train else None,
         "samples": samples, "blender": bpy.app.version_string,
     }, indent=2) + "\n")
     return out
@@ -190,17 +220,20 @@ def main() -> None:
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--samples", type=int, default=64)
     ap.add_argument("--out", default=str(ROOT / "build" / "render"))
+    ap.add_argument("--parts", nargs="*", help="render only these parts")
+    ap.add_argument("--views", nargs="*", type=int, help="render only these views (preview; output is not post-processable)")
     args = ap.parse_args()
     paths = [Path(p) for p in args.models]
     if args.all:
-        paths += sorted(p for p in (ROOT / "models").rglob("*.py") if p.name != "maxlib.py" and not p.name.startswith("_"))
+        paths += sorted(p for p in (ROOT / "models").glob("*/*.py")
+                        if p.parent.name in ("aircraft", "trains", "calibration") and not p.name.startswith("_"))
     if not paths:
         ap.error("give model paths or --all")
     for p in paths:
         mod = load_model(p.resolve())
         print(f"rendering {mod.CATEGORY}/{mod.VEHICLE} ({len(mod.PARTS)} part(s))", flush=True)
-        for part, build in mod.PARTS.items():
-            out = render_part(mod, part, build, Path(args.out), args.samples)
+        for part in (args.parts or list(mod.PARTS)):
+            out = render_part(mod, part, Path(args.out), args.samples, args.views)
             print(f"wrote {out}", flush=True)
 
 
