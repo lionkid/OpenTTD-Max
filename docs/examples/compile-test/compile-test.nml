@@ -1,0 +1,215 @@
+// OpenTTD-Max compile test: every construct used in docs/PLAN.md, verified with nmlc 0.9.0.
+// Run make_placeholder_sprites.py first, then: nmlc -c --grf compile-test.grf compile-test.nml
+grf {
+    grfid: "MAX\01";
+    name: string(STR_GRF_NAME);
+    desc: string(STR_GRF_DESC);
+    url: string(STR_GRF_URL);
+    version: 1;
+    min_compatible_version: 1;
+}
+
+railtypetable { RAIL, ELRL, MONO, MGLV, HSR: [HSTR, ELRL] }  // HSR falls back to ELRL when no high-speed railtype GRF is loaded
+
+// Badges (OpenTTD 15+ / NML 0.9+): filterable tags in the purchase list.
+badgetable {
+    "manufacturer", "manufacturer/boeing", "manufacturer/airbus", "manufacturer/aerospatiale", "manufacturer/jr",
+    "role", "role/passenger", "role/freighter", "role/supersonic"
+}
+item(FEAT_BADGES, badge_manufacturer) { property { label: "manufacturer"; name: string(STR_BADGE_MANUFACTURER); } }
+item(FEAT_BADGES, badge_boeing)       { property { label: "manufacturer/boeing"; name: string(STR_BADGE_BOEING); } }
+item(FEAT_BADGES, badge_airbus)       { property { label: "manufacturer/airbus"; name: string(STR_BADGE_AIRBUS); } }
+item(FEAT_BADGES, badge_aerospatiale) { property { label: "manufacturer/aerospatiale"; name: string(STR_BADGE_AEROSPATIALE); } }
+item(FEAT_BADGES, badge_jr)           { property { label: "manufacturer/jr"; name: string(STR_BADGE_JR); } }
+item(FEAT_BADGES, badge_role)         { property { label: "role"; name: string(STR_BADGE_ROLE); } }
+item(FEAT_BADGES, badge_pax)          { property { label: "role/passenger"; name: string(STR_BADGE_PAX); } }
+item(FEAT_BADGES, badge_freighter)    { property { label: "role/freighter"; name: string(STR_BADGE_FREIGHTER); } }
+item(FEAT_BADGES, badge_supersonic)   { property { label: "role/supersonic"; name: string(STR_BADGE_SUPERSONIC); } }
+
+// 8 directional views (N, NE, E, SE, S, SW, W, NW) laid out left-to-right in one sheet.
+template tmpl_8_views(w, h, dx, dy) {
+    [0 * w, 0, w, h, dx, dy]
+    [1 * w, 0, w, h, dx, dy]
+    [2 * w, 0, w, h, dx, dy]
+    [3 * w, 0, w, h, dx, dy]
+    [4 * w, 0, w, h, dx, dy]
+    [5 * w, 0, w, h, dx, dy]
+    [6 * w, 0, w, h, dx, dy]
+    [7 * w, 0, w, h, dx, dy]
+}
+template tmpl_purchase(w, h, dx, dy) {
+    [8 * w, 0, w, h, dx, dy]
+}
+
+// ---- Concorde -------------------------------------------------------------
+spriteset(ss_concorde, "gfx/concorde_1x.png") { tmpl_8_views(64, 48, -32, -24) }
+alternative_sprites(ss_concorde, ZOOM_LEVEL_IN_4X, BIT_DEPTH_32BPP, "gfx/concorde_4x.png", "gfx/concorde_4x_mask.png") {
+    tmpl_8_views(256, 192, -128, -96)
+}
+alternative_sprites(ss_concorde, ZOOM_LEVEL_NORMAL, BIT_DEPTH_32BPP, "gfx/concorde_1x32.png", "gfx/concorde_1x32_mask.png") { tmpl_8_views(64, 48, -32, -24) }
+alternative_sprites(ss_concorde, ZOOM_LEVEL_IN_2X, BIT_DEPTH_32BPP, "gfx/concorde_2x.png", "gfx/concorde_2x_mask.png") { tmpl_8_views(128, 96, -64, -48) }
+// Optionally hide the default maglev vehicles so only this set appears on MGLV track.
+disable_item(FEAT_TRAINS, 54, 57);
+spriteset(ss_concorde_purchase, "gfx/concorde_1x.png") { tmpl_purchase(64, 48, -32, -24) }
+alternative_sprites(ss_concorde_purchase, ZOOM_LEVEL_IN_4X, BIT_DEPTH_32BPP, "gfx/concorde_4x.png", "gfx/concorde_4x_mask.png") {
+    tmpl_purchase(256, 192, -128, -96)
+}
+
+item(FEAT_AIRCRAFT, concorde) {
+    property {
+        name:                       string(STR_NAME_CONCORDE);
+        climates_available:         ALL_CLIMATES;
+        introduction_date:          date(1976, 1, 21);
+        model_life:                 30;
+        vehicle_life:               27;
+        reliability_decay:          20;
+        sprite_id:                  SPRITE_ID_NEW_AIRCRAFT;
+        aircraft_type:              AIRCRAFT_TYPE_LARGE;
+        cost_factor:                200;
+        running_cost_factor:        240;
+        speed:                      2179 km/h;       // Mach 2.04 cruise
+        acceleration:               90;
+        passenger_capacity:         100;
+        mail_capacity:              8;
+        sound_effect:               SOUND_TAKEOFF_JET_FAST;
+        range:                      0;               // 0 = unlimited; tune in balancing phase
+        refittable_cargo_classes:   bitmask(CC_PASSENGERS, CC_MAIL);
+        non_refittable_cargo_classes: NO_CARGO_CLASS;
+        misc_flags:                 bitmask(AIRCRAFT_FLAG_2CC);
+        badges:                     ["manufacturer/aerospatiale", "role/passenger", "role/supersonic"];
+    }
+    graphics {
+        purchase: ss_concorde_purchase;
+        ss_concorde;
+    }
+}
+
+// ---- Boeing 737 family: parent + variant ---------------------------------
+spriteset(ss_b737, "gfx/b737_1x.png") { tmpl_8_views(64, 48, -32, -24) }
+alternative_sprites(ss_b737, ZOOM_LEVEL_IN_4X, BIT_DEPTH_32BPP, "gfx/b737_4x.png", "gfx/b737_4x_mask.png") { tmpl_8_views(256, 192, -128, -96) }
+spriteset(ss_b737_800, "gfx/b737_800_1x.png") { tmpl_8_views(64, 48, -32, -24) }
+alternative_sprites(ss_b737_800, ZOOM_LEVEL_IN_4X, BIT_DEPTH_32BPP, "gfx/b737_800_4x.png", "gfx/b737_800_4x_mask.png") { tmpl_8_views(256, 192, -128, -96) }
+
+item(FEAT_AIRCRAFT, b737) {
+    property {
+        name:                       string(STR_NAME_B737);
+        climates_available:         ALL_CLIMATES;
+        introduction_date:          date(1968, 2, 10);
+        model_life:                 60;
+        vehicle_life:               30;
+        reliability_decay:          20;
+        sprite_id:                  SPRITE_ID_NEW_AIRCRAFT;
+        aircraft_type:              AIRCRAFT_TYPE_LARGE;
+        cost_factor:                90;
+        running_cost_factor:        80;
+        speed:                      780 km/h;
+        acceleration:               60;
+        passenger_capacity:         124;
+        mail_capacity:              10;
+        sound_effect:               SOUND_TAKEOFF_JET;
+        refittable_cargo_classes:   bitmask(CC_PASSENGERS, CC_MAIL);
+        misc_flags:                 bitmask(AIRCRAFT_FLAG_2CC);
+        badges:                     ["manufacturer/boeing", "role/passenger"];
+    }
+    graphics { ss_b737; }
+}
+item(FEAT_AIRCRAFT, b737_800) {
+    property {
+        name:                       string(STR_NAME_B737_800);
+        climates_available:         ALL_CLIMATES;
+        introduction_date:          date(1998, 4, 1);
+        model_life:                 40;
+        vehicle_life:               30;
+        reliability_decay:          20;
+        sprite_id:                  SPRITE_ID_NEW_AIRCRAFT;
+        aircraft_type:              AIRCRAFT_TYPE_LARGE;
+        cost_factor:                110;
+        running_cost_factor:        90;
+        speed:                      842 km/h;
+        acceleration:               60;
+        passenger_capacity:         189;
+        mail_capacity:              12;
+        sound_effect:               SOUND_TAKEOFF_JET;
+        refittable_cargo_classes:   bitmask(CC_PASSENGERS, CC_MAIL);
+        misc_flags:                 bitmask(AIRCRAFT_FLAG_2CC);
+        variant_group:              b737;            // grouped under "Boeing 737" in the purchase list (OpenTTD 12+)
+        extra_flags:                bitmask(VEHICLE_FLAG_SYNC_VARIANT_RELIABILITY);
+        badges:                     ["manufacturer/boeing", "role/passenger"];
+    }
+    graphics { ss_b737_800; }
+}
+
+// ---- N700 Series Shinkansen (fixed 16-car EMU via articulated parts) -----
+spriteset(ss_n700, "gfx/n700_1x.png") { tmpl_8_views(64, 48, -32, -24) }
+alternative_sprites(ss_n700, ZOOM_LEVEL_IN_4X, BIT_DEPTH_32BPP, "gfx/n700_4x.png", "gfx/n700_4x_mask.png") { tmpl_8_views(256, 192, -128, -96) }
+
+switch (FEAT_TRAINS, SELF, sw_n700_articulated, extra_callback_info1) {
+    1..15:  return n700;                              // cars 2..16 reuse the same item
+    return CB_RESULT_NO_MORE_ARTICULATED_PARTS;
+}
+
+item(FEAT_TRAINS, n700) {
+    property {
+        name:                       string(STR_NAME_N700);
+        climates_available:         ALL_CLIMATES;
+        introduction_date:          date(2007, 7, 1);
+        model_life:                 30;
+        vehicle_life:               25;
+        reliability_decay:          20;
+        sprite_id:                  SPRITE_ID_NEW_TRAIN;
+        track_type:                 HSR;
+        engine_class:               ENGINE_CLASS_ELECTRIC;
+        running_cost_base:          RUNNING_COST_ELECTRIC;
+        speed:                      300 km/h;
+        power:                      17080 kW;
+        weight:                     715 ton;
+        tractive_effort_coefficient: 0.25;
+        length:                     8;
+        dual_headed:                0;
+        cargo_capacity:             82;
+        cost_factor:                120;
+        running_cost_factor:        120;
+        refittable_cargo_classes:   bitmask(CC_PASSENGERS);
+        misc_flags:                 bitmask(TRAIN_FLAG_MU, TRAIN_FLAG_TILT, TRAIN_FLAG_2CC);
+        curve_speed_mod:            0.1;             // +10 % curve speed on top of the tilt bonus
+        visual_effect_and_powered:  visual_effect_and_powered(VISUAL_EFFECT_DISABLE, 0, DISABLE_WAGON_POWER);
+        badges:                     ["manufacturer/jr", "role/passenger"];
+    }
+    graphics {
+        articulated_part: sw_n700_articulated;
+        ss_n700;
+    }
+}
+
+// ---- L0 Series SCMaglev ---------------------------------------------------
+spriteset(ss_l0, "gfx/l0_1x.png") { tmpl_8_views(64, 48, -32, -24) }
+alternative_sprites(ss_l0, ZOOM_LEVEL_IN_4X, BIT_DEPTH_32BPP, "gfx/l0_4x.png", "gfx/l0_4x_mask.png") { tmpl_8_views(256, 192, -128, -96) }
+
+item(FEAT_TRAINS, l0) {
+    property {
+        name:                       string(STR_NAME_L0);
+        climates_available:         ALL_CLIMATES;
+        introduction_date:          date(2027, 1, 1);
+        model_life:                 VEHICLE_NEVER_EXPIRES;
+        vehicle_life:               30;
+        reliability_decay:          20;
+        sprite_id:                  SPRITE_ID_NEW_TRAIN;
+        track_type:                 MGLV;
+        engine_class:               ENGINE_CLASS_MAGLEV;
+        running_cost_base:          RUNNING_COST_ELECTRIC;
+        speed:                      603 km/h;        // 2015 world record; 500 km/h planned service speed
+        power:                      20000 kW;
+        weight:                     400 ton;
+        tractive_effort_coefficient: 0.5;
+        length:                     8;
+        dual_headed:                0;
+        cargo_capacity:             68;
+        cost_factor:                220;
+        running_cost_factor:        200;
+        refittable_cargo_classes:   bitmask(CC_PASSENGERS);
+        misc_flags:                 bitmask(TRAIN_FLAG_MU, TRAIN_FLAG_2CC);
+        visual_effect_and_powered:  visual_effect_and_powered(VISUAL_EFFECT_DISABLE, 0, DISABLE_WAGON_POWER);
+        badges:                     ["manufacturer/jr", "role/passenger"];
+    }
+    graphics { ss_l0; }
+}

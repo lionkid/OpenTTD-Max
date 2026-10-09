@@ -1,0 +1,19 @@
+##grflangid 0x0C
+##plural 1
+STR_GRF_NAME            :OpenTTD-Max 航空與高鐵套件（編譯測試）
+STR_GRF_DESC            :高解析度（32bpp、4x zoom）客貨機與高速鐵路車輛套件。僅供編譯測試。
+STR_GRF_URL             :https://github.com/lionkid/OpenTTD-Max
+STR_NAME_CONCORDE       :協和號 Concorde
+STR_NAME_B737           :波音 737
+STR_NAME_B737_800       :波音 737-800
+STR_NAME_N700           :JR N700 系新幹線
+STR_NAME_L0             :JR 東海 L0 系超導磁浮
+STR_BADGE_MANUFACTURER  :製造商
+STR_BADGE_BOEING        :波音
+STR_BADGE_AIRBUS        :空中巴士
+STR_BADGE_AEROSPATIALE  :Aerospatiale/BAC
+STR_BADGE_JR            :JR 集團
+STR_BADGE_ROLE          :用途
+STR_BADGE_PAX           :客運
+STR_BADGE_FREIGHTER     :貨運
+STR_BADGE_SUPERSONIC    :超音速

@@ -1,0 +1,18 @@
+##grflangid 0x01
+STR_GRF_NAME            :OpenTTD-Max Air & Rail (compile test)
+STR_GRF_DESC            :High-resolution (32bpp, 4x zoom) aircraft and high-speed rail set. Compile test only.
+STR_GRF_URL             :https://github.com/lionkid/OpenTTD-Max
+STR_NAME_CONCORDE       :Aerospatiale/BAC Concorde
+STR_NAME_B737           :Boeing 737
+STR_NAME_B737_800       :Boeing 737-800
+STR_NAME_N700           :JR N700 Series Shinkansen
+STR_NAME_L0             :JR Central L0 Series SCMaglev
+STR_BADGE_MANUFACTURER  :Manufacturer
+STR_BADGE_BOEING        :Boeing
+STR_BADGE_AIRBUS        :Airbus
+STR_BADGE_AEROSPATIALE  :Aerospatiale/BAC
+STR_BADGE_JR            :JR Group
+STR_BADGE_ROLE          :Role
+STR_BADGE_PAX           :Passenger
+STR_BADGE_FREIGHTER     :Freighter
+STR_BADGE_SUPERSONIC    :Supersonic
