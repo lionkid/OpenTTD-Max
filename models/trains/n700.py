@@ -1,7 +1,7 @@
 """N700 Series Shinkansen. End car 27.35 m (10.7 m 'aero double-wing' nose), intermediate car 25 m,
 width 3.36 m, height 3.6 m. Livery: white with a company-colour band below the windows and a thin
 second band (blue on the real train)."""
-from railcar import build_car
+from railcar import train_parts
 
 CATEGORY = "trains"
 VEHICLE = "n700"
@@ -20,7 +20,4 @@ SPEC = {
     "roof_mat": "lightgrey", "roof_z": 3.45,
 }
 
-PARTS = {
-    "head": {"build": lambda: build_car(SPEC, "head"), "length_m": 27.35},
-    "mid": {"build": lambda: build_car(SPEC, "mid"), "length_m": 25.0},
-}
+PARTS = train_parts(SPEC, units=8)

@@ -20,3 +20,8 @@ STR_BADGE_SUPERSONIC    :超音速
 STR_BADGE_KIND          :種類
 STR_BADGE_SHINKANSEN    :新幹線
 STR_BADGE_MAGLEV        :リニア
+
+STR_PARAM_DISABLE_AIRCRAFT_NAME :オリジナル航空機を無効化
+STR_PARAM_DISABLE_AIRCRAFT_DESC :オリジナルの航空機を非表示にし、OpenTTD-Max の機体だけを販売します。購入済みの機体はそのまま運行できます。
+STR_PARAM_DISABLE_MAGLEV_NAME   :オリジナルのリニア機関車を無効化
+STR_PARAM_DISABLE_MAGLEV_DESC   :オリジナルのリニア機関車（Lev1～Lev4、Wizzowow Rocketeer）を非表示にします。リニア用貨車は引き続き購入できます。

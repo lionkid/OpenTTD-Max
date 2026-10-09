@@ -104,6 +104,11 @@ def cost(v: str) -> int:
     return c
 
 
+def car_units(r: dict) -> int:
+    """In-game length of one car (1..8 units); 25 m = 8/8."""
+    return max(1, min(8, round(float(r["car_length_m"]) / 25.0 * 8)))
+
+
 def badge_list(*labels: str) -> str:
     return "[" + ", ".join(f'"{x}"' for x in labels if x) + "]"
 
@@ -187,6 +192,10 @@ def gen_trains(rows: list[dict], badges: bool, strict: bool, missing: list[str])
         parts = manifest["parts"]
         cars = int(r["cars"])
         maglev = r["track"].upper() == "MGLV"
+        units = car_units(r)
+        for pname, pdata in parts.items():
+            if pdata.get("units") not in (None, units) and "_placeholder" not in gfx_rel:
+                die(f"{rid}: art part {pname} rendered for length {pdata['units']}/8 but car_length_m gives {units}/8")
         out.append(f"\n// ---- {r['name_en']} ({cars} cars) ----")
         if "head" in parts:
             head = parts["head"]
@@ -194,10 +203,17 @@ def gen_trains(rows: list[dict], badges: bool, strict: bool, missing: list[str])
             out += spriteset_blocks(f"ss_{rid}_head", head, gfx_rel)
             out += spriteset_blocks(f"ss_{rid}_mid", mid, gfx_rel)
             out += spriteset_blocks(f"ss_{rid}_tail", head, gfx_rel, TAIL_ORDER)
+            mid_ref = f"ss_{rid}_mid"
+            if "mid_p" in parts:
+                # Pantograph on every other intermediate car.
+                out += spriteset_blocks(f"ss_{rid}_mid_p", parts["mid_p"], gfx_rel)
+                out += [f"switch (FEAT_TRAINS, SELF, sw_{rid}_gfx_mid, position_in_articulated_veh % 2) {{",
+                        f"    1: ss_{rid}_mid_p;", f"    ss_{rid}_mid;", "}"]
+                mid_ref = f"sw_{rid}_gfx_mid"
             out += [
                 f"switch (FEAT_TRAINS, SELF, sw_{rid}_gfx_rear, position_in_articulated_veh_from_end) {{",
                 f"    0: ss_{rid}_tail;",
-                f"    ss_{rid}_mid;",
+                f"    {mid_ref};",
                 "}",
                 f"switch (FEAT_TRAINS, SELF, sw_{rid}_gfx, position_in_articulated_veh) {{",
                 f"    0: ss_{rid}_head;",
@@ -232,7 +248,7 @@ def gen_trains(rows: list[dict], badges: bool, strict: bool, missing: list[str])
             f"power: {int(r['power_kw'])} kW;",
             f"weight: {int(r['weight_t'])} ton;",           # whole consist: only the lead part adds vehicle weight
             f"tractive_effort_coefficient: {float(r['te_coeff'])};",
-            "length: 8;",
+            f"length: {units};",
             "dual_headed: 0;",
             f"cargo_capacity: {int(r['pax_per_car'])};",     # per car: every articulated part gets this
             f"cost_factor: {cost(r['cost_factor'])};",

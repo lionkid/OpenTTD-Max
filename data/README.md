@@ -38,4 +38,4 @@
 | pax_per_car | 每節載客 |
 | tilt | 1 = 傾斜列車 |
 | track | `HSR`（高速軌道，退回 ELRL）或 `MGLV` |
-| car_length_m | 建模與比例校正用 |
+| car_length_m | 中間車長度；決定遊戲內每節車廂長度（25 m = 8/8，四捨五入），必須與模型檔 `train_parts(units=...)` 一致 |

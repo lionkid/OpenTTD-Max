@@ -20,3 +20,8 @@ STR_BADGE_SUPERSONIC    :超音速
 STR_BADGE_KIND          :類型
 STR_BADGE_SHINKANSEN    :新幹線
 STR_BADGE_MAGLEV        :磁浮
+
+STR_PARAM_DISABLE_AIRCRAFT_NAME :停用原版飛機
+STR_PARAM_DISABLE_AIRCRAFT_DESC :隱藏原版飛機，購買清單只顯示 OpenTTD-Max 機型。已購入的原版飛機仍可繼續營運。
+STR_PARAM_DISABLE_MAGLEV_NAME   :停用原版磁浮機車
+STR_PARAM_DISABLE_MAGLEV_DESC   :隱藏原版磁浮機車（Lev1–Lev4、Wizzowow Rocketeer），磁浮貨車廂仍可購買。

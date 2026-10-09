@@ -1,6 +1,6 @@
 """L0 Series SCMaglev. End car 28 m with a 15 m nose, intermediate car 24.3 m, width 2.9 m, height 3.1 m.
 Livery: white with a company-colour band along the window line (blue on the real train)."""
-from railcar import build_car
+from railcar import train_parts
 
 CATEGORY = "trains"
 VEHICLE = "l0"
@@ -20,7 +20,4 @@ SPEC = {
     "windows": [{"z": (1.95, 2.35), "pitch": 1.4, "duty": 0.5}],
 }
 
-PARTS = {
-    "head": {"build": lambda: build_car(SPEC, "head"), "length_m": 28.0},
-    "mid": {"build": lambda: build_car(SPEC, "mid"), "length_m": 24.3},
-}
+PARTS = train_parts(SPEC, units=8)

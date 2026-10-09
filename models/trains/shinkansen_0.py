@@ -1,6 +1,6 @@
 """0 Series Shinkansen (1964). End car 25.15 m with the rounded 'bullet' nose, intermediate car 25 m,
 width 3.38 m. Livery: ivory with company-colour window band and skirt line (blue on the real train)."""
-from railcar import build_car
+from railcar import train_parts
 
 CATEGORY = "trains"
 VEHICLE = "shinkansen_0"
@@ -21,7 +21,4 @@ SPEC = {
     "pantograph": 7.0,
 }
 
-PARTS = {
-    "head": {"build": lambda: build_car(SPEC, "head"), "length_m": 25.15},
-    "mid": {"build": lambda: build_car(SPEC, "mid"), "length_m": 25.0},
-}
+PARTS = train_parts(SPEC, units=8)

@@ -1,6 +1,6 @@
 """E5 Series Shinkansen (2011). End car 26.5 m with a 15 m long nose, intermediate car 25 m, width 3.35 m.
 Livery: company colour 1 above the stripe (Tokiwa green), company colour 2 stripe (Tsutsuji pink), white below."""
-from railcar import build_car
+from railcar import train_parts
 
 CATEGORY = "trains"
 VEHICLE = "e5"
@@ -18,7 +18,4 @@ SPEC = {
     "windows": [{"z": (2.2, 2.65), "pitch": 1.5, "duty": 0.72}],
 }
 
-PARTS = {
-    "head": {"build": lambda: build_car(SPEC, "head"), "length_m": 26.5},
-    "mid": {"build": lambda: build_car(SPEC, "mid"), "length_m": 25.0},
-}
+PARTS = train_parts(SPEC, units=8)

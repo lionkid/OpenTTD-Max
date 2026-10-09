@@ -218,7 +218,8 @@
       },
       "cc_brightness_factor": {
         "cc1": 0.835
-      }
+      },
+      "units": 8
     },
     "mid": {
       "zooms": {
@@ -436,7 +437,8 @@
       },
       "cc_brightness_factor": {
         "cc1": 0.9
-      }
+      },
+      "units": 8
     }
   }
 }

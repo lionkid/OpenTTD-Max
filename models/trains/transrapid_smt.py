@@ -1,6 +1,6 @@
 """Transrapid SMT (Shanghai Maglev). End section 27.2 m, middle section 24.8 m, width 3.7 m.
 The body wraps around the guideway; the dark lower part stands for the levitation chassis."""
-from railcar import build_car
+from railcar import train_parts
 
 CATEGORY = "trains"
 VEHICLE = "transrapid_smt"
@@ -20,7 +20,4 @@ SPEC = {
     "windows": [{"z": (2.0, 2.75), "pitch": 1.4, "duty": 0.82}],
 }
 
-PARTS = {
-    "head": {"build": lambda: build_car(SPEC, "head"), "length_m": 27.2},
-    "mid": {"build": lambda: build_car(SPEC, "mid"), "length_m": 24.8},
-}
+PARTS = train_parts(SPEC, units=8)

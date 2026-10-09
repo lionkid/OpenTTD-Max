@@ -52,10 +52,19 @@ def zoom_in(clicks: int) -> None:
 def latest_positions(log: Path) -> dict[str, int]:
     pos = {}
     for line in log.read_text(errors="replace").splitlines():
-        m = re.search(r"MAXTEST pos (air|rail) (\d+)", line)
+        m = re.search(r"MAXTEST pos (\w+) (\d+)", line)
         if m:
             pos[m.group(1)] = int(m.group(2))
     return pos
+
+
+def vehicle_names(log: Path) -> dict[str, str]:
+    names = {}
+    for line in log.read_text(errors="replace").splitlines():
+        m = re.search(r"MAXTEST vehicle (\w+) (?:aircraft|train) (.+?)(?: length .*)?$", line)
+        if m:
+            names[m.group(1)] = m.group(2)
+    return names
 
 
 def wait_for(log: Path, pattern: str, timeout: float) -> bool:
@@ -138,16 +147,20 @@ def main() -> None:
             if wid:
                 subprocess.run(["xdotool", "windowfocus", "--sync", wid[0]], env=env_x, check=False)
             zoom_in(3)                           # viewport to 4x
+            names = vehicle_names(log)
+            (out / "vehicles.txt").write_text("\n".join(f"{k}\t{v}" for k, v in sorted(names.items())) + "\n")
             for i in range(args.shots):
+                # Pause first so fast vehicles are still where the AI last saw them.
+                console("pause")
+                time.sleep(0.5)
                 pos = latest_positions(log)
-                for kind in ("air", "rail"):
-                    if kind not in pos:
-                        continue
-                    console(f"scrollto {pos[kind]}")
-                    time.sleep(0.8)
-                    dst = out / f"{kind}_{i:02d}.png"
+                for key in sorted(pos):
+                    console(f"scrollto {pos[key]}")
+                    time.sleep(0.6)
+                    dst = out / f"{key}_{i:02d}.png"
                     capture(dst)
-                    print(f"saved {dst.relative_to(ROOT)} (tile {pos[kind]})", flush=True)
+                    print(f"saved {dst.relative_to(ROOT)} ({names.get(key, key)}, tile {pos[key]})", flush=True)
+                console("unpause")
                 time.sleep(args.interval)
             if args.hold > 0:
                 print(f"holding for {args.hold:.0f} s on DISPLAY={DISPLAY}", flush=True)

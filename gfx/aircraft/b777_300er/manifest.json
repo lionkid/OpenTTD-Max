@@ -217,9 +217,10 @@
         }
       },
       "cc_brightness_factor": {
-        "cc1": 0.844,
+        "cc1": 0.843,
         "cc2": 0.824
-      }
+      },
+      "units": null
     }
   }
 }

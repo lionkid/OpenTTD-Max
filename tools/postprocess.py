@@ -163,7 +163,7 @@ def process_part(src: Path, dst: Path, part: str) -> dict:
             entry["fallback_8bpp"] = fallback
         result[zname] = entry
 
-    return {"zooms": result, "cc_brightness_factor": cc_factors}
+    return {"zooms": result, "cc_brightness_factor": cc_factors, "units": meta.get("units")}
 
 
 def process_vehicle(category: str, vehicle: str) -> Path:

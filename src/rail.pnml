@@ -6,6 +6,20 @@ grf {
     url: string(STR_GRF_URL);
     version: @VERSION@;
     min_compatible_version: 1;
+    param 0 {
+        param_disable_default_maglev {
+            name: string(STR_PARAM_DISABLE_MAGLEV_NAME);
+            desc: string(STR_PARAM_DISABLE_MAGLEV_DESC);
+            type: bool;
+            def_value: 0;
+        }
+    }
+}
+
+// Optional: hide the original maglev locomotives (engines 84-88: Lev1-Lev4, Wizzowow Rocketeer).
+// Maglev wagons stay, and the maglev railtype is still introduced by Transrapid SMT (2004).
+if (param_disable_default_maglev) {
+    disable_item(FEAT_TRAINS, 84, 88);
 }
 
 #include "common/templates.pnml"

@@ -200,7 +200,7 @@ class Airliner:
         if not w:
             return []
         stations = [{"span": st["y"], "x_le": self.x(st["s_le"]), "chord": st["chord"], "t": st["t"],
-                     "off": self.wing_z(st["y"])} for st in w["stations"]]
+                     "off": self.wing_z(st["y"]) + st.get("dz", 0.0)} for st in w["stations"]]
         objs = lifting_surface("wing", stations, w.get("material", "lightgrey"), axis="y", mirror=True)
         tip = w.get("tip")
         if tip:
@@ -211,7 +211,7 @@ class Airliner:
         """Winglet (blended / scimitar / sharklet) or wingtip fence at the last wing station, both sides."""
         last = self.s["wing"]["stations"][-1]
         y, s_le, chord = last["y"], last["s_le"], last["chord"]
-        z = self.wing_z(y)
+        z = self.wing_z(y) + last.get("dz", 0.0)
         kind = tip["kind"]
         mat = tip.get("material", "cc1" if tip.get("cc", True) else "lightgrey")
         objs = []
@@ -259,21 +259,44 @@ class Airliner:
         return lifting_surface("fin", stations, v.get("material", "cc1"), axis="z")
 
     # -- engines ---------------------------------------------------------------------------------
+    NACELLE_PROFILES = {
+        # (fraction of length, fraction of max radius)
+        "turbofan": [(0.0, 0.86), (0.04, 0.97), (0.22, 1.0), (0.62, 0.93), (0.9, 0.74), (1.0, 0.64)],
+        "lowbypass": [(0.0, 0.78), (0.05, 0.93), (0.16, 1.0), (0.5, 0.96), (0.82, 0.78), (1.0, 0.6)],
+        "flat": [(0.0, 0.86), (0.04, 0.97), (0.22, 1.0), (0.62, 0.93), (0.9, 0.74), (1.0, 0.64)],
+    }
+
     def nacelle(self, name, s_front, y, zc, length, d, material="cc2", pylon=True, kind="turbofan", width=None):
+        """Engine nacelle. kind: turbofan | lowbypass (long thin pods) | flat (737 Classic 'hamster' nacelle,
+        flattened underside) | box (Concorde paired nacelle). pylon: True (wing pylon), "fuselage" (stub
+        to the fuselage side, rear-mounted engines) or False."""
         r = d / 2
         x0 = self.x(s_front)
-        if kind == "box":       # Concorde-style paired nacelle
+        if kind == "box":
             rings = []
             for u, hw, hh in ((0.0, 0.92, 0.70), (0.06, 1.0, 0.92), (0.8, 1.0, 1.0), (1.0, 0.95, 0.9)):
                 rings.append(se_ring(x0 - u * length, y, zc, (width or d * 1.5) / 2 * hw, r * hh, r * hh, 24, 4.0, 4.0))
             objs = [loft(name, rings, [material, "black"], cap_mats=(1, 1))]
+        elif kind == "flat":
+            rings = [se_ring(x0 - u * length, y, zc, r * f, r * f, r * f * 0.74, 28, 2.0, 2.6)
+                     for u, f in self.NACELLE_PROFILES["flat"]]
+            objs = [loft(name, rings, [material, "black", "darkgrey"], cap_mats=(1, 2))]
+            objs.append(revolve_x(name + "_plug", [(x0 - length, r * 0.42), (x0 - length * 1.16, r * 0.08)], y, zc,
+                                  ["darkgrey"], n=16))
         else:
-            prof = [(0.0, 0.86), (0.04, 0.97), (0.22, 1.0), (0.62, 0.93), (0.9, 0.74), (1.0, 0.64)]
-            profile = [(x0 - u * length, r * f) for u, f in prof]
+            profile = [(x0 - u * length, r * f) for u, f in self.NACELLE_PROFILES[kind]]
             objs = [revolve_x(name, profile, y, zc, [material, "black", "darkgrey"], cap_mats=(1, 2))]
             plug = [(x0 - length, r * 0.42), (x0 - length * 1.16, r * 0.08)]
             objs.append(revolve_x(name + "_plug", plug, y, zc, ["darkgrey"], n=16))
-        if pylon and self.s["wing"]:
+        if pylon == "fuselage":
+            _, half, _, _ = self.section(s_front + length * 0.5)
+            sgn = 1.0 if y >= 0 else -1.0
+            sts = [{"span": sgn * half * 0.7, "x_le": self.x(s_front + length * 0.25), "chord": length * 0.55, "t": 0.16,
+                    "off": zc},
+                   {"span": y - sgn * r * 0.6, "x_le": self.x(s_front + length * 0.3), "chord": length * 0.45, "t": 0.16,
+                    "off": zc}]
+            objs += lifting_surface(name + "_stub", sts, "lightgrey", axis="y")
+        elif pylon and self.s["wing"]:
             wz = self.wing_z(y) - 0.25
             top = zc + r * 0.85
             if wz > top:

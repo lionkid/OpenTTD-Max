@@ -20,3 +20,8 @@ STR_BADGE_SUPERSONIC    :Supersonic
 STR_BADGE_KIND          :Type
 STR_BADGE_SHINKANSEN    :Shinkansen
 STR_BADGE_MAGLEV        :Maglev
+
+STR_PARAM_DISABLE_AIRCRAFT_NAME :Disable original aircraft
+STR_PARAM_DISABLE_AIRCRAFT_DESC :Hide the original aircraft so that only OpenTTD-Max aircraft are on sale. Existing original aircraft keep running.
+STR_PARAM_DISABLE_MAGLEV_NAME   :Disable original maglev locomotives
+STR_PARAM_DISABLE_MAGLEV_DESC   :Hide the original maglev locomotives (Lev1-Lev4, Wizzowow Rocketeer). Maglev wagons stay available.

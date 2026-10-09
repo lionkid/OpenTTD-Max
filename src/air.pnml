@@ -6,6 +6,19 @@ grf {
     url: string(STR_GRF_URL);
     version: @VERSION@;
     min_compatible_version: 1;
+    param 0 {
+        param_disable_default_aircraft {
+            name: string(STR_PARAM_DISABLE_AIRCRAFT_NAME);
+            desc: string(STR_PARAM_DISABLE_AIRCRAFT_DESC);
+            type: bool;
+            def_value: 0;
+        }
+    }
+}
+
+// Optional: hide the original aircraft so only this set is on sale.
+if (param_disable_default_aircraft) {
+    disable_item(FEAT_AIRCRAFT);
 }
 
 #include "common/templates.pnml"

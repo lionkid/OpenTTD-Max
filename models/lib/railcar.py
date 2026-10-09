@@ -54,7 +54,7 @@ class Car:
         s.update(spec)
         self.s = s
         self.kind = kind
-        self.L = s["length"] if kind == "head" or "mid_length" not in s else s["mid_length"]
+        self.L = s["length"] if kind == "head" or "mid_length" not in s else s["mid_length"]   # mid / mid_p
         if kind == "head" and "head_length" in s:
             self.L = s["head_length"]
         self.hw = s["width"] / 2
@@ -126,6 +126,9 @@ class Car:
         materials = [s["body"], "glass", "cc1", "cc2", s["skirt_mat"], "light", "darkgrey"]
         if s["roof_mat"]:
             materials.append(s["roof_mat"])
+        for b in s["bands"]:                       # any palette material may be used for a band
+            if b["mat"] not in materials:
+                materials.append(b["mat"])
         idx = {name: i for i, name in enumerate(materials)}
         idx["glass"], idx["cc1"], idx["cc2"], idx["light"] = 1, 2, 3, 5
         cab = s["cab"]
@@ -156,7 +159,7 @@ class Car:
                 if "s" in b and not (b["s"][0] <= sp <= b["s"][1]):
                     continue
                 if b["z"][0] <= z <= b["z"][1] and side > b.get("min_side", 0.0):
-                    m = idx[b["mat"]] if b["mat"] in idx else materials.index(b["mat"])
+                    m = idx[b["mat"]]
             if self.nose:
                 tt = sp / nl if sp < nl else ((L - sp) / nl if (s["rear_nose"] and sp > L - nl) else None)
                 if tt is not None:
@@ -208,7 +211,7 @@ class Car:
 
     def roof_gear(self):
         s = self.s
-        if self.kind != "mid" or s["pantograph"] is None:
+        if self.kind != "mid_p" or s["pantograph"] is None:
             return []
         sp = s["pantograph"]
         x = self.x(sp)
@@ -223,3 +226,18 @@ class Car:
 
 def build_car(spec: dict, kind: str):
     return Car(spec, kind).build()
+
+
+def train_parts(spec: dict, units: int = 8) -> dict:
+    """PARTS for tools/render.py: head and mid cars, plus "mid_p" (a mid car carrying a pantograph,
+    used on every other car) when the spec has a pantograph position. `units` is the in-game length
+    of every car (1..8, 8 = 25 m) and must match round(car_length_m / 25 * 8) in data/trains.csv."""
+    head_len = spec.get("head_length", spec.get("length", 25.0))
+    mid_len = spec.get("mid_length", spec.get("length", 25.0))
+    parts = {
+        "head": {"build": lambda: build_car(spec, "head"), "length_m": head_len, "units": units},
+        "mid": {"build": lambda: build_car(spec, "mid"), "length_m": mid_len, "units": units},
+    }
+    if spec.get("pantograph") is not None:
+        parts["mid_p"] = {"build": lambda: build_car(spec, "mid_p"), "length_m": mid_len, "units": units}
+    return parts
