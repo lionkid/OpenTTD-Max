@@ -5,28 +5,28 @@ shinkansen_200,200 Series Shinkansen,200 系新幹線,200系新幹線,jr,shinkan
 shinkansen_100,100 Series Shinkansen,100 系新幹線,100系新幹線,jr,shinkansen,P1,,1985-10-01,7,25,16,220,11040,925,0.25,83,0,HSR,110,105,25,shinkansen_100,bilevel cars in mid-set
 shinkansen_300,300 Series Shinkansen,300 系新幹線,300系新幹線,jr,shinkansen,P1,,1992-03-14,6,25,16,270,12000,710,0.25,83,0,HSR,115,105,25,shinkansen_300,
 shinkansen_400,400 Series Shinkansen,400 系新幹線,400系新幹線,jr,shinkansen,P2,,1992-07-01,3,20,7,240,5040,318,0.25,57,0,HSR,70,70,20,shinkansen_400,mini-shinkansen
-e1,E1 Series Shinkansen Max,E1 系新幹線 Max,E1系新幹線 Max,jr,shinkansen,P2,,1994-07-15,2,20,12,240,9840,692,0.25,103,0,HSR,120,110,25,e1,bilevel
-shinkansen_500,500 Series Shinkansen,500 系新幹線,500系新幹線,jr,shinkansen,P1,,1997-03-22,2,25,16,300,18240,688,0.25,83,0,HSR,150,140,25,shinkansen_500,
-shinkansen_500_8,500 Series Shinkansen (8 cars),500 系新幹線（8 輛）,500系新幹線（8両）,jr,shinkansen,P1,shinkansen_500,2008-04-01,2,25,8,285,9120,344,0.25,71,0,HSR,80,75,25,shinkansen_500,Kodama V sets
-e2,E2 Series Shinkansen,E2 系新幹線,E2系新幹線,jr,shinkansen,P1,,1997-10-01,13,25,10,275,9600,450,0.25,81,0,HSR,110,100,25,e2,
-e3,E3 Series Shinkansen,E3 系新幹線,E3系新幹線,jr,shinkansen,P2,,1997-03-22,11,20,6,275,4800,295,0.25,56,0,HSR,65,65,20,e3,mini-shinkansen
+e1,E1 Series Shinkansen Max,E1 系新幹線 Max,E1系新幹線 Max,jr,shinkansen,P2,,1994-07-15,1,20,12,240,9840,692,0.25,103,0,HSR,120,110,25,e1,bilevel
+shinkansen_500,500 Series Shinkansen,500 系新幹線,500系新幹線,jr,shinkansen,P1,,1997-03-22,1,25,16,300,18240,688,0.25,83,0,HSR,150,140,25,shinkansen_500,
+shinkansen_500_8,500 Series Shinkansen (8 cars),500 系新幹線（8 輛）,500系新幹線（8両）,jr,shinkansen,P1,shinkansen_500,2008-12-01,2,25,8,285,9120,344,0.25,76,0,HSR,80,75,25,shinkansen_500,Kodama V sets
+e2,E2 Series Shinkansen,E2 系新幹線,E2系新幹線,jr,shinkansen,P1,,1997-03-22,13,25,10,275,9600,450,0.25,81,0,HSR,110,100,25,e2,
+e3,E3 Series Shinkansen,E3 系新幹線,E3系新幹線,jr,shinkansen,P2,,1997-03-22,13,20,6,275,4800,295,0.25,56,0,HSR,65,65,20,e3,mini-shinkansen
 e4,E4 Series Shinkansen Max,E4 系新幹線 Max,E4系新幹線 Max,jr,shinkansen,P2,,1997-12-20,6,20,8,240,6720,428,0.25,102,0,HSR,95,90,25,e4,bilevel
 shinkansen_700,700 Series Shinkansen,700 系新幹線,700系新幹線,jr,shinkansen,P1,,1999-03-13,7,25,16,285,13200,708,0.25,83,0,HSR,120,110,25,shinkansen_700,
-shinkansen_700_8,700 Series Shinkansen Hikari Rail Star (8 cars),700 系新幹線 Hikari Rail Star（8 輛）,700系新幹線ひかりレールスター（8両）,jr,shinkansen,P1,shinkansen_700,2000-03-11,7,25,8,285,6600,354,0.25,71,0,HSR,65,60,25,shinkansen_700,
-doctor_yellow,923 Series Doctor Yellow,923 型 Doctor Yellow,923形ドクターイエロー,jr,shinkansen,P2,,2001-01-01,0,25,7,270,6600,350,0.25,20,0,HSR,90,90,25,doctor_yellow,inspection train; carries mail
+shinkansen_700_8,700 Series Shinkansen Hikari Rail Star (8 cars),700 系新幹線 Hikari Rail Star（8 輛）,700系新幹線ひかりレールスター（8両）,jr,shinkansen,P1,shinkansen_700,2000-03-11,2,25,8,285,6600,354,0.25,71,0,HSR,65,60,25,shinkansen_700,
+doctor_yellow,923 Series Doctor Yellow,923 型 Doctor Yellow,923形ドクターイエロー,jr,shinkansen,P2,,2001-09-01,4,25,7,270,6600,350,0.25,20,0,HSR,90,90,25,doctor_yellow,inspection train; no revenue seats (game: small passenger capacity)
 shinkansen_800,800 Series Shinkansen,800 系新幹線,800系新幹線,jr,shinkansen,P2,,2004-03-13,6,25,6,260,6600,276,0.25,65,0,HSR,70,65,25,shinkansen_800,
 n700,N700 Series Shinkansen,N700 系新幹線,N700系新幹線,jr,shinkansen,P0,,2007-07-01,6,25,16,300,17080,715,0.25,83,1,HSR,140,130,25,n700,
-n700_8,N700 Series Shinkansen (8 cars),N700 系新幹線（8 輛）,N700系新幹線（8両）,jr,shinkansen,P0,n700,2011-03-12,6,25,8,300,9760,360,0.25,68,1,HSR,75,70,25,n700,Sanyo-Kyushu sets
+n700_8,N700 Series Shinkansen (8 cars),N700 系新幹線（8 輛）,N700系新幹線（8両）,jr,shinkansen,P0,n700,2011-03-12,2,25,8,300,9760,360,0.25,68,0,HSR,75,70,25,n700,Sanyo-Kyushu sets
 n700a,N700A Series Shinkansen,N700A 系新幹線,N700A系新幹線,jr,shinkansen,P1,n700,2013-02-08,7,25,16,300,17080,708,0.25,83,1,HSR,145,125,25,n700,
 e5,E5 Series Shinkansen,E5 系新幹線,E5系新幹線,jr,shinkansen,P0,,2011-03-05,0,25,10,320,9600,453,0.25,73,1,HSR,120,110,25,e5,
-e6,E6 Series Shinkansen,E6 系新幹線,E6系新幹線,jr,shinkansen,P1,,2013-03-16,0,25,7,320,6000,305,0.25,48,1,HSR,85,80,20,e6,mini-shinkansen
-e7,E7 Series Shinkansen,E7 系新幹線,E7系新幹線,jr,shinkansen,P1,,2014-03-15,0,25,12,275,12000,540,0.25,78,0,HSR,125,110,25,e7,
+e6,E6 Series Shinkansen,E6 系新幹線,E6系新幹線,jr,shinkansen,P1,,2013-03-16,1,25,7,320,6000,305,0.25,48,1,HSR,85,80,20,e6,mini-shinkansen
+e7,E7 Series Shinkansen,E7 系新幹線,E7系新幹線,jr,shinkansen,P1,,2014-03-15,9,25,12,275,12000,540,0.25,78,0,HSR,125,110,25,e7,
 n700s,N700S Series Shinkansen,N700S 系新幹線,N700S系新幹線,jr,shinkansen,P1,n700,2020-07-01,0,25,16,300,17080,700,0.25,83,1,HSR,150,120,25,n700s,
-e8,E8 Series Shinkansen,E8 系新幹線,E8系新幹線,jr,shinkansen,P2,,2024-03-16,0,25,7,300,6720,320,0.25,51,0,HSR,90,80,20,e8,mini-shinkansen
+e8,E8 Series Shinkansen,E8 系新幹線,E8系新幹線,jr,shinkansen,P2,,2024-03-16,0,25,7,300,6000,320,0.25,51,0,HSR,90,80,20,e8,mini-shinkansen
 transrapid_smt,Transrapid SMT,Transrapid 上海磁浮,トランスラピッドSMT,transrapid,maglev,P0,,2004-01-01,0,25,5,430,10000,265,0.4,89,0,MGLV,160,150,25,transrapid_smt,unlocks maglev track
-transrapid_09,Transrapid 09,Transrapid 09,トランスラピッド09,transrapid,maglev,P1,transrapid_smt,2008-01-01,0,25,3,500,6000,188,0.4,92,0,MGLV,110,100,25,transrapid_smt,never in revenue service
-linimo,HSST-100L Linimo,HSST-100L Linimo,HSST-100L リニモ,hsst,maglev,P2,,2005-03-06,0,25,3,100,1500,51,0.3,81,0,MGLV,50,50,15,linimo,low-speed maglev
-beijing_s1,Beijing Metro Line S1 Maglev,北京地鐵 S1 線磁浮,北京地下鉄S1線リニア,crrc,maglev,P2,linimo,2017-12-30,0,25,6,105,3600,150,0.3,170,0,MGLV,90,90,15,linimo,low-speed maglev
+transrapid_09,Transrapid 09,Transrapid 09,トランスラピッド09,transrapid,maglev,P1,transrapid_smt,2008-08-04,0,25,3,500,6000,170,0.4,50,0,MGLV,110,100,25,transrapid_smt,test vehicle; first run on the Emsland track
+linimo,HSST-100L Linimo,HSST-100L Linimo,HSST-100L リニモ,hsst,maglev,P2,,2005-03-06,0,25,3,100,1500,51,0.3,35,0,MGLV,50,50,13.5,linimo,low-speed maglev
+beijing_s1,Beijing Metro Line S1 Maglev,北京地鐵 S1 線磁浮,北京地下鉄S1線リニア,crrc,maglev,P2,linimo,2017-12-30,0,25,6,80,3600,150,0.3,31,0,MGLV,90,90,15,linimo,low-speed maglev
 crrc_600,CRRC 600 km/h Maglev,中車 600 km/h 高速磁浮,中国中車600km/hリニア,crrc,maglev,P1,,2021-07-20,0,25,5,600,15000,300,0.4,100,0,MGLV,250,210,25,crrc_600,
-l0,L0 Series SCMaglev,L0 系超導磁浮,L0系,jr,maglev,P0,,2027-01-01,0,30,12,500,20000,400,0.4,68,0,MGLV,260,220,25,l0,game date; real service later
-l0_16,L0 Series SCMaglev (16 cars),L0 系超導磁浮（16 輛）,L0系（16両）,jr,maglev,P0,l0,2027-01-01,0,30,16,500,26000,530,0.4,68,0,MGLV,340,290,25,l0,
+l0,L0 Series SCMaglev,L0 系超導磁浮,L0系,jr,maglev,P0,,2027-01-01,0,30,12,500,20000,400,0.4,61,0,MGLV,260,220,25,l0,game date = original 2027 plan; real opening undecided (2034 or later)
+l0_16,L0 Series SCMaglev (16 cars),L0 系超導磁浮（16 輛）,L0系（16両）,jr,maglev,P0,l0,2027-01-01,0,30,16,500,26000,530,0.4,63,0,MGLV,340,290,25,l0,planned 16-car revenue formation (only 12-car test sets exist)

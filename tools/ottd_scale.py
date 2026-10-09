@@ -35,3 +35,9 @@ def train_length_scale(length_m: float, units: int) -> float:
     `length_m` occupies `units` (1..8) in-game length units, relative to the cross-section scale."""
     target_px = units * TRAIN_PX_PER_UNIT_1X
     return target_px / (length_m * TRAIN_CROSS_PX_PER_M_1X)
+
+# Per-view horizontal anchor shift for train sprites at 1x (N, NE, E, SE, S, SW, W, NW), measured by
+# tools/calibrate.py: OpenGFX rail vehicles are not centred on their reference point. Their content
+# starts at x = -14 in the NE/SW views and at x = -6 in the SE/NW views (the same frame as the NML
+# example templates), so a centred render is moved 3 px to match.
+TRAIN_VIEW_X_SHIFT_1X = (1, -3, 0, 3, 1, -3, 0, 3)

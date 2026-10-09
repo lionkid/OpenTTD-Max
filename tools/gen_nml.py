@@ -90,8 +90,11 @@ def nml_date(s: str) -> str:
     return f"date({y}, {m}, {d})"
 
 
+MIN_MODEL_LIFE = 8   # years a model stays on sale in game at least, even if it was built for less (Concorde: 3)
+
+
 def life(v: str) -> str:
-    return "VEHICLE_NEVER_EXPIRES" if int(v) == 0 else str(int(v))
+    return "VEHICLE_NEVER_EXPIRES" if int(v) == 0 else str(max(int(v), MIN_MODEL_LIFE))
 
 
 def cost(v: str) -> int:
@@ -119,6 +122,13 @@ def gen_aircraft(rows: list[dict], badges: bool, strict: bool, missing: list[str
         supersonic = "supersonic" in roles
         out.append(f"\n// ---- {r['name_en']} ----")
         out += spriteset_blocks(f"ss_{rid}", part, gfx_rel)
+        payload = float(r.get("payload_t") or 0)
+        if freighter:
+            if payload <= 0:
+                die(f"{rid}: freighter without payload_t")
+            # Capacity in cargo units = tonnes / unit weight (cargo_unit_weight is in 1/16 t).
+            out += [f"switch (FEAT_AIRCRAFT, SELF, sw_{rid}_capacity, {round(payload * 16)} / max(cargo_unit_weight, 1)) {{",
+                    "    return;", "}"]
         props = [
             f"name: string(STR_NAME_{rid.upper()});",
             "climates_available: ALL_CLIMATES;",
@@ -132,8 +142,8 @@ def gen_aircraft(rows: list[dict], badges: bool, strict: bool, missing: list[str
             f"running_cost_factor: {cost(r['running_cost_factor'])};",
             f"speed: {int(r['speed_kmh'])} km/h;",
             f"acceleration: {90 if supersonic else 60};",
-            f"passenger_capacity: {int(r['pax'])};",
-            f"mail_capacity: {int(r['mail'])};",
+            f"passenger_capacity: {round(payload * 4) if freighter else int(r['pax'])};",  # freighters: mail bags of 1/4 t
+            f"mail_capacity: {0 if freighter else int(r['mail'])};",
             f"sound_effect: {SOUND[r['sound']]};",
             "range: 0;",
         ]
@@ -151,15 +161,17 @@ def gen_aircraft(rows: list[dict], badges: bool, strict: bool, missing: list[str
             ]
         props.append("misc_flags: bitmask(AIRCRAFT_FLAG_2CC);")
         if r.get("variant_of"):
-            props += [f"variant_group: {r['variant_of']};",
-                      "extra_flags: bitmask(VEHICLE_FLAG_SYNC_VARIANT_RELIABILITY);"]
+            # Purchase-list grouping only. Do not sync reliability: that makes a variant age with its
+            # parent, so a 1998 737-800 would retire together with the 1968 737-200.
+            props.append(f"variant_group: {r['variant_of']};")
         if badges:
             props.append("badges: " + badge_list(f"manufacturer/{r['manufacturer']}", *[f"role/{x}" for x in roles]) + ";")
         out.append(f"item(FEAT_AIRCRAFT, {rid}) {{")
         out.append("    property {")
         out += [f"        {p}" for p in props]
         out.append("    }")
-        out.append(f"    graphics {{ ss_{rid}; }}")
+        cap = f" passenger_capacity: sw_{rid}_capacity;" if freighter else ""
+        out.append(f"    graphics {{{cap} ss_{rid}; }}")
         out.append("}")
     return "\n".join(out) + "\n"
 
@@ -231,8 +243,9 @@ def gen_trains(rows: list[dict], badges: bool, strict: bool, missing: list[str])
             "visual_effect_and_powered: visual_effect_and_powered(VISUAL_EFFECT_DISABLE, 0, DISABLE_WAGON_POWER);",
         ]
         if r.get("variant_of"):
-            props += [f"variant_group: {r['variant_of']};",
-                      "extra_flags: bitmask(VEHICLE_FLAG_SYNC_VARIANT_RELIABILITY);"]
+            # Purchase-list grouping only. Do not sync reliability: that makes a variant age with its
+            # parent, so a 1998 737-800 would retire together with the 1968 737-200.
+            props.append(f"variant_group: {r['variant_of']};")
         if badges:
             props.append("badges: " + badge_list(f"manufacturer/{r['manufacturer']}", f"kind/{r['kind']}") + ";")
         out.append(f"item(FEAT_TRAINS, {rid}) {{")

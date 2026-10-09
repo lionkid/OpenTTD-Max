@@ -34,6 +34,7 @@ RENDER_DIR = ROOT / "build" / "render"
 GFX_DIR = ROOT / "gfx"
 VIEWS = 8
 ZOOMS = {"4x": 4, "2x": 2, "1x": 1}
+CC_TARGET = 128.0
 ALIGN = 4  # crop boxes are aligned to 4 px at 4x so 2x and 1x offsets stay integral
 
 
@@ -100,6 +101,7 @@ def process_part(src: Path, dst: Path, part: str) -> dict:
     if meta.get("zoom") != 4:
         raise ValueError(f"{src}: renders must be 4x")
     cx, cy = meta["anchor"]
+    shifts = [int(v) * 4 for v in meta.get("view_x_shift_1x", [0] * VIEWS)]   # 1x px -> 4x px
     gap4 = 8
 
     crops = []  # per view: (rgba4, mask4, dx4, dy4)
@@ -107,10 +109,25 @@ def process_part(src: Path, dst: Path, part: str) -> dict:
         rgba = load_rgba(src / f"view{k}_color.png")
         mask = id_to_mask(load_rgba(src / f"view{k}_id.png"))
         l, t, r, b = aligned_bbox(rgba[..., 3], cx, cy)
-        crops.append((rgba[t:b, l:r], mask[t:b, l:r], l - cx, t - cy))
+        dx4, dy4 = l - cx + shifts[k], t - cy
+        if meta.get("center_views"):
+            dx4 = -((r - l) // 8) * 4
+            dy4 = -((b - t) // 8) * 4 + 4      # OpenGFX aircraft sit 1 px (1x) below centre
+        crops.append((rgba[t:b, l:r].copy(), mask[t:b, l:r], dx4, dy4))
 
-    cc_pixels = np.concatenate([c[0][..., :3].max(axis=2)[c[1] == CC1_MASK_INDEX] for c in crops])
-    cc_brightness = float(cc_pixels.mean()) if cc_pixels.size else None
+    # OpenTTD shades a masked pixel by its brightness relative to 128, so scale each company colour
+    # region to a mean of 128 (keeping its shading) whatever the lighting or material.
+    cc_factors = {}
+    for name, idx in (("cc1", CC1_MASK_INDEX), ("cc2", CC2_MASK_INDEX)):
+        vals = np.concatenate([c[0][..., :3].max(axis=2)[(c[1] == idx) & (c[0][..., 3] > 0)] for c in crops])
+        if vals.size == 0:
+            continue
+        f = float(np.clip(CC_TARGET / max(float(vals.mean()), 1.0), 0.5, 2.0))
+        cc_factors[name] = round(f, 3)
+        for rgba4, mask4, _dx, _dy in crops:
+            sel = mask4 == idx
+            rgba4[..., :3][sel] = np.clip(rgba4[..., :3][sel].astype(np.float32) * f, 0, 255).astype(np.uint8)
+    cc_brightness = None
 
     result = {}
     for zname, z in ZOOMS.items():
@@ -146,7 +163,7 @@ def process_part(src: Path, dst: Path, part: str) -> dict:
             entry["fallback_8bpp"] = fallback
         result[zname] = entry
 
-    return {"zooms": result, "cc1_brightness_mean": cc_brightness}
+    return {"zooms": result, "cc_brightness_factor": cc_factors}
 
 
 def process_vehicle(category: str, vehicle: str) -> Path:

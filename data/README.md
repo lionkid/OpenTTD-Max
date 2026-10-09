@@ -13,9 +13,9 @@
 | priority | P0 / P1 / P2 |
 | variant_of | 變體群組的父項目 id，空白表示自己是父項目或獨立 |
 | intro_date | 引入日期 YYYY-MM-DD |
-| model_life / vehicle_life | 年 |
+| model_life / vehicle_life | model_life：該型號實際生產年數（0 = 2026 年仍在生產）；遊戲內至少 8 年可購買。vehicle_life：單機使用年限 |
 | speed_kmh | 巡航速度，NML 自動換算（屬性上限約 3,280 km/h） |
-| pax / mail | 載客 / 郵件容量；貨機填 0 |
+| pax / mail | 載客 / 郵件容量（典型兩艙等；部分廣體機只有三艙等數據）；貨機填 0 |
 | payload_t | 貨機酬載（公噸），客機留空；遊戲內依各貨物單位重量換算容量 |
 | cost_factor / running_cost_factor | 相對成本，737-800 = 100 |
 | sound | `jet`、`jet_big`、`jet_fast` |

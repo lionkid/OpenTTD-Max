@@ -2,11 +2,11 @@
 
 | 項目 | 內容 |
 |---|---|
-| 文件版本 | v0.2（2026-10-09，M0 完成後更新） |
+| 文件版本 | v0.3（2026-10-09，M1 完成後更新） |
 | 專案代號 | OpenTTD-Max |
 | 交付物 | 兩個 NewGRF：`max-air.grf`（協和號、Airbus、Boeing 客貨機）與 `max-rail.grf`（新幹線、磁浮） |
 | 技術基準 | OpenTTD 15.3（現行穩定版，16.0 beta 進行中）、NML 0.9.0、32bpp + 4x extra zoom |
-| 狀態 | M0 完成，進入 M1（見 docs/M0-REPORT.md） |
+| 狀態 | M1 完成，P0 12 款已完成算圖（見 docs/M1-REPORT.md） |
 
 ---
 
@@ -213,7 +213,7 @@ OpenTTD 的 sprite 可同時提供多個 zoom 等級與兩種色深。NML 以 `a
 
 ### 7.2 Blender 管線規格
 
-1. **比例**：以第 4.2 節像素預算為準，先用原版 747 與原版列車 sprite 校正一次世界尺度，全專案共用同一 scale 常數。
+1. **比例**：已用 OpenGFX 原版 sprite 校正（M1）。飛機 1.0 px/m；列車截面 2.3 px/m、車長壓縮到遊戲長度、N/E/S/W 視角再拉長 √2。常數在 `tools/ottd_scale.py`，對照工具 `tools/calibrate.py`。
 2. **相機**：正交投影（orthographic），俯角 30°（Blender 相機 rotation X = 60°），方位 45°，得到 2:1 的 OpenTTD 菱形比例。8 個方向以旋轉模型（每 45°）而非移動相機。
 3. **光照**：採用社群公開的 OpenTTD 32bpp 光照設定 .blend 作為基準，確保陰影方向與原版圖庫一致；全專案共用一個 `lighting.blend`。
 4. **輸出**：每個方向輸出 4x RGBA PNG（透明背景），另輸出一張 **material ID pass**（公司色材質 = 純色、其他 = 黑）供 mask 產生。
@@ -227,7 +227,8 @@ OpenTTD 的 sprite 可同時提供多個 zoom 等級與兩種色深。NML 以 `a
 
 ### 7.3 3D 模型來源
 
-- 自行建模（最乾淨，工時最高）。
+- **參數化產生器（M1 起的主要做法）**：`models/lib/airliner.py`、`models/lib/railcar.py` 以真實尺寸程序化建模，每款車一份參數檔，沒有授權問題。
+- 自行手工建模（細節最好，工時最高），保留給需要特殊外形的車種。
 - 公開授權模型（CC0 / CC-BY）可用，須記錄來源與授權於 `CREDITS.md`；CC-BY-NC 與「個人使用」授權不可用，因為 BaNaNaS 發布需開放授權。
 - 同家族共用基礎模型：737 Original → Classic → NG → MAX 只換引擎、小翼、長度；747 各代只換上層艙長度與引擎。
 
@@ -489,6 +490,11 @@ disable_item(FEAT_TRAINS, 54, 57);
 | 新幹線軌道 | `HSR` label，fallback 至 `ELRL` |
 | 協和號航程 | 1.0 不啟用 `range` 限制（屬性填 0），列為 M5 選項 |
 
-## 14. 下一步（M1）
+## 14. 進度與下一步
 
-見 docs/M0-REPORT.md 的「M1 待辦」。
+| 里程碑 | 狀態 | 報告 |
+|---|---|---|
+| M0 技術驗證 | 完成 | docs/M0-REPORT.md |
+| M1 管線定稿 | 完成；比例改以 OpenGFX 校正，參數化產生器取代代理模型，P0 + P1 + P2 資料查證 | docs/M1-REPORT.md |
+| M2 MVP | 內容已完成（P0 12 款）；待發布 alpha | — |
+| M3 1.0 內容 | 下一步：用產生器補齊 P1 約 40 款 | — |

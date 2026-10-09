@@ -89,6 +89,8 @@ def main() -> None:
     ap.add_argument("--shots", type=int, default=4, help="screenshot rounds per vehicle")
     ap.add_argument("--interval", type=float, default=12.0, help="seconds between rounds")
     ap.add_argument("--openttd", default=shutil.which("openttd") or "/usr/games/openttd")
+    ap.add_argument("--hold", type=float, default=0.0,
+                    help="keep the game running this many seconds after the screenshots (drive it with xdotool)")
     args = ap.parse_args()
 
     home = ROOT / "build" / "ingame" / "home"
@@ -99,12 +101,19 @@ def main() -> None:
         (data / sub).mkdir(parents=True)
     for grf in ("max-air.grf", "max-rail.grf"):
         shutil.copy(Path(args.grf_dir) / grf, data / "newgrf" / grf)
+    # A self-built OpenTTD does not look in the distro base set directory; give it OpenGFX.
+    ogfx = Path("/usr/share/games/openttd/baseset/opengfx")
+    if ogfx.exists():
+        (data / "baseset" / "opengfx").mkdir(parents=True)
+        for f in ogfx.iterdir():
+            if f.suffix in (".grf", ".obg") and f.exists():
+                shutil.copy(f, data / "baseset" / "opengfx" / f.name)
     shutil.copytree(HERE / "ai" / "MaxTest", data / "ai" / "MaxTest")
     for scr in (HERE / "scripts").glob("*.scr"):
         shutil.copy(scr, data / "scripts" / scr.name)
     cfg = home / "openttd.cfg"
     cfg.write_text((HERE / "openttd.cfg.in").read_text())
-    out = Path(args.out)
+    out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
     log = out / "openttd.log"
 
@@ -140,6 +149,9 @@ def main() -> None:
                     capture(dst)
                     print(f"saved {dst.relative_to(ROOT)} (tile {pos[kind]})", flush=True)
                 time.sleep(args.interval)
+            if args.hold > 0:
+                print(f"holding for {args.hold:.0f} s on DISPLAY={DISPLAY}", flush=True)
+                time.sleep(args.hold)
         finally:
             game.terminate()
             try:

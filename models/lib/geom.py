@@ -114,16 +114,31 @@ def smoothstep(e0: float, e1: float, x: float) -> float:
 # Rings
 # ---------------------------------------------------------------------------------------------
 def se_ring(x: float, cy: float, cz: float, half_w: float, h_top: float, h_bot: float, n: int,
-            e_top: float = 2.0, e_bot: float = 2.0) -> list[Vec]:
-    """Closed superellipse ring in the YZ plane at x. Exponent 2 = ellipse, larger = boxier."""
-    pts = []
-    for j in range(n):
-        th = 2 * math.pi * j / n
+            e_top: float = 2.0, e_bot: float = 2.0, dense: int = 720) -> list[Vec]:
+    """Closed superellipse ring in the YZ plane at x, with n points spaced evenly by arc length
+    (so flat sides of boxy sections get as many faces as the corners). Exponent 2 = ellipse."""
+    raw = []
+    for j in range(dense):
+        th = 2 * math.pi * j / dense
         c, s = math.cos(th), math.sin(th)
         e = e_top if s >= 0 else e_bot
         y = cy + half_w * math.copysign(abs(c) ** (2 / e), c)
         z = cz + (h_top if s >= 0 else h_bot) * math.copysign(abs(s) ** (2 / e), s)
-        pts.append((x, y, z))
+        raw.append((y, z))
+    cum = [0.0]
+    for k in range(1, dense + 1):
+        a, b = raw[k - 1], raw[k % dense]
+        cum.append(cum[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
+    total = cum[-1]
+    pts, k = [], 0
+    for j in range(n):
+        target = total * j / n
+        while cum[k + 1] < target:
+            k += 1
+        seg = cum[k + 1] - cum[k]
+        u = 0.0 if seg <= 0 else (target - cum[k]) / seg
+        a, b = raw[k], raw[(k + 1) % dense]
+        pts.append((x, a[0] + u * (b[0] - a[0]), a[1] + u * (b[1] - a[1])))
     return pts
 
 

@@ -3,6 +3,8 @@
 class MaxTest extends AIController {
     air_engine_name = "Boeing 737-800";
     rail_engine_name = "N700 Series Shinkansen";
+    freighter_name = "Boeing 747-8F";
+    hangar = null;
     function Start();
 }
 
@@ -53,6 +55,8 @@ function MaxTest::BuildAir() {
     if (b == null || !AIAirport.BuildAirport(b, type, AIStation.STATION_NEW)) { Log("airport B failed: " + AIError.GetLastErrorString()); return null; }
     Log("airport A tile " + a + " airport B tile " + b);
     local hangar = AIAirport.GetHangarOfAirport(a);
+    Log("hangar tile " + hangar);
+    this.hangar = hangar;
     local v = AIVehicle.BuildVehicle(hangar, engine);
     if (!AIVehicle.IsValidVehicle(v)) { Log("aircraft build failed: " + AIError.GetLastErrorString()); return null; }
     AIOrder.AppendOrder(v, a, AIOrder.OF_NONE);
@@ -107,12 +111,41 @@ function MaxTest::BuildRail() {
     return v;
 }
 
+// One line per engine: what the player sees in the purchase list (speed in km/h-ish internal units).
+function MaxTest::DumpEngines() {
+    foreach (vt in [AIVehicle.VT_AIR, AIVehicle.VT_RAIL]) {
+        local list = AIEngineList(vt);
+        foreach (e, _ in list) {
+            if (!AIEngine.IsBuildable(e)) continue;
+            local cargo = AIEngine.GetCargoType(e);
+            Log("engine " + (vt == AIVehicle.VT_AIR ? "air" : "rail") + " | " + AIEngine.GetName(e) +
+                " | speed " + AIEngine.GetMaxSpeed(e) + " | capacity " + AIEngine.GetCapacity(e) + " " + AICargo.GetCargoLabel(cargo) +
+                " | power " + AIEngine.GetPower(e) + " | weight " + AIEngine.GetWeight(e) + " | price " + AIEngine.GetPrice(e));
+        }
+    }
+}
+
+function MaxTest::CheckFreighter() {
+    if (this.hangar == null) return;
+    local engine = this.FindEngine(AIVehicle.VT_AIR, this.freighter_name);
+    if (engine == null) return;
+    local v = AIVehicle.BuildVehicle(this.hangar, engine);
+    if (!AIVehicle.IsValidVehicle(v)) { Log("freighter build failed: " + AIError.GetLastErrorString()); return; }
+    foreach (c, _ in AICargoList()) {
+        if (!AIEngine.CanRefitCargo(engine, c)) continue;
+        Log("freighter refit " + AICargo.GetCargoLabel(c) + " capacity " + AIVehicle.GetRefitCapacity(v, c) +
+            " (unit weight " + AICargo.GetWeight(c, 1) + " t)");
+    }
+}
+
 function MaxTest::Start() {
     AICompany.SetName("OpenTTD-Max QA");
     AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
     Log("start year " + AIDate.GetYear(AIDate.GetCurrentDate()));
+    this.DumpEngines();
     local air = this.BuildAir();
     local rail = this.BuildRail();
+    this.CheckFreighter();
     Log("ready");
     while (true) {
         if (air != null) Log("pos air " + AIVehicle.GetLocation(air) + " state " + AIVehicle.GetState(air));

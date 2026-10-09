@@ -26,7 +26,7 @@ tree_placer = 0
 max_no_competitors = 1
 number_towns = 0
 industry_density = 1
-max_loan = 500000
+max_loan = 20000000
 vehicle_breakdowns = 0
 disasters = 0
 

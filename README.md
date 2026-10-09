@@ -5,10 +5,13 @@
 | 文件 | 內容 |
 |---|---|
 | [docs/PLAN.md](docs/PLAN.md) | 企劃書（範圍、內容清單、機制設計、美術管線、時程） |
-| [docs/M0-REPORT.md](docs/M0-REPORT.md) | M0 技術驗證報告（本階段成果與 M1 待辦） |
+| [docs/M0-REPORT.md](docs/M0-REPORT.md) | M0 技術驗證報告 |
+| [docs/M1-REPORT.md](docs/M1-REPORT.md) | M1 管線定稿報告（比例校正、參數化產生器、OpenTTD 15.3 實機驗證） |
 | [data/README.md](data/README.md) | CSV 欄位定義 |
 
-**目前狀態：M0 完成**。建置鏈、算圖管線、遊戲內自動截圖都已跑通；內容仍是代理模型與佔位圖。
+**目前狀態：M1 完成**。P0 共 12 款（協和號、737-800、747-400、747-8F、777-300ER、A320、A380、0 系、N700、E5、Transrapid、L0）已完成 32bpp 4x 算圖並在 OpenTTD 15.3 驗證；其餘 P1 / P2 車種暫用佔位圖。
+
+![P0 vehicles at 4x](docs/qa/m1_rail_n700_4x.png)
 
 ## 建置
 
@@ -29,18 +32,25 @@ make gfx                                         # build/render -> gfx/<cat>/<id
 make                                             # 重新編譯 GRF
 ```
 
+## 新增一款車輛
+
+1. 在 `data/aircraft.csv` 或 `data/trains.csv` 加一列（欄位見 `data/README.md`），`art` 欄填模型名稱。
+2. 在 `models/aircraft/<art>.py` 或 `models/trains/<art>.py` 寫參數檔（參考現有檔案，尺寸用公尺）。
+3. `make render && make gfx && make`。不需要手改任何 NML。
+
 ## 遊戲內自動截圖（Linux）
 
 ```bash
-apt install openttd openttd-opengfx xvfb xdotool imagemagick
-make test-grf && python3 tools/ingame/run.py     # 截圖輸出到 build/qa/
+tools/ingame/build_openttd.sh 15.3 /opt/openttd-15.3     # 或 apt install openttd（13.4，需 make test-grf）
+make && python3 tools/ingame/run.py --openttd /opt/openttd-15.3/build/openttd --grf-dir .
+python3 tools/calibrate.py trains/n700:mid=2953            # 與 OpenGFX 原版 sprite 比對尺寸
 ```
 
 ## 目錄
 
 ```text
 data/      車輛數值 CSV（唯一數值來源）
-models/    Blender 程序化模型（models/proxy 為 M0 代理模型）
+models/    參數化模型：lib/ 產生器，aircraft/、trains/ 每款一份參數檔
 gfx/       後製完成的 sprite sheet 與 manifest（提交到 repo，CI 直接編譯）
 src/       手寫 NML 片段（grf 區塊、badges、railtype）
 lang/      靜態字串（英 / 繁中 / 日），車輛名稱由 CSV 產生

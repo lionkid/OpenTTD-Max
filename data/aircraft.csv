@@ -1,50 +1,50 @@
 id,name_en,name_zh_tw,name_ja,manufacturer,role,priority,variant_of,intro_date,model_life,vehicle_life,speed_kmh,pax,mail,payload_t,cost_factor,running_cost_factor,sound,length_m,wingspan_m,art,notes
-concorde,Aerospatiale/BAC Concorde,協和號 Concorde,コンコルド,aerospatiale,passenger+supersonic,P0,,1976-01-21,27,25,2179,100,8,,300,400,jet_fast,61.66,25.6,concorde,retired 2003
-b707_320b,Boeing 707-320B,波音 707-320B,ボーイング707-320B,boeing,passenger,P1,,1962-06-01,20,25,897,147,10,,90,120,jet,46.6,44.4,b707_320b,
-b727_200,Boeing 727-200,波音 727-200,ボーイング727-200,boeing,passenger,P1,,1967-12-14,17,25,917,155,10,,85,115,jet,46.7,32.9,b727_200,trijet
-b737_200,Boeing 737-200,波音 737-200,ボーイング737-200,boeing,passenger,P1,,1968-04-28,20,25,780,115,8,,60,80,jet,30.5,28.3,b737_200,737 family parent
-b737_300,Boeing 737-300,波音 737-300,ボーイング737-300,boeing,passenger,P1,b737_200,1984-12-01,16,25,794,128,8,,70,80,jet,33.4,28.9,b737_300,
+concorde,Aerospatiale/BAC Concorde,協和號 Concorde,コンコルド,aerospatiale,passenger+supersonic,P0,,1976-01-21,3,25,2179,100,8,,300,400,jet_fast,61.66,25.6,concorde,production ended 1979; retired 2003
+b707_320b,Boeing 707-320B,波音 707-320B,ボーイング707-320B,boeing,passenger,P1,,1962-06-01,16,25,897,141,10,,90,120,jet,46.6,44.4,b707_320b,
+b727_200,Boeing 727-200,波音 727-200,ボーイング727-200,boeing,passenger,P1,,1967-12-14,17,25,917,134,10,,85,115,jet,46.7,32.9,b727_200,trijet
+b737_200,Boeing 737-200,波音 737-200,ボーイング737-200,boeing,passenger,P1,,1968-04-28,20,25,780,102,8,,60,80,jet,30.5,28.3,b737_200,737 family parent
+b737_300,Boeing 737-300,波音 737-300,ボーイング737-300,boeing,passenger,P1,b737_200,1984-12-01,15,25,794,128,8,,70,80,jet,33.4,28.9,b737_300,
 b737_400,Boeing 737-400,波音 737-400,ボーイング737-400,boeing,passenger,P1,b737_200,1988-09-01,12,25,794,146,10,,75,85,jet,36.4,28.9,b737_400,
 b737_700,Boeing 737-700,波音 737-700,ボーイング737-700,boeing,passenger,P1,b737_200,1998-01-18,22,30,842,128,8,,90,90,jet,33.6,35.8,b737_700,
 b737_800,Boeing 737-800,波音 737-800,ボーイング737-800,boeing,passenger,P0,b737_200,1998-04-22,22,30,842,162,10,,100,100,jet,39.5,35.8,b737_800,
-b737_900er,Boeing 737-900ER,波音 737-900ER,ボーイング737-900ER,boeing,passenger,P1,b737_200,2007-05-27,13,30,842,178,12,,108,105,jet,42.1,35.8,b737_900er,
+b737_900er,Boeing 737-900ER,波音 737-900ER,ボーイング737-900ER,boeing,passenger,P1,b737_200,2007-04-27,13,30,842,178,12,,108,105,jet,42.1,35.8,b737_900er,
 b737_max8,Boeing 737 MAX 8,波音 737 MAX 8,ボーイング737 MAX 8,boeing,passenger,P1,b737_200,2017-05-22,0,30,839,172,10,,115,95,jet,39.5,35.9,b737_max8,
 b737_max9,Boeing 737 MAX 9,波音 737 MAX 9,ボーイング737 MAX 9,boeing,passenger,P1,b737_200,2018-03-21,0,30,839,193,12,,120,100,jet,42.2,35.9,b737_max9,
-b747_100,Boeing 747-100,波音 747-100,ボーイング747-100,boeing,passenger,P1,,1970-01-22,16,25,907,366,20,,200,250,jet_big,70.6,59.6,b747_100,747 family parent
-b747_400,Boeing 747-400,波音 747-400,ボーイング747-400,boeing,passenger,P0,b747_100,1989-02-09,20,30,913,416,24,,230,240,jet_big,70.6,64.4,b747_400,
+b747_100,Boeing 747-100,波音 747-100,ボーイング747-100,boeing,passenger,P1,,1970-01-22,16,25,907,452,20,,200,250,jet_big,70.6,59.6,b747_100,747 family parent
+b747_400,Boeing 747-400,波音 747-400,ボーイング747-400,boeing,passenger,P0,b747_100,1989-02-09,16,30,913,524,24,,230,240,jet_big,70.6,64.4,b747_400,
 b747_400f,Boeing 747-400F,波音 747-400F,ボーイング747-400F,boeing,freighter,P1,b747_100,1993-11-17,16,30,913,0,0,112,230,230,jet_big,70.6,64.4,b747_400f,nose cargo door
-b747_8i,Boeing 747-8 Intercontinental,波音 747-8 洲際型,ボーイング747-8インターコンチネンタル,boeing,passenger,P1,b747_100,2012-06-01,11,30,917,410,24,,270,250,jet_big,76.3,68.4,b747_8i,
-b747_8f,Boeing 747-8F,波音 747-8F,ボーイング747-8F,boeing,freighter,P0,b747_100,2011-10-12,12,30,917,0,0,134,260,240,jet_big,76.3,68.4,b747_8f,
+b747_8i,Boeing 747-8 Intercontinental,波音 747-8 洲際型,ボーイング747-8インターコンチネンタル,boeing,passenger,P1,b747_100,2012-06-01,5,30,917,410,24,,270,250,jet_big,76.3,68.4,b747_8i,
+b747_8f,Boeing 747-8F,波音 747-8F,ボーイング747-8F,boeing,freighter,P0,b747_100,2011-10-12,11,30,917,0,0,134,260,240,jet_big,76.3,68.4,b747_8f,
 b757_200,Boeing 757-200,波音 757-200,ボーイング757-200,boeing,passenger,P1,,1983-01-01,22,30,850,200,12,,110,110,jet,47.3,38.0,b757_200,757 family parent
-b757_300,Boeing 757-300,波音 757-300,ボーイング757-300,boeing,passenger,P1,b757_200,1999-03-19,6,30,850,243,14,,120,115,jet,54.4,38.0,b757_300,
-b767_200,Boeing 767-200,波音 767-200,ボーイング767-200,boeing,passenger,P1,,1982-09-08,15,30,851,216,14,,140,150,jet_big,48.5,47.6,b767_200,767 family parent
+b757_300,Boeing 757-300,波音 757-300,ボーイング757-300,boeing,passenger,P1,b757_200,1999-03-19,5,30,850,243,14,,120,115,jet,54.4,38.0,b757_300,
+b767_200,Boeing 767-200,波音 767-200,ボーイング767-200,boeing,passenger,P1,,1982-09-08,12,30,851,216,14,,140,150,jet_big,48.5,47.6,b767_200,767 family parent
 b767_300er,Boeing 767-300ER,波音 767-300ER,ボーイング767-300ER,boeing,passenger,P1,b767_200,1988-03-01,26,30,851,269,16,,160,155,jet_big,54.9,47.6,b767_300er,
 b767_300f,Boeing 767-300F,波音 767-300F,ボーイング767-300F,boeing,freighter,P1,b767_200,1995-10-01,0,30,851,0,0,52,155,150,jet_big,54.9,47.6,b767_300f,
 b777_200,Boeing 777-200,波音 777-200,ボーイング777-200,boeing,passenger,P1,,1995-06-07,12,30,905,314,20,,210,200,jet_big,63.7,60.9,b777_200,777 family parent
 b777_300er,Boeing 777-300ER,波音 777-300ER,ボーイング777-300ER,boeing,passenger,P0,b777_200,2004-05-10,20,30,905,396,24,,240,210,jet_big,73.9,64.8,b777_300er,
 b777f,Boeing 777F,波音 777F,ボーイング777F,boeing,freighter,P1,b777_200,2009-02-19,0,30,905,0,0,102,235,205,jet_big,63.7,64.8,b777f,
-b777_9,Boeing 777-9,波音 777-9,ボーイング777-9,boeing,passenger,P2,b777_200,2027-01-01,0,30,905,426,26,,280,215,jet_big,76.7,71.8,b777_9,service entry date provisional
+b777_9,Boeing 777-9,波音 777-9,ボーイング777-9,boeing,passenger,P2,b777_200,2027-07-01,0,30,905,426,26,,280,215,jet_big,76.7,71.8,b777_9,service entry date provisional
 b787_8,Boeing 787-8,波音 787-8,ボーイング787-8,boeing,passenger,P1,,2011-10-26,0,30,903,248,16,,180,160,jet_big,56.7,60.1,b787_8,787 family parent
 b787_9,Boeing 787-9,波音 787-9,ボーイング787-9,boeing,passenger,P1,b787_8,2014-08-09,0,30,903,296,18,,200,170,jet_big,62.8,60.1,b787_9,
 b787_10,Boeing 787-10,波音 787-10,ボーイング787-10,boeing,passenger,P1,b787_8,2018-04-03,0,30,903,336,20,,215,180,jet_big,68.3,60.1,b787_10,
-a300b4,Airbus A300B4,空中巴士 A300B4,エアバスA300B4,airbus,passenger,P1,,1974-05-30,20,25,833,266,16,,140,160,jet_big,53.6,44.8,a300b4,A300 family parent
+a300b4,Airbus A300B4,空中巴士 A300B4,エアバスA300B4,airbus,passenger,P1,,1975-06-01,9,25,833,266,16,,140,160,jet_big,53.6,44.8,a300b4,A300 family parent
 a300_600f,Airbus A300-600F,空中巴士 A300-600F,エアバスA300-600F,airbus,freighter,P1,a300b4,1994-04-01,13,30,833,0,0,48,140,150,jet_big,54.1,44.8,a300_600f,
 a310_300,Airbus A310-300,空中巴士 A310-300,エアバスA310-300,airbus,passenger,P2,a300b4,1985-12-01,13,25,850,220,14,,130,140,jet_big,46.7,43.9,a310_300,
-a320_200,Airbus A320-200,空中巴士 A320-200,エアバスA320-200,airbus,passenger,P0,,1988-04-18,31,30,828,150,10,,100,100,jet,37.6,34.1,a320_200,A320 family parent
+a320_200,Airbus A320-200,空中巴士 A320-200,エアバスA320-200,airbus,passenger,P0,,1989-02-02,31,30,828,150,10,,100,100,jet,37.6,34.1,a320_200,A320 family parent
 a318,Airbus A318,空中巴士 A318,エアバスA318,airbus,passenger,P1,a320_200,2003-07-22,10,30,828,107,6,,80,85,jet,31.4,34.1,a318,
-a319,Airbus A319,空中巴士 A319,エアバスA319,airbus,passenger,P1,a320_200,1996-05-08,23,30,828,124,8,,90,90,jet,33.8,34.1,a319,
-a321,Airbus A321,空中巴士 A321,エアバスA321,airbus,passenger,P1,a320_200,1994-03-18,25,30,828,185,12,,110,110,jet,44.5,34.1,a321,
+a319,Airbus A319,空中巴士 A319,エアバスA319,airbus,passenger,P1,a320_200,1996-05-08,25,30,828,124,8,,90,90,jet,33.8,34.1,a319,
+a321,Airbus A321,空中巴士 A321,エアバスA321,airbus,passenger,P1,a320_200,1994-03-18,28,30,828,185,12,,110,110,jet,44.5,34.1,a321,
 a320neo,Airbus A320neo,空中巴士 A320neo,エアバスA320neo,airbus,passenger,P1,a320_200,2016-01-25,0,30,828,165,10,,112,90,jet,37.6,35.8,a320neo,
 a321neo,Airbus A321neo,空中巴士 A321neo,エアバスA321neo,airbus,passenger,P1,a320_200,2017-05-31,0,30,828,206,12,,122,98,jet,44.5,35.8,a321neo,
 a321xlr,Airbus A321XLR,空中巴士 A321XLR,エアバスA321XLR,airbus,passenger,P1,a320_200,2024-11-14,0,30,828,200,12,,130,100,jet,44.5,35.8,a321xlr,
-a330_300,Airbus A330-300,空中巴士 A330-300,エアバスA330-300,airbus,passenger,P1,,1994-01-17,25,30,871,277,18,,200,190,jet_big,63.7,60.3,a330_300,A330 family parent
-a330_200,Airbus A330-200,空中巴士 A330-200,エアバスA330-200,airbus,passenger,P1,a330_300,1998-05-01,22,30,871,247,16,,190,180,jet_big,58.8,60.3,a330_200,
-a330_200f,Airbus A330-200F,空中巴士 A330-200F,エアバスA330-200F,airbus,freighter,P1,a330_300,2010-08-01,0,30,871,0,0,70,190,175,jet_big,58.8,60.3,a330_200f,
-a330_900,Airbus A330-900neo,空中巴士 A330-900neo,エアバスA330-900neo,airbus,passenger,P1,a330_300,2018-12-15,0,30,871,287,18,,215,170,jet_big,63.7,64.0,a330_900,
-a340_300,Airbus A340-300,空中巴士 A340-300,エアバスA340-300,airbus,passenger,P1,,1993-03-15,18,30,871,295,18,,210,230,jet_big,63.7,60.3,a340_300,A340 family parent
-a340_600,Airbus A340-600,空中巴士 A340-600,エアバスA340-600,airbus,passenger,P1,a340_300,2002-08-01,9,30,871,380,22,,245,250,jet_big,75.4,63.5,a340_600,
+a330_300,Airbus A330-300,空中巴士 A330-300,エアバスA330-300,airbus,passenger,P1,,1994-01-17,26,30,871,277,18,,200,190,jet_big,63.7,60.3,a330_300,A330 family parent
+a330_200,Airbus A330-200,空中巴士 A330-200,エアバスA330-200,airbus,passenger,P1,a330_300,1998-05-01,21,30,871,247,16,,190,180,jet_big,58.8,60.3,a330_200,
+a330_200f,Airbus A330-200F,空中巴士 A330-200F,エアバスA330-200F,airbus,freighter,P1,a330_300,2010-08-01,7,30,871,0,0,70,190,175,jet_big,58.8,60.3,a330_200f,
+a330_900,Airbus A330-900,空中巴士 A330-900,エアバスA330-900,airbus,passenger,P1,a330_300,2018-12-15,0,30,871,287,18,,215,170,jet_big,63.7,64.0,a330_900,
+a340_300,Airbus A340-300,空中巴士 A340-300,エアバスA340-300,airbus,passenger,P1,,1993-03-15,16,30,871,295,18,,210,230,jet_big,63.7,60.3,a340_300,A340 family parent
+a340_600,Airbus A340-600,空中巴士 A340-600,エアバスA340-600,airbus,passenger,P1,a340_300,2002-08-01,8,30,871,380,22,,245,250,jet_big,75.4,63.5,a340_600,
 a350_900,Airbus A350-900,空中巴士 A350-900,エアバスA350-900,airbus,passenger,P1,,2015-01-15,0,30,903,325,20,,230,190,jet_big,66.8,64.8,a350_900,A350 family parent
 a350_1000,Airbus A350-1000,空中巴士 A350-1000,エアバスA350-1000,airbus,passenger,P1,a350_900,2018-02-24,0,30,903,366,22,,250,200,jet_big,73.8,64.8,a350_1000,
-a350f,Airbus A350F,空中巴士 A350F,エアバスA350F,airbus,freighter,P2,a350_900,2027-01-01,0,30,903,0,0,111,255,200,jet_big,70.8,64.8,a350f,service entry date provisional
+a350f,Airbus A350F,空中巴士 A350F,エアバスA350F,airbus,freighter,P2,a350_900,2027-12-01,0,30,903,0,0,111,255,200,jet_big,70.8,64.8,a350f,service entry date provisional
 a380_800,Airbus A380-800,空中巴士 A380-800,エアバスA380-800,airbus,passenger,P0,,2007-10-25,14,30,903,525,30,,330,300,jet_big,72.7,79.8,a380_800,
-beluga_xl,Airbus BelugaXL,空中巴士 BelugaXL,エアバス ベルーガXL,airbus,freighter,P2,,2020-01-09,0,30,737,0,0,51,250,230,jet_big,63.1,60.3,beluga_xl,outsize cargo
+beluga_xl,Airbus BelugaXL,空中巴士 BelugaXL,エアバス ベルーガXL,airbus,freighter,P2,,2020-01-09,4,30,737,0,0,51,250,230,jet_big,63.1,60.3,beluga_xl,outsize cargo; Airbus in-house operation

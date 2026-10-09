@@ -31,12 +31,12 @@ DEFAULTS = {
     "tail_up": 0.42,             # rise of the tail cone underside at the end, fraction of fus_h
     "hump": None,                # {"start": s, "end": s, "height": m, "front": m, "back": m}
     "upper_windows": None,       # (s0, s1) window band on the upper deck (hump / A380)
-    "upper_window_z": 0.78,      # fraction of fus_h / 2 above the centre for the upper band
+    "upper_window_below_top": (1.35, 0.85),  # upper-deck window band, metres below the local top
     "windows": True,
     "window_z": (0.10, 0.34),    # main-deck band, fraction of fus_h / 2 above the centre
     "cheatline_z": (-0.14, 0.05),
     "cockpit": (0.60, 0.84),     # cockpit glazing, fraction of nose_len
-    "cockpit_z": 0.16,
+    "cockpit_below_top": (0.95, 0.35),  # cockpit glazing band, metres below the local top
     "belly_grey": True,
     "segments": 56,
     "wing": None,                # {"stations": [{"y", "s_le", "chord", "t"}], "dihedral", "z_root", "tip": {...}}
@@ -157,15 +157,17 @@ class Airliner:
             _, c, half, top, bot = secs[min(i, len(secs) - 1)]
             zr = (z - c) / self.Rh
             side = abs(y) / max(half, 1e-3)
-            if nl * ck0 < sp < nl * ck1 and z > c + s["cockpit_z"] * self.Rh * (sp / nl) and side < 0.93:
-                return GLASS
+            if nl * ck0 < sp < nl * ck1 and side < 0.96:
+                lo, hi = s["cockpit_below_top"]
+                if c + top - lo < z < c + top - hi:
+                    return GLASS
             in_cabin = nl * 0.92 < sp < L - tl * 0.82
             if s["windows"] and in_cabin and w0 < zr < w1 and side > 0.55:
                 return GLASS
             if uw and uw[0] < sp < uw[1] and side > 0.35:
                 ztop = c + top
-                if ztop - 0.55 * self.Rh * (1 - s["upper_window_z"] + 0.35) < z < ztop - 0.25 * self.Rh and \
-                        z > c + s["upper_window_z"] * self.Rh * 0.85:
+                lo, hi = s["upper_window_below_top"]
+                if ztop - lo < z < ztop - hi:
                     return GLASS
             if nl * 0.55 < sp < L - tl * 0.55 and c0 < zr < c1 and side > 0.45:
                 return CC1
@@ -257,13 +259,13 @@ class Airliner:
         return lifting_surface("fin", stations, v.get("material", "cc1"), axis="z")
 
     # -- engines ---------------------------------------------------------------------------------
-    def nacelle(self, name, s_front, y, zc, length, d, material="cc2", pylon=True, kind="turbofan"):
+    def nacelle(self, name, s_front, y, zc, length, d, material="cc2", pylon=True, kind="turbofan", width=None):
         r = d / 2
         x0 = self.x(s_front)
         if kind == "box":       # Concorde-style paired nacelle
             rings = []
             for u, hw, hh in ((0.0, 0.92, 0.70), (0.06, 1.0, 0.92), (0.8, 1.0, 1.0), (1.0, 0.95, 0.9)):
-                rings.append(se_ring(x0 - u * length, y, zc, r * 1.5 * hw, r * hh, r * hh, 24, 4.0, 4.0))
+                rings.append(se_ring(x0 - u * length, y, zc, (width or d * 1.5) / 2 * hw, r * hh, r * hh, 24, 4.0, 4.0))
             objs = [loft(name, rings, [material, "black"], cap_mats=(1, 1))]
         else:
             prof = [(0.0, 0.86), (0.04, 0.97), (0.22, 1.0), (0.62, 0.93), (0.9, 0.74), (1.0, 0.64)]
@@ -291,7 +293,7 @@ class Airliner:
             for sg in sides:
                 objs += self.nacelle(f"eng{k}_{'l' if sg > 0 else 'r'}", e["s"], sg * e["y"], e["z"], e["length"], e["d"],
                                      material=e.get("material", "cc2"), pylon=e.get("pylon", True),
-                                     kind=e.get("kind", "turbofan"))
+                                     kind=e.get("kind", "turbofan"), width=e.get("w"))
         return objs
 
     # -- landing gear ----------------------------------------------------------------------------

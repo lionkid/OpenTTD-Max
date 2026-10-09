@@ -38,7 +38,8 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "models"))
 sys.path.insert(0, str(ROOT / "models" / "lib"))
 from ottd_scale import (AIRCRAFT_PX_PER_M_1X, CAMERA_ELEVATION_DEG, DIAGONAL_STRETCH,  # noqa: E402
-                        TRAIN_CROSS_PX_PER_M_1X, TRAIN_Y_SHIFT_1X, train_length_scale)
+                        TRAIN_CROSS_PX_PER_M_1X, TRAIN_VIEW_X_SHIFT_1X, TRAIN_Y_SHIFT_1X,
+                        train_length_scale)
 
 ZOOM = 4
 Z_SCALE = 1.0          # vertical exaggeration; OpenGFX calibration found none needed
@@ -48,6 +49,8 @@ AMBIENT = 0.35
 
 
 def load_model(path: Path):
+    if str(path.parent) not in sys.path:
+        sys.path.insert(0, str(path.parent))   # family modules such as models/aircraft/_b747.py
     spec = importlib.util.spec_from_file_location(path.stem, path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -209,6 +212,9 @@ def render_part(mod, part: str, out_root: Path, samples: int, views=None) -> Pat
     (out / "render.json").write_text(json.dumps({
         "zoom": ZOOM, "anchor": [w // 2, h // 2 - y_shift], "px_per_m_1x": px_per_m,
         "length_scale": length_scale, "units": units if is_train else None,
+        "view_x_shift_1x": list(TRAIN_VIEW_X_SHIFT_1X) if is_train else [0] * 8,
+        # OpenGFX aircraft are centred on their bounding box in every view (tools/calibrate.py).
+        "center_views": not is_train,
         "samples": samples, "blender": bpy.app.version_string,
     }, indent=2) + "\n")
     return out
