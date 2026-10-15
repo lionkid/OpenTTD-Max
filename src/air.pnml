@@ -14,6 +14,36 @@ grf {
             def_value: 0;
         }
     }
+    param 1 {
+        param_loading {
+            name: string(STR_PARAM_LOADING_NAME);
+            desc: string(STR_PARAM_LOADING_DESC);
+            type: int;
+            min_value: 0;
+            max_value: 3;
+            def_value: 0;
+            names: {
+                0: string(STR_PARAM_LOADING_STANDARD);
+                1: string(STR_PARAM_LOADING_FAST);
+                2: string(STR_PARAM_LOADING_VERY_FAST);
+                3: string(STR_PARAM_LOADING_ORIGINAL);
+            };
+        }
+    }
+    param 2 {
+        param_sounds {
+            name: string(STR_PARAM_SOUNDS_NAME);
+            desc: string(STR_PARAM_SOUNDS_DESC);
+            type: int;
+            min_value: 0;
+            max_value: 1;
+            def_value: 0;
+            names: {
+                0: string(STR_PARAM_SOUNDS_SET);
+                1: string(STR_PARAM_SOUNDS_ORIGINAL);
+            };
+        }
+    }
 }
 
 // Optional: hide the original aircraft so only this set is on sale.

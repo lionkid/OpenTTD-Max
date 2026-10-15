@@ -9,12 +9,13 @@
 | [docs/M1-REPORT.md](docs/M1-REPORT.md) | M1 管線定稿報告（比例校正、參數化產生器、OpenTTD 15.3 實機驗證） |
 | [docs/M3-REPORT.md](docs/M3-REPORT.md) | M3 內容報告（全部車種完成、GRF 參數） |
 | [docs/M4-REPORT.md](docs/M4-REPORT.md) | M4 報告（平衡、1950–2050 完整一局測試、發布準備） |
+| [docs/M5-REPORT.md](docs/M5-REPORT.md) | M5 報告（裝卸速度、跑道與機場等級、音效、後續玩法構想） |
 | [docs/CATALOG.md](docs/CATALOG.md) | 車種型錄（縮圖、三語名稱、數值） |
 | [docs/BALANCE.md](docs/BALANCE.md) · [docs/TIMELINE.md](docs/TIMELINE.md) | 平衡對照表 · 可購時間軸 |
 | [docs/RELEASE.md](docs/RELEASE.md) | 發布與 BaNaNaS 上架步驟 |
 | [data/README.md](data/README.md) | CSV 欄位定義 |
 
-**目前狀態：M4 完成，1.0 就緒**。49 款飛機與 24 款列車模型（共 80 筆車種資料）全部完成 32bpp、最高 4x 的正式算圖；成本已對照原版車輛平衡，並在 OpenTTD 15.3 跑完 1950–2050 完整一局。發布步驟見 docs/RELEASE.md。
+**目前狀態：M5 玩法更新（GRF 版本 3）**。49 款飛機與 24 款列車模型（共 80 筆車種資料）全部完成 32bpp、最高 4x 的正式算圖；成本已對照原版車輛平衡，並在 OpenTTD 15.3 跑完 1950–2050 完整一局。M5 修正了裝卸速度、依起飛跑道長度分出小型 / 大型機並在購買視窗列出適用機場，加入自製起降與發車音效。發布步驟見 docs/RELEASE.md。
 
 ![Aircraft](docs/qa/gallery_aircraft.png)
 
@@ -25,7 +26,18 @@
 | 套件 | 參數 | 預設 |
 |---|---|---|
 | `max-air.grf` | 停用原版飛機 | 關 |
+| `max-air.grf` | 裝卸速度：標準（8 步裝滿）/ 快（4 步）/ 很快（2 步）/ 原版（每步固定 20 單位） | 標準 |
+| `max-air.grf` | 音效：OpenTTD-Max 音效（起飛、觸地）/ 遊戲原版音效 | OpenTTD-Max |
 | `max-rail.grf` | 停用原版磁浮機車 | 關 |
+| `max-rail.grf` | 裝卸速度：標準 / 快 / 很快 / 原版（每節每步 5 單位） | 標準 |
+| `max-rail.grf` | 音效：OpenTTD-Max 音效（新幹線、磁浮發車）/ 遊戲原版音效 | OpenTTD-Max |
+| `max-rail.grf` | 編組方式：固定編組 + 自由編組 / 只有固定編組 / 只有自由編組 | 兩者 |
+
+裝卸步驟：飛機每 20 tick、列車每 40 tick 一步（一天 74 tick），只在遊戲設定「漸進式裝卸」開啟時有效。未設定 `loading_speed` 的 NewGRF 車輛在 OpenTTD 裡每步只裝 1 單位，這是 1.0 版裝卸極慢的原因。
+
+購買視窗另顯示每款飛機的起飛跑道長度與適用機場（≤ 2,100 m 為小型機，可安全使用小機場與通勤機場；其餘為大型機，在這兩種機場降落有墜機風險），以及每列車的編組長度與所需月台格數。
+
+**自由編組**：每個車系除了固定編組，還有「先頭車 ×2」（一輛雙頭機車，兩端都是先頭車）和「中間車」兩個購買項目。買先頭車後，把任意數量的同系列中間車拖到兩節先頭車之間，就能組出符合月台長度的列車；中間車有動力（每節加上該車系每節的功率），其他車系的車廂無法加掛。先頭車列在固定編組的變體群組裡，中間車在車廂區。
 
 ## 建置
 
@@ -34,6 +46,7 @@ pip install nml==0.9.0 pillow numpy
 make            # 驗證資料 -> 產生 NML -> max-air.grf + max-rail.grf
 make test-grf   # 無 badges 版本（OpenTTD 13 / 14 測試用），輸出到 build/test/
 make bundle     # BaNaNaS 格式 tar，輸出到 build/bundle/
+make sounds     # 重新合成 sounds/*.wav（tools/make_sounds.py，純程式合成、無錄音）
 ```
 
 產出的 `max-air.grf`、`max-rail.grf` 複製到 OpenTTD 的 `newgrf/` 目錄即可使用（需 OpenTTD 15.0+、32bpp blitter）。

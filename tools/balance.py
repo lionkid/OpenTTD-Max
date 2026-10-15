@@ -99,6 +99,25 @@ def train_props(r: dict) -> tuple[int, int]:
     return _clamp_prop(price, TRAIN_PRICE_UNIT), _clamp_prop(running, TRAIN_RUN_UNIT)
 
 
+# Free formations: the two head cars are one dual-headed engine priced at HEAD_PRICE_SHARE of the full
+# formation; intermediate cars are wagons, whose price OpenTTD caps at 255 wagon units (base price 2,000,
+# i.e. about 1,500 GBP at the default "low" vehicle costs), so they are cheap like every wagon in the game.
+HEAD_PRICE_SHARE = 0.6
+WAGON_PRICE_UNIT = 2000 * 0.75 / 256   # cost_factor unit of a wagon
+
+
+def free_train_props(r: dict) -> dict[str, int]:
+    """cost / running_cost factors for the head-car engine and the intermediate-car wagon of a series."""
+    price, running = train_targets(r)
+    cars = int(r["cars"])
+    return {
+        "head_cost": _clamp_prop(price * HEAD_PRICE_SHARE, TRAIN_PRICE_UNIT),
+        "head_run": _clamp_prop(running * 2 / cars, TRAIN_RUN_UNIT),
+        "car_cost": _clamp_prop(price / cars, WAGON_PRICE_UNIT),
+        "car_run": _clamp_prop(running / cars, TRAIN_RUN_UNIT),
+    }
+
+
 # ---------------------------------------------------------------------------------------------
 # Report
 # ---------------------------------------------------------------------------------------------

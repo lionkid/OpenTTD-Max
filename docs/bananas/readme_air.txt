@@ -18,6 +18,10 @@ Features
 - Families grouped in the purchase list (e.g. all 737 generations under the 737).
 - Badges: manufacturer and role (passenger, freighter, supersonic).
 - Freighters carry their real payload in tonnes for every cargo type.
+- Purchase window shows the takeoff runway length and the suitable airports: aircraft
+  needing up to 2,100 m are "small" and safe at Small and Commuter airports.
+- Loads a full aircraft in 8 loading steps (parameter: 8 / 4 / 2 steps or original).
+- Synthesised takeoff and touchdown sounds (parameter: set sounds or original sounds).
 - Parameter: disable the original aircraft.
 - English, Traditional Chinese, Japanese.
 

@@ -5,91 +5,91 @@ Images: 2x zoom, south-west view (in game up to 4x).
 
 ## Aircraft / 飛機 / 航空機 (49)
 
-| | Vehicle | Year | km/h | Capacity | Price | Running / yr |
-|---|---|---|---|---|---|---|
-| ![](catalog/b707_320b.png) | **Boeing 707-320B**<br>波音 707-320B<br>ボーイング707-320B | 1962 | 897 | 141 pax | £30,762 | £3,121 |
-| ![](catalog/b727_200.png) | **Boeing 727-200**<br>波音 727-200<br>ボーイング727-200 | 1967 | 917 | 134 pax | £30,762 | £2,924 |
-| ![](catalog/b737_200.png) | **Boeing 737-200**<br>波音 737-200<br>ボーイング737-200 | 1968 | 780 | 102 pax | £24,610 | £2,446 |
-| ![](catalog/b747_100.png) | **Boeing 747-100**<br>波音 747-100<br>ボーイング747-100 | 1970 | 907 | 452 pax | £90,235 | £7,142 |
-| ![](catalog/a300b4.png) | **Airbus A300B4**<br>空中巴士 A300B4<br>エアバスA300B4 | 1975 | 833 | 266 pax | £57,422 | £4,471 |
-| ![](catalog/concorde.png) | **Aerospatiale/BAC Concorde**<br>協和號 Concorde<br>コンコルド | 1976 | 2179 | 100 pax | £114,845 | £5,736 |
-| ![](catalog/b767_200.png) | **Boeing 767-200**<br>波音 767-200<br>ボーイング767-200 | 1982 | 851 | 216 pax | £51,270 | £3,627 |
-| ![](catalog/b757_200.png) | **Boeing 757-200**<br>波音 757-200<br>ボーイング757-200 | 1983 | 850 | 200 pax | £47,168 | £3,403 |
-| ![](catalog/b737_300.png) | **Boeing 737-300**<br>波音 737-300<br>ボーイング737-300 | 1984 | 794 | 128 pax | £32,813 | £2,503 |
-| ![](catalog/a310_300.png) | **Airbus A310-300**<br>空中巴士 A310-300<br>エアバスA310-300 | 1985 | 850 | 220 pax | £51,270 | £3,599 |
-| ![](catalog/b767_300er.png) | **Boeing 767-300ER**<br>波音 767-300ER<br>ボーイング767-300ER | 1988 | 851 | 269 pax | £63,575 | £4,106 |
-| ![](catalog/b737_400.png) | **Boeing 737-400**<br>波音 737-400<br>ボーイング737-400 | 1988 | 794 | 146 pax | £36,914 | £2,643 |
-| ![](catalog/a320_200.png) | **Airbus A320-200**<br>空中巴士 A320-200<br>エアバスA320-200 | 1989 | 828 | 150 pax | £38,965 | £2,671 |
-| ![](catalog/b747_400.png) | **Boeing 747-400**<br>波音 747-400<br>ボーイング747-400 | 1989 | 913 | 524 pax | £110,743 | £7,058 |
-| ![](catalog/a340_300.png) | **Airbus A340-300**<br>空中巴士 A340-300<br>エアバスA340-300 | 1993 | 871 | 295 pax | £69,727 | £4,246 |
-| ![](catalog/b747_400f.png) | **Boeing 747-400F**<br>波音 747-400F<br>ボーイング747-400F | 1993 | 913 | 112 t | £82,032 | £4,949 |
-| ![](catalog/a330_300.png) | **Airbus A330-300**<br>空中巴士 A330-300<br>エアバスA330-300 | 1994 | 871 | 277 pax | £65,626 | £3,993 |
-| ![](catalog/a321.png) | **Airbus A321**<br>空中巴士 A321<br>エアバスA321 | 1994 | 828 | 185 pax | £47,168 | £2,953 |
-| ![](catalog/a300_600f.png) | **Airbus A300-600F**<br>空中巴士 A300-600F<br>エアバスA300-600F | 1994 | 833 | 48 t | £41,016 | £2,615 |
-| ![](catalog/b777_200.png) | **Boeing 777-200**<br>波音 777-200<br>ボーイング777-200 | 1995 | 905 | 314 pax | £73,829 | £4,387 |
-| ![](catalog/b767_300f.png) | **Boeing 767-300F**<br>波音 767-300F<br>ボーイング767-300F | 1995 | 851 | 52 t | £43,067 | £2,728 |
-| ![](catalog/a319.png) | **Airbus A319**<br>空中巴士 A319<br>エアバスA319 | 1996 | 828 | 124 pax | £32,813 | £2,250 |
-| ![](catalog/b737_700.png) | **Boeing 737-700**<br>波音 737-700<br>ボーイング737-700 | 1998 | 842 | 128 pax | £34,864 | £2,250 |
-| ![](catalog/b737_800.png) | **Boeing 737-800**<br>波音 737-800<br>ボーイング737-800 | 1998 | 842 | 162 pax | £43,067 | £2,615 |
-| ![](catalog/a330_200.png) | **Airbus A330-200**<br>空中巴士 A330-200<br>エアバスA330-200 | 1998 | 871 | 247 pax | £61,524 | £3,543 |
-| ![](catalog/b757_300.png) | **Boeing 757-300**<br>波音 757-300<br>ボーイング757-300 | 1999 | 850 | 243 pax | £61,524 | £3,459 |
-| ![](catalog/a340_600.png) | **Airbus A340-600**<br>空中巴士 A340-600<br>エアバスA340-600 | 2002 | 871 | 380 pax | £90,235 | £4,809 |
-| ![](catalog/a318.png) | **Airbus A318**<br>空中巴士 A318<br>エアバスA318 | 2003 | 828 | 107 pax | £30,762 | £1,940 |
-| ![](catalog/b777_300er.png) | **Boeing 777-300ER**<br>波音 777-300ER<br>ボーイング777-300ER | 2004 | 905 | 396 pax | £94,337 | £4,893 |
-| ![](catalog/b737_900er.png) | **Boeing 737-900ER**<br>波音 737-900ER<br>ボーイング737-900ER | 2007 | 842 | 178 pax | £49,219 | £2,587 |
-| ![](catalog/a380_800.png) | **Airbus A380-800**<br>空中巴士 A380-800<br>エアバスA380-800 | 2007 | 903 | 525 pax | £120,997 | £6,074 |
-| ![](catalog/b777f.png) | **Boeing 777F**<br>波音 777F<br>ボーイング777F | 2009 | 905 | 102 t | £82,032 | £3,993 |
-| ![](catalog/a330_200f.png) | **Airbus A330-200F**<br>空中巴士 A330-200F<br>エアバスA330-200F | 2010 | 871 | 70 t | £59,473 | £2,953 |
-| ![](catalog/b747_8f.png) | **Boeing 747-8F**<br>波音 747-8F<br>ボーイング747-8F | 2011 | 917 | 134 t | £104,591 | £4,921 |
-| ![](catalog/b787_8.png) | **Boeing 787-8**<br>波音 787-8<br>ボーイング787-8 | 2011 | 903 | 248 pax | £65,626 | £3,149 |
-| ![](catalog/b747_8i.png) | **Boeing 747-8 Intercontinental**<br>波音 747-8 洲際型<br>ボーイング747-8インターコンチネンタル | 2012 | 917 | 410 pax | £100,489 | £4,696 |
-| ![](catalog/b787_9.png) | **Boeing 787-9**<br>波音 787-9<br>ボーイング787-9 | 2014 | 903 | 296 pax | £75,880 | £3,515 |
-| ![](catalog/a350_900.png) | **Airbus A350-900**<br>空中巴士 A350-900<br>エアバスA350-900 | 2015 | 903 | 325 pax | £84,083 | £3,768 |
-| ![](catalog/a320neo.png) | **Airbus A320neo**<br>空中巴士 A320neo<br>エアバスA320neo | 2016 | 828 | 165 pax | £47,168 | £2,250 |
-| ![](catalog/b737_max8.png) | **Boeing 737 MAX 8**<br>波音 737 MAX 8<br>ボーイング737 MAX 8 | 2017 | 839 | 172 pax | £49,219 | £2,306 |
-| ![](catalog/a321neo.png) | **Airbus A321neo**<br>空中巴士 A321neo<br>エアバスA321neo | 2017 | 828 | 206 pax | £57,422 | £2,615 |
-| ![](catalog/a350_1000.png) | **Airbus A350-1000**<br>空中巴士 A350-1000<br>エアバスA350-1000 | 2018 | 903 | 366 pax | £94,337 | £4,077 |
-| ![](catalog/b737_max9.png) | **Boeing 737 MAX 9**<br>波音 737 MAX 9<br>ボーイング737 MAX 9 | 2018 | 839 | 193 pax | £53,321 | £2,503 |
-| ![](catalog/b787_10.png) | **Boeing 787-10**<br>波音 787-10<br>ボーイング787-10 | 2018 | 903 | 336 pax | £86,134 | £3,824 |
-| ![](catalog/a330_900.png) | **Airbus A330-900**<br>空中巴士 A330-900<br>エアバスA330-900 | 2018 | 871 | 287 pax | £75,880 | £3,374 |
-| ![](catalog/beluga_xl.png) | **Airbus BelugaXL**<br>空中巴士 BelugaXL<br>エアバス ベルーガXL | 2020 | 737 | 51 t | £47,168 | £2,221 |
-| ![](catalog/a321xlr.png) | **Airbus A321XLR**<br>空中巴士 A321XLR<br>エアバスA321XLR | 2024 | 828 | 200 pax | £57,422 | £2,559 |
-| ![](catalog/b777_9.png) | **Boeing 777-9**<br>波音 777-9<br>ボーイング777-9 | 2027 | 905 | 426 pax | £110,743 | £4,640 |
-| ![](catalog/a350f.png) | **Airbus A350F**<br>空中巴士 A350F<br>エアバスA350F | 2027 | 903 | 111 t | £94,337 | £3,993 |
+| | Vehicle | Year | km/h | Capacity | Runway | Airports | Price | Running / yr |
+|---|---|---|---|---|---|---|---|---|
+| ![](catalog/b707_320b.png) | **Boeing 707-320B**<br>波音 707-320B<br>ボーイング707-320B | 1962 | 897 | 141 pax | 3,050 m | International or larger (large aircraft) | £30,762 | £3,121 |
+| ![](catalog/b727_200.png) | **Boeing 727-200**<br>波音 727-200<br>ボーイング727-200 | 1967 | 917 | 134 pax | 3,080 m | International or larger (large aircraft) | £30,762 | £2,924 |
+| ![](catalog/b737_200.png) | **Boeing 737-200**<br>波音 737-200<br>ボーイング737-200 | 1968 | 780 | 102 pax | 1,860 m | any, including Small and Commuter | £24,610 | £2,446 |
+| ![](catalog/b747_100.png) | **Boeing 747-100**<br>波音 747-100<br>ボーイング747-100 | 1970 | 907 | 452 pax | 3,250 m | Intercontinental (large aircraft) | £90,235 | £7,142 |
+| ![](catalog/a300b4.png) | **Airbus A300B4**<br>空中巴士 A300B4<br>エアバスA300B4 | 1975 | 833 | 266 pax | 2,300 m | City or larger (large aircraft) | £57,422 | £4,471 |
+| ![](catalog/concorde.png) | **Aerospatiale/BAC Concorde**<br>協和號 Concorde<br>コンコルド | 1976 | 2179 | 100 pax | 3,600 m | Intercontinental (large aircraft) | £114,845 | £5,736 |
+| ![](catalog/b767_200.png) | **Boeing 767-200**<br>波音 767-200<br>ボーイング767-200 | 1982 | 851 | 216 pax | 1,920 m | any, including Small and Commuter | £51,270 | £3,627 |
+| ![](catalog/b757_200.png) | **Boeing 757-200**<br>波音 757-200<br>ボーイング757-200 | 1983 | 850 | 200 pax | 2,070 m | any, including Small and Commuter | £47,168 | £3,403 |
+| ![](catalog/b737_300.png) | **Boeing 737-300**<br>波音 737-300<br>ボーイング737-300 | 1984 | 794 | 128 pax | 2,000 m | any, including Small and Commuter | £32,813 | £2,503 |
+| ![](catalog/a310_300.png) | **Airbus A310-300**<br>空中巴士 A310-300<br>エアバスA310-300 | 1985 | 850 | 220 pax | 2,290 m | City or larger (large aircraft) | £51,270 | £3,599 |
+| ![](catalog/b767_300er.png) | **Boeing 767-300ER**<br>波音 767-300ER<br>ボーイング767-300ER | 1988 | 851 | 269 pax | 2,650 m | City or larger (large aircraft) | £63,575 | £4,106 |
+| ![](catalog/b737_400.png) | **Boeing 737-400**<br>波音 737-400<br>ボーイング737-400 | 1988 | 794 | 146 pax | 2,650 m | City or larger (large aircraft) | £36,914 | £2,643 |
+| ![](catalog/a320_200.png) | **Airbus A320-200**<br>空中巴士 A320-200<br>エアバスA320-200 | 1989 | 828 | 150 pax | 2,100 m | any, including Small and Commuter | £38,965 | £2,671 |
+| ![](catalog/b747_400.png) | **Boeing 747-400**<br>波音 747-400<br>ボーイング747-400 | 1989 | 913 | 524 pax | 2,960 m | International or larger (large aircraft) | £110,743 | £7,058 |
+| ![](catalog/a340_300.png) | **Airbus A340-300**<br>空中巴士 A340-300<br>エアバスA340-300 | 1993 | 871 | 295 pax | 3,000 m | International or larger (large aircraft) | £69,727 | £4,246 |
+| ![](catalog/b747_400f.png) | **Boeing 747-400F**<br>波音 747-400F<br>ボーイング747-400F | 1993 | 913 | 112 t | 2,910 m | International or larger (large aircraft) | £82,032 | £4,949 |
+| ![](catalog/a330_300.png) | **Airbus A330-300**<br>空中巴士 A330-300<br>エアバスA330-300 | 1994 | 871 | 277 pax | 2,500 m | City or larger (large aircraft) | £65,626 | £3,993 |
+| ![](catalog/a321.png) | **Airbus A321**<br>空中巴士 A321<br>エアバスA321 | 1994 | 828 | 185 pax | 2,200 m | City or larger (large aircraft) | £47,168 | £2,953 |
+| ![](catalog/a300_600f.png) | **Airbus A300-600F**<br>空中巴士 A300-600F<br>エアバスA300-600F | 1994 | 833 | 48 t | 2,470 m | City or larger (large aircraft) | £41,016 | £2,615 |
+| ![](catalog/b777_200.png) | **Boeing 777-200**<br>波音 777-200<br>ボーイング777-200 | 1995 | 905 | 314 pax | 2,440 m | City or larger (large aircraft) | £73,829 | £4,387 |
+| ![](catalog/b767_300f.png) | **Boeing 767-300F**<br>波音 767-300F<br>ボーイング767-300F | 1995 | 851 | 52 t | 2,650 m | City or larger (large aircraft) | £43,067 | £2,728 |
+| ![](catalog/a319.png) | **Airbus A319**<br>空中巴士 A319<br>エアバスA319 | 1996 | 828 | 124 pax | 1,850 m | any, including Small and Commuter | £32,813 | £2,250 |
+| ![](catalog/b737_700.png) | **Boeing 737-700**<br>波音 737-700<br>ボーイング737-700 | 1998 | 842 | 128 pax | 2,040 m | any, including Small and Commuter | £34,864 | £2,250 |
+| ![](catalog/b737_800.png) | **Boeing 737-800**<br>波音 737-800<br>ボーイング737-800 | 1998 | 842 | 162 pax | 2,320 m | City or larger (large aircraft) | £43,067 | £2,615 |
+| ![](catalog/a330_200.png) | **Airbus A330-200**<br>空中巴士 A330-200<br>エアバスA330-200 | 1998 | 871 | 247 pax | 2,220 m | City or larger (large aircraft) | £61,524 | £3,543 |
+| ![](catalog/b757_300.png) | **Boeing 757-300**<br>波音 757-300<br>ボーイング757-300 | 1999 | 850 | 243 pax | 2,610 m | City or larger (large aircraft) | £61,524 | £3,459 |
+| ![](catalog/a340_600.png) | **Airbus A340-600**<br>空中巴士 A340-600<br>エアバスA340-600 | 2002 | 871 | 380 pax | 3,400 m | Intercontinental (large aircraft) | £90,235 | £4,809 |
+| ![](catalog/a318.png) | **Airbus A318**<br>空中巴士 A318<br>エアバスA318 | 2003 | 828 | 107 pax | 1,780 m | any, including Small and Commuter | £30,762 | £1,940 |
+| ![](catalog/b777_300er.png) | **Boeing 777-300ER**<br>波音 777-300ER<br>ボーイング777-300ER | 2004 | 905 | 396 pax | 3,050 m | International or larger (large aircraft) | £94,337 | £4,893 |
+| ![](catalog/b737_900er.png) | **Boeing 737-900ER**<br>波音 737-900ER<br>ボーイング737-900ER | 2007 | 842 | 178 pax | 2,990 m | International or larger (large aircraft) | £49,219 | £2,587 |
+| ![](catalog/a380_800.png) | **Airbus A380-800**<br>空中巴士 A380-800<br>エアバスA380-800 | 2007 | 903 | 525 pax | 3,000 m | International or larger (large aircraft) | £120,997 | £6,074 |
+| ![](catalog/b777f.png) | **Boeing 777F**<br>波音 777F<br>ボーイング777F | 2009 | 905 | 102 t | 2,830 m | International or larger (large aircraft) | £82,032 | £3,993 |
+| ![](catalog/a330_200f.png) | **Airbus A330-200F**<br>空中巴士 A330-200F<br>エアバスA330-200F | 2010 | 871 | 70 t | 2,400 m | City or larger (large aircraft) | £59,473 | £2,953 |
+| ![](catalog/b747_8f.png) | **Boeing 747-8F**<br>波音 747-8F<br>ボーイング747-8F | 2011 | 917 | 134 t | 3,100 m | International or larger (large aircraft) | £104,591 | £4,921 |
+| ![](catalog/b787_8.png) | **Boeing 787-8**<br>波音 787-8<br>ボーイング787-8 | 2011 | 903 | 248 pax | 2,590 m | City or larger (large aircraft) | £65,626 | £3,149 |
+| ![](catalog/b747_8i.png) | **Boeing 747-8 Intercontinental**<br>波音 747-8 洲際型<br>ボーイング747-8インターコンチネンタル | 2012 | 917 | 410 pax | 3,100 m | International or larger (large aircraft) | £100,489 | £4,696 |
+| ![](catalog/b787_9.png) | **Boeing 787-9**<br>波音 787-9<br>ボーイング787-9 | 2014 | 903 | 296 pax | 2,830 m | International or larger (large aircraft) | £75,880 | £3,515 |
+| ![](catalog/a350_900.png) | **Airbus A350-900**<br>空中巴士 A350-900<br>エアバスA350-900 | 2015 | 903 | 325 pax | 2,600 m | City or larger (large aircraft) | £84,083 | £3,768 |
+| ![](catalog/a320neo.png) | **Airbus A320neo**<br>空中巴士 A320neo<br>エアバスA320neo | 2016 | 828 | 165 pax | 1,950 m | any, including Small and Commuter | £47,168 | £2,250 |
+| ![](catalog/b737_max8.png) | **Boeing 737 MAX 8**<br>波音 737 MAX 8<br>ボーイング737 MAX 8 | 2017 | 839 | 172 pax | 2,530 m | City or larger (large aircraft) | £49,219 | £2,306 |
+| ![](catalog/a321neo.png) | **Airbus A321neo**<br>空中巴士 A321neo<br>エアバスA321neo | 2017 | 828 | 206 pax | 2,200 m | City or larger (large aircraft) | £57,422 | £2,615 |
+| ![](catalog/a350_1000.png) | **Airbus A350-1000**<br>空中巴士 A350-1000<br>エアバスA350-1000 | 2018 | 903 | 366 pax | 2,800 m | International or larger (large aircraft) | £94,337 | £4,077 |
+| ![](catalog/b737_max9.png) | **Boeing 737 MAX 9**<br>波音 737 MAX 9<br>ボーイング737 MAX 9 | 2018 | 839 | 193 pax | 2,590 m | City or larger (large aircraft) | £53,321 | £2,503 |
+| ![](catalog/b787_10.png) | **Boeing 787-10**<br>波音 787-10<br>ボーイング787-10 | 2018 | 903 | 336 pax | 2,770 m | International or larger (large aircraft) | £86,134 | £3,824 |
+| ![](catalog/a330_900.png) | **Airbus A330-900**<br>空中巴士 A330-900<br>エアバスA330-900 | 2018 | 871 | 287 pax | 3,000 m | International or larger (large aircraft) | £75,880 | £3,374 |
+| ![](catalog/beluga_xl.png) | **Airbus BelugaXL**<br>空中巴士 BelugaXL<br>エアバス ベルーガXL | 2020 | 737 | 51 t | 2,500 m | City or larger (large aircraft) | £47,168 | £2,221 |
+| ![](catalog/a321xlr.png) | **Airbus A321XLR**<br>空中巴士 A321XLR<br>エアバスA321XLR | 2024 | 828 | 200 pax | 2,500 m | City or larger (large aircraft) | £57,422 | £2,559 |
+| ![](catalog/b777_9.png) | **Boeing 777-9**<br>波音 777-9<br>ボーイング777-9 | 2027 | 905 | 426 pax | 3,050 m | International or larger (large aircraft) | £110,743 | £4,640 |
+| ![](catalog/a350f.png) | **Airbus A350F**<br>空中巴士 A350F<br>エアバスA350F | 2027 | 903 | 111 t | 2,800 m | International or larger (large aircraft) | £94,337 | £3,993 |
 
 ## Trains / 列車 / 列車 (31)
 
-| | Vehicle | Year | km/h | Cars × seats | Power | Price | Running / yr |
-|---|---|---|---|---|---|---|---|
-| ![](catalog/shinkansen_0.png) | **0 Series Shinkansen**<br>0 系新幹線<br>0系新幹線 | 1964 | 220 | 16 × 84 | 11,840 kW | £107,815 | £2,965 |
-| ![](catalog/shinkansen_0.png) | **0 Series Shinkansen (12 cars)**<br>0 系新幹線（12 輛）<br>0系新幹線（12両） | 1964 | 220 | 12 × 84 | 8,880 kW | £80,861 | £2,529 |
-| ![](catalog/shinkansen_200.png) | **200 Series Shinkansen**<br>200 系新幹線<br>200系新幹線 | 1982 | 240 | 12 × 74 | 11,040 kW | £80,861 | £2,417 |
-| ![](catalog/shinkansen_100.png) | **100 Series Shinkansen**<br>100 系新幹線<br>100系新幹線 | 1985 | 220 | 16 × 83 | 11,040 kW | £116,018 | £2,950 |
-| ![](catalog/shinkansen_300.png) | **300 Series Shinkansen**<br>300 系新幹線<br>300系新幹線 | 1992 | 270 | 16 × 83 | 12,000 kW | £132,425 | £3,133 |
-| ![](catalog/shinkansen_400.png) | **400 Series Shinkansen**<br>400 系新幹線<br>400系新幹線 | 1992 | 240 | 7 × 57 | 5,040 kW | £37,501 | £1,742 |
-| ![](catalog/e1.png) | **E1 Series Shinkansen Max**<br>E1 系新幹線 Max<br>E1系新幹線 Max | 1994 | 240 | 12 × 103 | 9,840 kW | £117,190 | £2,894 |
-| ![](catalog/shinkansen_500.png) | **500 Series Shinkansen**<br>500 系新幹線<br>500系新幹線 | 1997 | 300 | 16 × 83 | 18,240 kW | £142,972 | £3,232 |
-| ![](catalog/e2.png) | **E2 Series Shinkansen**<br>E2 系新幹線<br>E2系新幹線 | 1997 | 275 | 10 × 81 | 9,600 kW | £83,205 | £2,388 |
-| ![](catalog/e3.png) | **E3 Series Shinkansen**<br>E3 系新幹線<br>E3系新幹線 | 1997 | 275 | 6 × 56 | 4,800 kW | £33,985 | £1,700 |
-| ![](catalog/e4.png) | **E4 Series Shinkansen Max**<br>E4 系新幹線 Max<br>E4系新幹線 Max | 1997 | 240 | 8 × 102 | 6,720 kW | £78,517 | £2,318 |
-| ![](catalog/shinkansen_700.png) | **700 Series Shinkansen**<br>700 系新幹線<br>700系新幹線 | 1999 | 285 | 16 × 83 | 13,200 kW | £140,628 | £3,189 |
-| ![](catalog/shinkansen_700.png) | **700 Series Shinkansen Hikari Rail Star (8 cars)**<br>700 系新幹線 Hikari Rail Star（8 輛）<br>700系新幹線ひかりレールスター（8両） | 2000 | 285 | 8 × 71 | 6,600 kW | £59,767 | £2,051 |
-| ![](catalog/doctor_yellow.png) | **923 Series Doctor Yellow**<br>923 型 Doctor Yellow<br>923形ドクターイエロー | 2001 | 270 | 7 × 20 | 6,600 kW | £14,063 | £1,405 |
-| ![](catalog/transrapid_smt.png) | **Transrapid SMT**<br>Transrapid 上海磁浮<br>トランスラピッドSMT | 2004 | 430 | 5 × 89 | 10,000 kW | £93,752 | £3,232 |
-| ![](catalog/shinkansen_800.png) | **800 Series Shinkansen**<br>800 系新幹線<br>800系新幹線 | 2004 | 260 | 6 × 65 | 6,600 kW | £39,845 | £1,756 |
-| ![](catalog/linimo.png) | **HSST-100L Linimo**<br>HSST-100L Linimo<br>HSST-100L リニモ | 2005 | 100 | 3 × 35 | 1,500 kW | £8,203 | £1,489 |
-| ![](catalog/n700.png) | **N700 Series Shinkansen**<br>N700 系新幹線<br>N700系新幹線 | 2007 | 300 | 16 × 83 | 17,080 kW | £147,659 | £3,232 |
-| ![](catalog/transrapid_smt.png) | **Transrapid 09**<br>Transrapid 09<br>トランスラピッド09 | 2008 | 500 | 3 × 50 | 6,000 kW | £35,157 | £2,388 |
-| ![](catalog/shinkansen_500.png) | **500 Series Shinkansen (8 cars)**<br>500 系新幹線（8 輛）<br>500系新幹線（8両） | 2008 | 285 | 8 × 76 | 9,120 kW | £66,798 | £2,108 |
-| ![](catalog/e5.png) | **E5 Series Shinkansen**<br>E5 系新幹線<br>E5系新幹線 | 2011 | 320 | 10 × 73 | 9,600 kW | £85,549 | £2,360 |
-| ![](catalog/n700.png) | **N700 Series Shinkansen (8 cars)**<br>N700 系新幹線（8 輛）<br>N700系新幹線（8両） | 2011 | 300 | 8 × 68 | 9,760 kW | £62,111 | £2,037 |
-| ![](catalog/n700.png) | **N700A Series Shinkansen**<br>N700A 系新幹線<br>N700A系新幹線 | 2013 | 300 | 16 × 83 | 17,080 kW | £151,175 | £3,232 |
-| ![](catalog/e6.png) | **E6 Series Shinkansen**<br>E6 系新幹線<br>E6系新幹線 | 2013 | 320 | 7 × 48 | 6,000 kW | £39,845 | £1,728 |
-| ![](catalog/e7.png) | **E7 Series Shinkansen**<br>E7 系新幹線<br>E7系新幹線 | 2014 | 275 | 12 × 78 | 12,000 kW | £103,127 | £2,571 |
-| ![](catalog/beijing_s1.png) | **Beijing Metro Line S1 Maglev**<br>北京地鐵 S1 線磁浮<br>北京地下鉄S1線リニア | 2017 | 80 | 6 × 31 | 3,600 kW | £12,891 | £1,503 |
-| ![](catalog/n700s.png) | **N700S Series Shinkansen**<br>N700S 系新幹線<br>N700S系新幹線 | 2020 | 300 | 16 × 83 | 17,080 kW | £155,863 | £3,232 |
-| ![](catalog/crrc_600.png) | **CRRC 600 km/h Maglev**<br>中車 600 km/h 高速磁浮<br>中国中車600km/hリニア | 2021 | 600 | 5 × 100 | 15,000 kW | £132,425 | £3,583 |
-| ![](catalog/e8.png) | **E8 Series Shinkansen**<br>E8 系新幹線<br>E8系新幹線 | 2024 | 300 | 7 × 51 | 6,000 kW | £42,188 | £1,742 |
-| ![](catalog/l0.png) | **L0 Series SCMaglev**<br>L0 系超導磁浮<br>L0系 | 2027 | 500 | 12 × 61 | 20,000 kW | £180,473 | £3,583 |
-| ![](catalog/l0.png) | **L0 Series SCMaglev (16 cars)**<br>L0 系超導磁浮（16 輛）<br>L0系（16両） | 2027 | 500 | 16 × 63 | 26,000 kW | £249,615 | £3,583 |
+| | Vehicle | Year | km/h | Cars × seats | Platform | Power | Price | Running / yr |
+|---|---|---|---|---|---|---|---|---|
+| ![](catalog/shinkansen_0.png) | **0 Series Shinkansen**<br>0 系新幹線<br>0系新幹線 | 1964 | 220 | 16 × 84 | 8 tiles | 11,840 kW | £107,815 | £2,965 |
+| ![](catalog/shinkansen_0.png) | **0 Series Shinkansen (12 cars)**<br>0 系新幹線（12 輛）<br>0系新幹線（12両） | 1964 | 220 | 12 × 84 | 6 tiles | 8,880 kW | £80,861 | £2,529 |
+| ![](catalog/shinkansen_200.png) | **200 Series Shinkansen**<br>200 系新幹線<br>200系新幹線 | 1982 | 240 | 12 × 74 | 6 tiles | 11,040 kW | £80,861 | £2,417 |
+| ![](catalog/shinkansen_100.png) | **100 Series Shinkansen**<br>100 系新幹線<br>100系新幹線 | 1985 | 220 | 16 × 83 | 8 tiles | 11,040 kW | £116,018 | £2,950 |
+| ![](catalog/shinkansen_300.png) | **300 Series Shinkansen**<br>300 系新幹線<br>300系新幹線 | 1992 | 270 | 16 × 83 | 8 tiles | 12,000 kW | £132,425 | £3,133 |
+| ![](catalog/shinkansen_400.png) | **400 Series Shinkansen**<br>400 系新幹線<br>400系新幹線 | 1992 | 240 | 7 × 57 | 3 tiles | 5,040 kW | £37,501 | £1,742 |
+| ![](catalog/e1.png) | **E1 Series Shinkansen Max**<br>E1 系新幹線 Max<br>E1系新幹線 Max | 1994 | 240 | 12 × 103 | 6 tiles | 9,840 kW | £117,190 | £2,894 |
+| ![](catalog/shinkansen_500.png) | **500 Series Shinkansen**<br>500 系新幹線<br>500系新幹線 | 1997 | 300 | 16 × 83 | 8 tiles | 18,240 kW | £142,972 | £3,232 |
+| ![](catalog/e2.png) | **E2 Series Shinkansen**<br>E2 系新幹線<br>E2系新幹線 | 1997 | 275 | 10 × 81 | 5 tiles | 9,600 kW | £83,205 | £2,388 |
+| ![](catalog/e3.png) | **E3 Series Shinkansen**<br>E3 系新幹線<br>E3系新幹線 | 1997 | 275 | 6 × 56 | 3 tiles | 4,800 kW | £33,985 | £1,700 |
+| ![](catalog/e4.png) | **E4 Series Shinkansen Max**<br>E4 系新幹線 Max<br>E4系新幹線 Max | 1997 | 240 | 8 × 102 | 4 tiles | 6,720 kW | £78,517 | £2,318 |
+| ![](catalog/shinkansen_700.png) | **700 Series Shinkansen**<br>700 系新幹線<br>700系新幹線 | 1999 | 285 | 16 × 83 | 8 tiles | 13,200 kW | £140,628 | £3,189 |
+| ![](catalog/shinkansen_700.png) | **700 Series Shinkansen Hikari Rail Star (8 cars)**<br>700 系新幹線 Hikari Rail Star（8 輛）<br>700系新幹線ひかりレールスター（8両） | 2000 | 285 | 8 × 71 | 4 tiles | 6,600 kW | £59,767 | £2,051 |
+| ![](catalog/doctor_yellow.png) | **923 Series Doctor Yellow**<br>923 型 Doctor Yellow<br>923形ドクターイエロー | 2001 | 270 | 7 × 20 | 4 tiles | 6,600 kW | £14,063 | £1,405 |
+| ![](catalog/transrapid_smt.png) | **Transrapid SMT**<br>Transrapid 上海磁浮<br>トランスラピッドSMT | 2004 | 430 | 5 × 89 | 3 tiles | 10,000 kW | £93,752 | £3,232 |
+| ![](catalog/shinkansen_800.png) | **800 Series Shinkansen**<br>800 系新幹線<br>800系新幹線 | 2004 | 260 | 6 × 65 | 3 tiles | 6,600 kW | £39,845 | £1,756 |
+| ![](catalog/linimo.png) | **HSST-100L Linimo**<br>HSST-100L Linimo<br>HSST-100L リニモ | 2005 | 100 | 3 × 35 | 1 tiles | 1,500 kW | £8,203 | £1,489 |
+| ![](catalog/n700.png) | **N700 Series Shinkansen**<br>N700 系新幹線<br>N700系新幹線 | 2007 | 300 | 16 × 83 | 8 tiles | 17,080 kW | £147,659 | £3,232 |
+| ![](catalog/transrapid_smt.png) | **Transrapid 09**<br>Transrapid 09<br>トランスラピッド09 | 2008 | 500 | 3 × 50 | 2 tiles | 6,000 kW | £35,157 | £2,388 |
+| ![](catalog/shinkansen_500.png) | **500 Series Shinkansen (8 cars)**<br>500 系新幹線（8 輛）<br>500系新幹線（8両） | 2008 | 285 | 8 × 76 | 4 tiles | 9,120 kW | £66,798 | £2,108 |
+| ![](catalog/e5.png) | **E5 Series Shinkansen**<br>E5 系新幹線<br>E5系新幹線 | 2011 | 320 | 10 × 73 | 5 tiles | 9,600 kW | £85,549 | £2,360 |
+| ![](catalog/n700.png) | **N700 Series Shinkansen (8 cars)**<br>N700 系新幹線（8 輛）<br>N700系新幹線（8両） | 2011 | 300 | 8 × 68 | 4 tiles | 9,760 kW | £62,111 | £2,037 |
+| ![](catalog/n700.png) | **N700A Series Shinkansen**<br>N700A 系新幹線<br>N700A系新幹線 | 2013 | 300 | 16 × 83 | 8 tiles | 17,080 kW | £151,175 | £3,232 |
+| ![](catalog/e6.png) | **E6 Series Shinkansen**<br>E6 系新幹線<br>E6系新幹線 | 2013 | 320 | 7 × 48 | 3 tiles | 6,000 kW | £39,845 | £1,728 |
+| ![](catalog/e7.png) | **E7 Series Shinkansen**<br>E7 系新幹線<br>E7系新幹線 | 2014 | 275 | 12 × 78 | 6 tiles | 12,000 kW | £103,127 | £2,571 |
+| ![](catalog/beijing_s1.png) | **Beijing Metro Line S1 Maglev**<br>北京地鐵 S1 線磁浮<br>北京地下鉄S1線リニア | 2017 | 80 | 6 × 31 | 2 tiles | 3,600 kW | £12,891 | £1,503 |
+| ![](catalog/n700s.png) | **N700S Series Shinkansen**<br>N700S 系新幹線<br>N700S系新幹線 | 2020 | 300 | 16 × 83 | 8 tiles | 17,080 kW | £155,863 | £3,232 |
+| ![](catalog/crrc_600.png) | **CRRC 600 km/h Maglev**<br>中車 600 km/h 高速磁浮<br>中国中車600km/hリニア | 2021 | 600 | 5 × 100 | 3 tiles | 15,000 kW | £132,425 | £3,583 |
+| ![](catalog/e8.png) | **E8 Series Shinkansen**<br>E8 系新幹線<br>E8系新幹線 | 2024 | 300 | 7 × 51 | 3 tiles | 6,000 kW | £42,188 | £1,742 |
+| ![](catalog/l0.png) | **L0 Series SCMaglev**<br>L0 系超導磁浮<br>L0系 | 2027 | 500 | 12 × 61 | 6 tiles | 20,000 kW | £180,473 | £3,583 |
+| ![](catalog/l0.png) | **L0 Series SCMaglev (16 cars)**<br>L0 系超導磁浮（16 輛）<br>L0系（16両） | 2027 | 500 | 16 × 63 | 8 tiles | 26,000 kW | £249,615 | £3,583 |
 

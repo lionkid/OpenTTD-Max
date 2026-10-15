@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.1.0 (unreleased)
+
+- Loading speed: vehicles of this set loaded one unit per loading step (the OpenTTD default for NewGRF
+  vehicles without a loading_speed), so a 747 took months to board. Now a full load takes 8 steps
+  (aircraft: about 2 days, trains: about 4 days) and a new parameter offers 4 steps, 2 steps or the
+  original fixed amounts.
+- Aircraft are small or large by takeoff field length (data/aircraft.csv runway_m, verified against
+  published variant tables; small = up to 2,100 m): small aircraft (737-200/-300/-700, 757-200,
+  767-200, A318/A319/A320/A320neo) use Small and Commuter airports safely, large ones may crash there.
+  The purchase window shows the runway length, the suitable airports and, for trains, the formation
+  length and the platform tiles needed.
+- Sound effects: synthesised jet, wide-body and Concorde takeoff, touchdown, Shinkansen chime and
+  maglev departure (sounds/, tools/make_sounds.py), selectable per set with a parameter.
+- Free formations: every train series also comes as "head cars" (one dual-headed engine, a head car at
+  each end) plus an "intermediate car" wagon, so a formation of any length can be built to fit the
+  platforms. Intermediate cars are powered (livery override + extra_power_per_wagon), only the series'
+  own cars can be coupled, and a parameter keeps fixed formations, free formations or both on sale.
+- Catalogue: runway / airport and platform columns.
+- NewGRF version 3 (savegames from 1.0.0 stay compatible; the new parameters read as their defaults).
+
 ## 1.0.0 (prepared 2026-10-09, not yet tagged)
 
 - Balance: purchase price and running cost are now computed from seats, introduction year and speed

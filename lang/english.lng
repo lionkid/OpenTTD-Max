@@ -25,3 +25,20 @@ STR_PARAM_DISABLE_AIRCRAFT_NAME :Disable original aircraft
 STR_PARAM_DISABLE_AIRCRAFT_DESC :Hide the original aircraft so that only OpenTTD-Max aircraft are on sale. Existing original aircraft keep running.
 STR_PARAM_DISABLE_MAGLEV_NAME   :Disable original maglev locomotives
 STR_PARAM_DISABLE_MAGLEV_DESC   :Hide the original maglev locomotives (Lev1-Lev4, Wizzowow Rocketeer). Maglev wagons stay available.
+
+STR_PARAM_LOADING_NAME          :Loading speed
+STR_PARAM_LOADING_DESC          :Cargo loaded or unloaded per loading step by the vehicles of this set (aircraft: one step every 20 ticks, trains: every 40 ticks; a day is 74 ticks). Standard: a full load in 8 steps. Fast: 4 steps. Very fast: 2 steps. Original: a fixed 20 units (aircraft) or 5 units per car (trains) per step like the original vehicles, which is slow for large aircraft. Used only while gradual loading is on.
+STR_PARAM_LOADING_STANDARD      :Standard (full load in 8 steps)
+STR_PARAM_LOADING_FAST          :Fast (4 steps)
+STR_PARAM_LOADING_VERY_FAST     :Very fast (2 steps)
+STR_PARAM_LOADING_ORIGINAL      :Original (fixed units per step)
+STR_PARAM_SOUNDS_NAME           :Sound effects
+STR_PARAM_SOUNDS_DESC           :This set's own sounds (jet and Concorde takeoff, touchdown, Shinkansen and maglev departure) or the original game sounds.
+STR_PARAM_SOUNDS_SET            :OpenTTD-Max sounds
+STR_PARAM_SOUNDS_ORIGINAL       :Original game sounds
+
+STR_PARAM_FORMATION_NAME        :Formations
+STR_PARAM_FORMATION_DESC        :Fixed formations are bought as one complete train. Free formations: buy the two head cars (one dual-headed engine) and couple any number of that series' intermediate cars between them. Changing this in a running game removes the trains of the kind that is switched off.
+STR_PARAM_FORMATION_BOTH        :Fixed and free formations
+STR_PARAM_FORMATION_FIXED       :Fixed formations only
+STR_PARAM_FORMATION_FREE        :Free formations only (head cars + intermediate cars)

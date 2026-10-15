@@ -3,6 +3,7 @@
 #   make render     render every model with Blender (needs BPY_PYTHON, see tools/render.py)
 #   make gfx        post-process build/render into gfx/ sprite sheets
 #   make placeholder regenerate the placeholder sprites used for vehicles without art
+#   make sounds     synthesise sounds/*.wav (tools/make_sounds.py)
 #   make test-grf   build without badges for OpenTTD < 15 (used by tools/ingame)
 #   make bundle     BaNaNaS-style tar files in build/bundle/ (VERSION_LABEL=0.1.0-alpha)
 #   make clean
@@ -14,9 +15,9 @@ GEN_FLAGS  ?=
 
 GRFS   = max-air.grf max-rail.grf
 INPUTS = $(wildcard data/*.csv) $(wildcard src/*.pnml) $(wildcard src/common/*.pnml) $(wildcard lang/*.lng) \
-         $(wildcard gfx/*/*/manifest.json) tools/gen_nml.py VERSION
+         $(wildcard gfx/*/*/manifest.json) $(wildcard sounds/*.wav) tools/gen_nml.py VERSION
 
-.PHONY: all check nml grf render gfx placeholder test-grf bundle clean
+.PHONY: all check nml grf render gfx placeholder sounds test-grf bundle clean
 
 all: check grf
 
@@ -45,6 +46,9 @@ gfx:
 
 placeholder:
 	$(PY) tools/make_placeholder_gfx.py
+
+sounds:
+	$(PY) tools/make_sounds.py
 
 # Badge-free build for OpenTTD 13/14 test installs; output goes to build/test/.
 test-grf:

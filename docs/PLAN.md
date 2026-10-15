@@ -179,11 +179,14 @@ OpenTTD 的 sprite 可同時提供多個 zoom 等級與兩種色深。NML 以 `a
 - **Badges**：`manufacturer/boeing`、`manufacturer/airbus`、`manufacturer/aerospatiale`、`role/passenger`、`role/freighter`、`role/supersonic`、`era/...`。
 - **成本**：以 737-800 為基準 100，依機體大小與年代調整；協和號營運成本刻意高（史實虧損）。
 - **壽命**：`model_life` 依停產年份，`vehicle_life` 25–30 年；協和號 2003 退役。
-- **音效**：原版 `SOUND_TAKEOFF_JET` 系列，協和號用 `SOUND_TAKEOFF_JET_FAST`。自訂音效列為 P2。
+- **音效**：原版 `SOUND_TAKEOFF_JET` 系列為備援，協和號用 `SOUND_TAKEOFF_JET_FAST`。M5 起以 `sound_effect` callback 播放自製合成音效（起飛依 `sound` 類別三種、觸地一種），GRF 參數可切回原版。
+- **裝卸速度**：`loading_speed` 屬性 + callback 36，預設 8 步裝滿（GRF 參數可選 4 步、2 步或原版固定量）。NewGRF 車輛若不設 `loading_speed`，OpenTTD 每步只裝 1 單位。
+- **機場等級**：依 `runway_m`（起飛場地長度）分 `AIRCRAFT_TYPE_SMALL`（≤ 2,100 m，小機場安全）與 `LARGE`；購買視窗以 `additional_text` 顯示跑道長度與適用機場等級（只有小 / 大型旗標是遊戲機制，其餘等級為建議）。
 
 ### 6.2 鐵路
 
 - **固定編組**：每個車系一個購買項目，用 `articulated_part` callback 自動串出整列（範例見第 8 節）。優點是玩家一鍵買整列、不會接錯車廂；缺點是不能自由拆編。
+- **自由編組**（M5）：每個車系另有「先頭車 ×2」（`dual_headed` 機車，後端自動以反向先頭車繪製）與「中間車」（車廂；用 `livery_override` + `extra_power_per_wagon` 成為有動力車廂），`can_attach_wagon` 只允許同系列中間車。GRF 參數可選固定 / 自由 / 兩者。
 - **編組長度變體**：同車系以 `variant_group` 提供 8 / 12 / 16 輛三個項目，或以 refit subtype 切換（二擇一，M1 決定，建議 variant_group，因為對應不同的 power / weight 比較直覺）。
 - **傾斜列車**：N700、E5、E6 等設 `TRAIN_FLAG_TILT`（遊戲內彎道加速 20%）。另可用 `curve_speed_mod` 微調。
 - **動力**：`TRAIN_FLAG_MU`、`power` 填整列總功率、`weight` 填整列總重、`tractive_effort_coefficient` 0.25 左右。
@@ -466,7 +469,8 @@ disable_item(FEAT_TRAINS, 54, 57);
 | M2 MVP | 7–12 | P0 共 12 款：Concorde、737-800、747-400、747-8F、777-300ER、A320、A380、0 系、N700、E5、Transrapid SMT、L0 | 內部 alpha，上傳 GitHub Release |
 | M3 1.0 內容 | 13–20 | P1 全部（約 40 款）、GRF 參數、繁中 / 日文翻譯 | 公開 beta，TT-Forums / 社群收集回饋 |
 | M4 1.0 發布 | 21–24 | 平衡調整、QA 截圖全套、README / 說明、BaNaNaS 上架 | 1.0 tag |
-| M5 後續 | 25+ | P2 趣味項目、自訂音效、航程系統、16.0 回歸 | 持續 |
+| M5 玩法更新 | 25–26 | 裝卸速度修正與參數、跑道長度 / 機場等級 / 購買視窗說明、自製音效（docs/M5-REPORT.md） | GRF 版本 3 |
+| M6 後續 | 27+ | P2 趣味項目（艙等 refit、貨物老化、航程系統、年代 badges）、16.0 回歸 | 持續 |
 
 ## 12. 風險與對策
 

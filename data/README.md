@@ -19,8 +19,10 @@
 | pax / mail | 載客 / 郵件容量（典型兩艙等；部分廣體機只有三艙等數據）；貨機填 0 |
 | payload_t | 貨機酬載（公噸），客機留空；遊戲內依各貨物單位重量換算容量 |
 | price_adj / running_adj | 選填：價格 / 營運成本微調倍率（空白 = 1.0）。基準值由 `tools/balance.py` 依座位數、年代、速度計算，見 docs/BALANCE.md |
-| sound | `jet`、`jet_big`、`jet_fast` |
+| sound | `jet`、`jet_big`、`jet_fast`：原版備援音效，也決定本套件的起飛音效（sounds/jet_takeoff.wav、jet_takeoff_big.wav、concorde_takeoff.wav） |
 | length_m / wingspan_m | 建模與比例校正用 |
+| runway_m | 最大起飛重量、海平面標準大氣的起飛場地長度（公尺，依各型號公開數據，無資料者為估計值並在 notes 註明）；購買視窗顯示四捨五入到 50 m 的值與適用機場等級（≤ 2,100 全部機場、≤ 2,700 城市機場以上、≤ 3,100 國際機場以上、其餘洲際機場） |
+| airport_class | 選填：`small` 或 `large`。空白時由 runway_m 推算（≤ 2,100 m 為 small）。small 可安全使用小型 / 通勤機場；large 在這兩種機場降落有墜機風險（遊戲設定「飛機失事」非「無」時） |
 | art | 圖檔目錄名（`gfx/aircraft/<art>/`），空白表示用佔位圖 |
 | notes | 備註 |
 
@@ -30,7 +32,7 @@
 |---|---|
 | id, name_*, priority, variant_of, intro_date, model_life, game_model_life, vehicle_life, price_adj, running_adj, art, notes | 同上 |
 | manufacturer | badge：`jr`、`transrapid`、`crrc`、`hsst` |
-| kind | badge：`shinkansen`、`maglev` |
+| kind | badge：`shinkansen`、`maglev`；也決定發車音效（sounds/shinkansen_depart.wav、maglev_depart.wav） |
 | cars | 固定編組節數（articulated） |
 | speed_kmh | 營運最高速 |
 | power_kw | 整列總功率 |

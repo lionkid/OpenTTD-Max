@@ -41,6 +41,10 @@ plane_crashes = 0
 train_acceleration_model = 1
 roadveh_acceleration_model = 1
 
+[station]
+station_spread = 64
+distant_join_stations = true
+
 [economy]
 inflation = false
 

@@ -25,3 +25,20 @@ STR_PARAM_DISABLE_AIRCRAFT_NAME :停用原版飛機
 STR_PARAM_DISABLE_AIRCRAFT_DESC :隱藏原版飛機，購買清單只顯示 OpenTTD-Max 機型。已購入的原版飛機仍可繼續營運。
 STR_PARAM_DISABLE_MAGLEV_NAME   :停用原版磁浮機車
 STR_PARAM_DISABLE_MAGLEV_DESC   :隱藏原版磁浮機車（Lev1–Lev4、Wizzowow Rocketeer），磁浮貨車廂仍可購買。
+
+STR_PARAM_LOADING_NAME          :裝卸速度
+STR_PARAM_LOADING_DESC          :本套件車輛每個裝卸步驟裝卸的貨量（飛機每 20 tick 一步、列車每 40 tick 一步，一天 74 tick）。標準：8 步裝滿。快：4 步。很快：2 步。原版：固定每步 20 單位（飛機）或每節 5 單位（列車），與原版車輛相同，大型飛機會很慢。僅在「漸進式裝卸」開啟時有效。
+STR_PARAM_LOADING_STANDARD      :標準（8 步裝滿）
+STR_PARAM_LOADING_FAST          :快（4 步裝滿）
+STR_PARAM_LOADING_VERY_FAST     :很快（2 步裝滿）
+STR_PARAM_LOADING_ORIGINAL      :原版（每步固定單位）
+STR_PARAM_SOUNDS_NAME           :音效
+STR_PARAM_SOUNDS_DESC           :使用本套件自己的音效（噴射機與協和號起飛、降落觸地、新幹線與磁浮發車）或遊戲原版音效。
+STR_PARAM_SOUNDS_SET            :OpenTTD-Max 音效
+STR_PARAM_SOUNDS_ORIGINAL       :遊戲原版音效
+
+STR_PARAM_FORMATION_NAME        :編組方式
+STR_PARAM_FORMATION_DESC        :固定編組：一次購買整列。自由編組：購買兩節先頭車（一輛雙頭機車）後，在兩節之間加掛任意數量的同系列中間車。遊戲進行中更改，會讓被關閉類型的列車消失。
+STR_PARAM_FORMATION_BOTH        :固定編組 + 自由編組
+STR_PARAM_FORMATION_FIXED       :只有固定編組
+STR_PARAM_FORMATION_FREE        :只有自由編組（先頭車 + 中間車）

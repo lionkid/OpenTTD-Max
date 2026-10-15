@@ -21,7 +21,7 @@ TRAIN_SPEED_MAX_KMH = 1000                # practical sanity limit, property all
 REQUIRED = {
     "aircraft.csv": ["id", "name_en", "manufacturer", "role", "priority", "variant_of", "intro_date", "model_life",
                      "vehicle_life", "speed_kmh", "pax", "mail", "price_adj", "running_adj", "sound",
-                     "length_m", "wingspan_m", "art"],
+                     "length_m", "wingspan_m", "runway_m", "art"],
     "trains.csv": ["id", "name_en", "manufacturer", "kind", "priority", "variant_of", "intro_date", "model_life",
                    "vehicle_life", "cars", "speed_kmh", "power_kw", "weight_t", "te_coeff", "pax_per_car", "tilt",
                    "track", "price_adj", "running_adj", "car_length_m", "art"],
@@ -88,6 +88,10 @@ def check_aircraft(rows: list[dict]) -> None:
             err(f"aircraft:{rid}: pax must be 0..65535 and mail 0..255")
         if r["sound"] not in ("jet", "jet_big", "jet_fast"):
             err(f"aircraft:{rid}: unknown sound {r['sound']!r}")
+        if not 1000 <= int(r["runway_m"]) <= 5000:
+            err(f"aircraft:{rid}: runway_m {r['runway_m']!r} is not a takeoff field length in metres")
+        if r.get("airport_class", "") not in ("", "small", "large"):
+            err(f"aircraft:{rid}: airport_class must be empty, small or large")
         for role in r["role"].split("+"):
             if role not in ("passenger", "freighter", "supersonic"):
                 err(f"aircraft:{rid}: unknown role {role!r}")

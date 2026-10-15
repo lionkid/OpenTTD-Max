@@ -2,12 +2,20 @@
 // from the debug log (openttd -d script=4).
 //   MAXTEST engine <air|rail> | name | speed | capacity | power | weight | price
 //   MAXTEST pos <key> <tile>        position of each test vehicle, logged every few ticks
+//   MAXTEST ld <key> <tick> <state> <cargo on board>   loading progress, logged with the position
 class MaxTest extends AIController {
     air_names = ["Airbus A380-800", "Boeing 777-300ER", "Boeing 787-8", "Airbus A321", "Boeing 737-800"];
     rail_names = ["E5 Series Shinkansen", "E6 Series Shinkansen", "E7 Series Shinkansen", "Transrapid SMT",
                   "N700 Series Shinkansen"];
     freighter_name = "Boeing 747-8F";
+    free_trains = [["E5 Series Shinkansen", 4], ["Transrapid SMT", 2]];   // series, intermediate cars
     hangar = null;
+    cx = 0;            // centre of the test area (map centre, or near the largest town with near_town=1)
+    cy = 0;
+    town = null;       // the town the stations are joined to (near_town=1)
+    rail_station = null;
+    free_head = null;  // the first free formation (vehicle id) and its depot, for the coupling test
+    free_depot = null;
     air_a = null;
     air_b = null;
     vehicles = null;   // [key, vehicle id]
@@ -48,7 +56,7 @@ function MaxTest::FindSpot(center, radius, fn) {
 
 function MaxTest::BuildAirports() {
     local type = AIAirport.IsValidAirportType(AIAirport.AT_INTERNATIONAL) ? AIAirport.AT_INTERNATIONAL : AIAirport.AT_LARGE;
-    local cx = AIMap.GetMapSizeX() / 2, cy = AIMap.GetMapSizeY() / 2;
+    local cx = this.cx, cy = this.cy;
     // Squirrel 2 closures only see outer locals listed after the colon.
     local build = function(t) : (type) { return AIAirport.BuildAirport(t, type, AIStation.STATION_NEW); };
     local a = this.FindSpot(AIMap.GetTileIndex(cx - 25, cy - 20), 25, build);
@@ -87,11 +95,9 @@ function MaxTest::TryRail(x0, y, rt) {
     return ok;
 }
 
-function MaxTest::BuildTrain(name, key, y_start) {
-    local engine = this.FindEngine(AIVehicle.VT_RAIL, name);
-    if (engine == null) return y_start;
-    local rt = AIEngine.GetRailType(engine);
-    local cx = AIMap.GetMapSizeX() / 2;
+// Build a railway row for `rt` at or below y_start; returns [x0, y] or null.
+function MaxTest::BuildRow(name, rt, y_start) {
+    local cx = this.cx;
     local x0 = null, y = null;
     for (local yy = y_start; yy < y_start + 40 && x0 == null; yy++) {
         for (local xx = cx - 25; xx < cx + 10 && x0 == null; xx += 4) {
@@ -103,17 +109,86 @@ function MaxTest::BuildTrain(name, key, y_start) {
             if (ok) { x0 = xx; y = yy; }
         }
     }
-    if (x0 == null) { Log("no row for " + name); return y_start; }
-    if (!this.TryRail(x0, y, rt)) { Log("rail build failed for " + name + ": " + AIError.GetLastErrorString()); return y + 3; }
-    local depot = AIMap.GetTileIndex(x0 - 1, y);
-    local v = AIVehicle.BuildVehicle(depot, engine);
-    if (!AIVehicle.IsValidVehicle(v)) { Log("train build failed: " + name + ": " + AIError.GetLastErrorString()); return y + 3; }
+    if (x0 == null) { Log("no row for " + name); return null; }
+    if (!this.TryRail(x0, y, rt)) { Log("rail build failed for " + name + ": " + AIError.GetLastErrorString()); return null; }
+    return [x0, y];
+}
+
+function MaxTest::StartTrain(v, key, name, x0, y) {
     AIOrder.AppendOrder(v, AIMap.GetTileIndex(x0 + 2, y), AIOrder.OF_NONE);
     AIOrder.AppendOrder(v, AIMap.GetTileIndex(x0 + 20, y), AIOrder.OF_NONE);
     AIVehicle.StartStopVehicle(v);
-    Log("vehicle " + key + " train " + name + " length " + AIVehicle.GetLength(v) + " depot tile " + depot);
+    if (this.rail_station == null) this.rail_station = AIMap.GetTileIndex(x0 + 2, y);
+    Log("vehicle " + key + " train " + name + " length " + AIVehicle.GetLength(v) + " depot tile " + AIMap.GetTileIndex(x0 - 1, y));
     this.vehicles.append([key, v]);
+}
+
+function MaxTest::BuildTrain(name, key, y_start) {
+    local engine = this.FindEngine(AIVehicle.VT_RAIL, name);
+    if (engine == null) return y_start;
+    local row = this.BuildRow(name, AIEngine.GetRailType(engine), y_start);
+    if (row == null) return y_start + 3;
+    local x0 = row[0], y = row[1];
+    local v = AIVehicle.BuildVehicle(AIMap.GetTileIndex(x0 - 1, y), engine);
+    if (!AIVehicle.IsValidVehicle(v)) { Log("train build failed: " + name + ": " + AIError.GetLastErrorString()); return y + 3; }
+    this.StartTrain(v, key, name, x0, y);
     return y + 3;
+}
+
+// Free formation: the series' head cars (one dual-headed engine) plus `cars` intermediate cars, each
+// coupled right behind the front head car (the rear head car stays at the end).
+function MaxTest::BuildFreeTrain(name, key, cars, y_start) {
+    local head = this.FindEngine(AIVehicle.VT_RAIL, name + " head cars");
+    local car = this.FindEngine(AIVehicle.VT_RAIL, name + " intermediate car");
+    if (head == null || car == null) return y_start;
+    local row = this.BuildRow(name, AIEngine.GetRailType(head), y_start);
+    if (row == null) return y_start + 3;
+    local x0 = row[0], y = row[1];
+    local depot = AIMap.GetTileIndex(x0 - 1, y);
+    local v = AIVehicle.BuildVehicle(depot, head);
+    if (!AIVehicle.IsValidVehicle(v)) { Log("head build failed: " + name + ": " + AIError.GetLastErrorString()); return y + 3; }
+    for (local i = 0; i < cars; i++) {
+        local w = AIVehicle.BuildVehicle(depot, car);
+        if (!AIVehicle.IsValidVehicle(w)) { Log("car build failed: " + AIError.GetLastErrorString()); break; }
+        if (!AIVehicle.MoveWagon(w, 0, v, 0)) Log("car couple failed: " + AIError.GetLastErrorString());
+    }
+    Log("free " + key + " " + name + " wagons " + AIVehicle.GetNumWagons(v) + " length " + AIVehicle.GetLength(v) +
+        " head power " + AIEngine.GetPower(head) + " head price " + AIEngine.GetPrice(head) + " car price " + AIEngine.GetPrice(car) +
+        " capacity " + AIVehicle.GetCapacity(v, 0));
+    if (this.free_head == null) { this.free_head = v; this.free_depot = depot; }
+    this.StartTrain(v, key, name + " head cars", x0, y);
+    return y + 3;
+}
+
+// Coupling a car of another series to the free formation must be refused by the attach callback.
+function MaxTest::CheckAttach(other) {
+    if (this.free_head == null) return;
+    local car = this.FindEngine(AIVehicle.VT_RAIL, other + " intermediate car");
+    if (car == null) return;
+    local w = AIVehicle.BuildVehicle(this.free_depot, car);
+    if (!AIVehicle.IsValidVehicle(w)) { Log("attach test: car build failed: " + AIError.GetLastErrorString()); return; }
+    local ok = AIVehicle.MoveWagon(w, 0, this.free_head, 0);
+    Log("attach test: " + other + " car onto the free formation: " + (ok ? "ACCEPTED (wrong)" : "refused, " + AIError.GetLastErrorString()));
+    if (!ok) AIVehicle.SellWagonChain(w, 0);
+}
+
+// Join a drive-through bus stop in the town centre to station `sid` so that the station receives the
+// town's passengers (a distant join; the QA config raises station_spread to 64 for this).
+function MaxTest::JoinTown(sid) {
+    if (this.town == null || sid == null) return;
+    AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
+    local X = AIMap.GetMapSizeX();
+    local fn = function(t) : (sid, X) {
+        if (!AIRoad.IsRoadTile(t) || AIRoad.IsRoadStationTile(t)) return false;
+        foreach (d in [1, X]) {
+            if (AIRoad.AreRoadTilesConnected(t, t + d) && AIRoad.AreRoadTilesConnected(t, t - d) &&
+                AIRoad.BuildDriveThroughRoadStation(t, t + d, AIRoad.ROADVEHTYPE_BUS, sid)) return true;
+        }
+        return false;
+    };
+    local t = this.FindSpot(AITown.GetLocation(this.town), 6, fn);
+    if (t == null || !fn(t)) { Log("bus stop for station " + sid + " failed: " + AIError.GetLastErrorString()); return; }
+    Log("bus stop at " + t + " joined to station " + sid);
 }
 
 // One line per engine: what the player sees in the purchase list.
@@ -191,17 +266,44 @@ function MaxTest::Start() {
     AICompany.SetName("OpenTTD-Max QA");
     AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
     this.vehicles = [];
+    this.cx = AIMap.GetMapSizeX() / 2;
+    this.cy = AIMap.GetMapSizeY() / 2;
+    if (AIController.GetSetting("near_town") == 1) {
+        local towns = AITownList();
+        towns.Valuate(AITown.GetPopulation);
+        towns.Sort(AIList.SORT_BY_VALUE, false);
+        if (!towns.IsEmpty()) {
+            local t = towns.Begin();
+            this.town = t;
+            // Keep the test area inside the map: the rail rows need 45 tiles to the east and 50 to the south.
+            this.cx = max(40, min(AIMap.GetTileX(AITown.GetLocation(t)), AIMap.GetMapSizeX() - 45));
+            this.cy = max(30, min(AIMap.GetTileY(AITown.GetLocation(t)), AIMap.GetMapSizeY() - 50));
+            Log("town " + AITown.GetName(t) + " population " + AITown.GetPopulation(t) + " tile " + AITown.GetLocation(t));
+        }
+    }
     Log("start year " + AIDate.GetYear(AIDate.GetCurrentDate()));
     this.DumpEngines();
     if (this.BuildAirports()) {
         foreach (i, n in this.air_names) this.BuildAircraft(n, "air" + i);
     }
-    local y = AIMap.GetMapSizeY() / 2 + 8;
+    local y = this.cy + 8;
     foreach (i, n in this.rail_names) y = this.BuildTrain(n, "rail" + i, y);
+    foreach (i, ft in this.free_trains) y = this.BuildFreeTrain(ft[0], "free" + i, ft[1], y);
+    this.CheckAttach("E6 Series Shinkansen");
     this.CheckFreighter();
+    if (this.air_a != null) this.JoinTown(AIStation.GetStationID(this.air_a));
+    if (this.rail_station != null) this.JoinTown(AIStation.GetStationID(this.rail_station));
     Log("ready");
+    local pass = 0;   // passengers: the first cargo of class CC_PASSENGERS
+    foreach (c, _ in AICargoList()) {
+        if (AICargo.HasCargoClass(c, AICargo.CC_PASSENGERS)) { pass = c; break; }
+    }
     while (true) {
-        foreach (kv in this.vehicles) Log("pos " + kv[0] + " " + AIVehicle.GetLocation(kv[1]));
+        foreach (kv in this.vehicles) {
+            Log("pos " + kv[0] + " " + AIVehicle.GetLocation(kv[1]));
+            Log("ld " + kv[0] + " " + AIController.GetTick() + " " + AIVehicle.GetState(kv[1]) + " " +
+                AIVehicle.GetCargoLoad(kv[1], pass));
+        }
         this.Sleep(5);
     }
 }

@@ -25,3 +25,20 @@ STR_PARAM_DISABLE_AIRCRAFT_NAME :オリジナル航空機を無効化
 STR_PARAM_DISABLE_AIRCRAFT_DESC :オリジナルの航空機を非表示にし、OpenTTD-Max の機体だけを販売します。購入済みの機体はそのまま運行できます。
 STR_PARAM_DISABLE_MAGLEV_NAME   :オリジナルのリニア機関車を無効化
 STR_PARAM_DISABLE_MAGLEV_DESC   :オリジナルのリニア機関車（Lev1～Lev4、Wizzowow Rocketeer）を非表示にします。リニア用貨車は引き続き購入できます。
+
+STR_PARAM_LOADING_NAME          :積み降ろし速度
+STR_PARAM_LOADING_DESC          :このセットの車両が1回の積み降ろしステップで扱う貨物量（航空機は20ティック、列車は40ティックごとに1ステップ、1日は74ティック）。標準：8ステップで満載。高速：4ステップ。超高速：2ステップ。オリジナル：オリジナル車両と同じ固定量（航空機20、列車は1両あたり5）で、大型機では遅くなります。「段階的な積み降ろし」が有効なときのみ適用されます。
+STR_PARAM_LOADING_STANDARD      :標準（8ステップで満載）
+STR_PARAM_LOADING_FAST          :高速（4ステップ）
+STR_PARAM_LOADING_VERY_FAST     :超高速（2ステップ）
+STR_PARAM_LOADING_ORIGINAL      :オリジナル（ステップごとの固定量）
+STR_PARAM_SOUNDS_NAME           :効果音
+STR_PARAM_SOUNDS_DESC           :このセット独自の効果音（ジェット機・コンコルドの離陸、着地、新幹線・リニアの発車）か、ゲーム標準の効果音かを選びます。
+STR_PARAM_SOUNDS_SET            :OpenTTD-Max の効果音
+STR_PARAM_SOUNDS_ORIGINAL       :ゲーム標準の効果音
+
+STR_PARAM_FORMATION_NAME        :編成方式
+STR_PARAM_FORMATION_DESC        :固定編成：1回の購入で編成全体を購入します。自由編成：先頭車2両（両運転台の機関車1両）を購入し、その間に同じ系列の中間車を好きな数だけ連結します。ゲーム中に変更すると、無効にした種類の列車は消えます。
+STR_PARAM_FORMATION_BOTH        :固定編成＋自由編成
+STR_PARAM_FORMATION_FIXED       :固定編成のみ
+STR_PARAM_FORMATION_FREE        :自由編成のみ（先頭車＋中間車）

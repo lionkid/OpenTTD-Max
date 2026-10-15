@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 import balance  # noqa: E402
 from gallery import TAIL, compose, view_image  # noqa: E402
+from gen_nml import EXTRA_TEXT, airport_tier, train_tiles  # noqa: E402
 
 OUT = ROOT / "docs" / "catalog"
 VIEW, ZOOM = 5, "2x"
@@ -47,9 +48,11 @@ def main():
         rows.sort(key=lambda r: r["intro_date"])
         lines += [f"## {title} ({len(rows)})", ""]
         if category == "aircraft":
-            lines += ["| | Vehicle | Year | km/h | Capacity | Price | Running / yr |", "|---|---|---|---|---|---|---|"]
+            lines += ["| | Vehicle | Year | km/h | Capacity | Runway | Airports | Price | Running / yr |",
+                      "|---|---|---|---|---|---|---|---|---|"]
         else:
-            lines += ["| | Vehicle | Year | km/h | Cars × seats | Power | Price | Running / yr |", "|---|---|---|---|---|---|---|---|"]
+            lines += ["| | Vehicle | Year | km/h | Cars × seats | Platform | Power | Price | Running / yr |",
+                      "|---|---|---|---|---|---|---|---|---|"]
         done = {}
         for r in rows:
             art = r["art"]
@@ -60,12 +63,15 @@ def main():
             if category == "aircraft":
                 cp, rp = balance.aircraft_props(r)
                 cap = f"{float(r['payload_t']):.0f} t" if "freighter" in r["role"] else f"{r['pax']} pax"
+                tier = airport_tier(r)
+                airports = EXTRA_TEXT["english"]["tiers"][tier] + ("" if tier == "small" else " (large aircraft)")
                 lines.append(f"| ![]({done[art]}) | {name} | {year} | {r['speed_kmh']} | {cap} | "
+                             f"{int(r['runway_m']):,} m | {airports} | "
                              f"£{cp * balance.AIR_PRICE_UNIT:,.0f} | £{rp * balance.AIR_RUN_UNIT:,.0f} |")
             else:
                 cp, rp = balance.train_props(r)
                 lines.append(f"| ![]({done[art]}) | {name} | {year} | {r['speed_kmh']} | {r['cars']} × {r['pax_per_car']} | "
-                             f"{int(r['power_kw']):,} kW | £{cp * balance.TRAIN_PRICE_UNIT:,.0f} | £{rp * balance.TRAIN_RUN_UNIT:,.0f} |")
+                             f"{train_tiles(r)} tiles | {int(r['power_kw']):,} kW | £{cp * balance.TRAIN_PRICE_UNIT:,.0f} | £{rp * balance.TRAIN_RUN_UNIT:,.0f} |")
         lines.append("")
     (ROOT / "docs" / "CATALOG.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"wrote docs/CATALOG.md and {len(list(OUT.glob('*.png')))} thumbnails")

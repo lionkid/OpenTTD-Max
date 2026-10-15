@@ -98,6 +98,8 @@ def main() -> None:
     ap.add_argument("--shots", type=int, default=4, help="screenshot rounds per vehicle")
     ap.add_argument("--interval", type=float, default=12.0, help="seconds between rounds")
     ap.add_argument("--openttd", default=shutil.which("openttd") or "/usr/games/openttd")
+    ap.add_argument("--sound-driver", default="null",
+                    help="OpenTTD sound driver; 'sdl' with SDL_AUDIODRIVER=disk records the mixed audio to a raw file")
     ap.add_argument("--grf-param", action="append", default=[], metavar="GRF=VALUES",
                     help="NewGRF parameters, e.g. max-air.grf=1 (repeatable)")
     ap.add_argument("--start-year", type=int, default=0)
@@ -151,7 +153,7 @@ def main() -> None:
     time.sleep(1.5)
     env = dict(os.environ, HOME=str(home), DISPLAY=DISPLAY, XDG_DATA_HOME=str(home / ".local" / "share"),
                XDG_CONFIG_HOME=str(home / ".config"))
-    cmd = [args.openttd, "-c", str(cfg), "-x", "-v", "sdl", "-b", "32bpp-anim", "-s", "null", "-m", "null",
+    cmd = [args.openttd, "-c", str(cfg), "-x", "-v", "sdl", "-b", "32bpp-anim", "-s", args.sound_driver, "-m", "null",
            "-r", f"{RES[0]}x{RES[1]}", "-d", "script=4,grf=2"]
     print("launching:", " ".join(cmd), flush=True)
     with open(log, "wb") as lf:

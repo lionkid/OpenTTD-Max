@@ -22,6 +22,13 @@ Features
 - Shinkansen run on electrified rail (or a high-speed track type "HSTR" from a
   track set); maglevs run on the original maglev track.
 - Formation variants grouped in the purchase list; badges for manufacturer and type.
+- Free formations: buy a series' head cars (one dual-headed engine) and couple any
+  number of its intermediate cars between them to fit your platforms. Parameter:
+  fixed formations, free formations or both.
+- Purchase window shows the formation length and the platform tiles needed.
+- Loads a full car in 8 loading steps (parameter: 8 / 4 / 2 steps or original).
+- Synthesised Shinkansen chime and maglev departure sounds (parameter: set sounds or
+  original sounds).
 - Parameter: disable the original maglev locomotives.
 - English, Traditional Chinese, Japanese.
 
