@@ -44,7 +44,24 @@ grf {
             };
         }
     }
+    param 3 {
+        param_aging {
+            name: string(STR_PARAM_AGING_NAME);
+            desc: string(STR_PARAM_AGING_DESC);
+            type: int;
+            min_value: 0;
+            max_value: 1;
+            def_value: 0;
+            names: {
+                0: string(STR_PARAM_AGING_ON);
+                1: string(STR_PARAM_AGING_OFF);
+            };
+        }
+    }
 }
+
+// Cargo labels used by the cabin-layout callbacks (cargo_type_in_veh).
+cargotable { PASS, MAIL }
 
 // Optional: hide the original aircraft so only this set is on sale.
 if (param_disable_default_aircraft) {

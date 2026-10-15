@@ -27,6 +27,9 @@ Features
   fixed formations, free formations or both.
 - Purchase window shows the formation length and the platform tiles needed.
 - Loads a full car in 8 loading steps (parameter: 8 / 4 / 2 steps or original).
+- Formation layouts by refit: standard, all ordinary cars (+12% seats) or more Green
+  Cars (-15% seats, passengers age half as fast). Shinkansen and fast maglevs keep
+  passengers fresh longer (parameter: passenger comfort).
 - Synthesised Shinkansen chime and maglev departure sounds (parameter: set sounds or
   original sounds).
 - Parameter: disable the original maglev locomotives.

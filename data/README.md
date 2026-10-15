@@ -19,6 +19,7 @@
 | pax / mail | 載客 / 郵件容量（典型兩艙等；部分廣體機只有三艙等數據）；貨機填 0 |
 | payload_t | 貨機酬載（公噸），客機留空；遊戲內依各貨物單位重量換算容量 |
 | price_adj / running_adj | 選填：價格 / 營運成本微調倍率（空白 = 1.0）。基準值由 `tools/balance.py` 依座位數、年代、速度計算，見 docs/BALANCE.md |
+| （貨物老化） | 不是欄位：`tools/balance.py` 依 role / pax / speed 推算 `cargo_age_period`（supersonic ×2、pax ≥ 250 ×1.25；列車 speed ≥ 400 ×1.5、≥ 270 ×1.25），見 docs/BALANCE.md |
 | sound | `jet`、`jet_big`、`jet_fast`：原版備援音效，也決定本套件的起飛音效（sounds/jet_takeoff.wav、jet_takeoff_big.wav、concorde_takeoff.wav） |
 | length_m / wingspan_m | 建模與比例校正用 |
 | runway_m | 最大起飛重量、海平面標準大氣的起飛場地長度（公尺，依各型號公開數據，無資料者為估計值並在 notes 註明）；購買視窗顯示四捨五入到 50 m 的值與適用機場等級（≤ 2,100 全部機場、≤ 2,700 城市機場以上、≤ 3,100 國際機場以上、其餘洲際機場） |

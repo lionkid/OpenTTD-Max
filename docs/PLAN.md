@@ -179,6 +179,8 @@ OpenTTD 的 sprite 可同時提供多個 zoom 等級與兩種色深。NML 以 `a
 - **Badges**：`manufacturer/boeing`、`manufacturer/airbus`、`manufacturer/aerospatiale`、`role/passenger`、`role/freighter`、`role/supersonic`、`era/...`。
 - **成本**：以 737-800 為基準 100，依機體大小與年代調整；協和號營運成本刻意高（史實虧損）。
 - **壽命**：`model_life` 依停產年份，`vehicle_life` 25–30 年；協和號 2003 退役。
+- **艙等配置**（M6）：乘客的 refit 子類型（`cargo_subtype_text` + `passenger_capacity` callback）：標準 / 高密度（+15% 座位、老化 ×0.75）/ 豪華（−20% 座位、老化 ×2）。列車同理（標準 / 全普通車 +12% / 綠色車廂加強 −15%）。
+- **貨物老化**（M6）：`cargo_age_period` 依車種分級（協和號 ×2、廣體機 ×1.25、新幹線 ×1.25、高速磁浮 ×1.5），callback 36 再乘艙等係數；參數「乘客舒適度」可關閉。OpenTTD 票價不能依艙等加價，這是唯一的「舒適度」槓桿，效果刻意溫和（見 docs/BALANCE.md）。
 - **音效**：原版 `SOUND_TAKEOFF_JET` 系列為備援，協和號用 `SOUND_TAKEOFF_JET_FAST`。M5 起以 `sound_effect` callback 播放自製合成音效（起飛依 `sound` 類別三種、觸地一種），GRF 參數可切回原版。
 - **裝卸速度**：`loading_speed` 屬性 + callback 36，預設 8 步裝滿（GRF 參數可選 4 步、2 步或原版固定量）。NewGRF 車輛若不設 `loading_speed`，OpenTTD 每步只裝 1 單位。
 - **機場等級**：依 `runway_m`（起飛場地長度）分 `AIRCRAFT_TYPE_SMALL`（≤ 2,100 m，小機場安全）與 `LARGE`；購買視窗以 `additional_text` 顯示跑道長度與適用機場等級（只有小 / 大型旗標是遊戲機制，其餘等級為建議）。
@@ -470,7 +472,8 @@ disable_item(FEAT_TRAINS, 54, 57);
 | M3 1.0 內容 | 13–20 | P1 全部（約 40 款）、GRF 參數、繁中 / 日文翻譯 | 公開 beta，TT-Forums / 社群收集回饋 |
 | M4 1.0 發布 | 21–24 | 平衡調整、QA 截圖全套、README / 說明、BaNaNaS 上架 | 1.0 tag |
 | M5 玩法更新 | 25–26 | 裝卸速度修正與參數、跑道長度 / 機場等級 / 購買視窗說明、自製音效（docs/M5-REPORT.md） | GRF 版本 3 |
-| M6 後續 | 27+ | P2 趣味項目（艙等 refit、貨物老化、航程系統、年代 badges）、16.0 回歸 | 持續 |
+| M6 艙等與老化 | 27 | 艙等配置 refit、貨物老化分級與參數（docs/M6-REPORT.md） | GRF 版本 3 |
+| M7 後續 | 28+ | 航程系統、年代 badges、16.0 回歸 | 持續 |
 
 ## 12. 風險與對策
 

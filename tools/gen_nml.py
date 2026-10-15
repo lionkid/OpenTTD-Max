@@ -72,6 +72,13 @@ FREE_TEXT = {
     },
 }
 
+# Cabin layouts offered as passenger refit subtypes: (string id, seat factor, cargo-age factor). Seats
+# scale the CSV capacity, the age factor scales the vehicle's cargo_age_period (balance.cargo_age_period).
+CABINS = {
+    "aircraft": [("AIR_STANDARD", 1.0, 1.0), ("AIR_DENSE", 1.15, 0.75), ("AIR_PREMIUM", 0.8, 2.0)],
+    "trains": [("RAIL_STANDARD", 1.0, 1.0), ("RAIL_ORDINARY", 1.12, 0.75), ("RAIL_GREEN", 0.85, 2.0)],
+}
+
 # Purchase-window text (additional_text callback) per language. {} is a newline in NML strings; only the
 # "aircraft" and "train" templates go through str.format.
 EXTRA_TEXT = {
@@ -82,6 +89,8 @@ EXTRA_TEXT = {
                   "intl": "International or larger", "interc": "Intercontinental"},
         "train": "{cars} cars, {length_m} m: platform of {tiles} tiles.",
         "tilt": "{}Tilting train: faster through curves.",
+        "cabin_air": "{}Refit cabin: high density +15% seats (fare drops faster with time) or premium -20% seats (fare drops half as fast).",
+        "cabin_rail": "{}Refit: all ordinary cars +12% seats (fare drops faster with time) or more Green Cars -15% seats (fare drops half as fast).",
     },
     "traditional_chinese": {
         "aircraft": "起飛跑道約 {runway:,} 公尺。適用機場：{tier}。",
@@ -90,6 +99,8 @@ EXTRA_TEXT = {
                   "intl": "國際機場以上", "interc": "洲際機場"},
         "train": "{cars} 輛編組，全長 {length_m} 公尺，月台需 {tiles} 格。",
         "tilt": "{}傾斜列車：過彎更快。",
+        "cabin_air": "{}可改裝艙等：高密度座位 +15%（票價隨時間減少較快）或豪華座位 −20%（票價減少減半）。",
+        "cabin_rail": "{}可改裝編組：全普通車座位 +12%（票價隨時間減少較快）或綠色車廂加強座位 −15%（票價減少減半）。",
     },
     "japanese": {
         "aircraft": "離陸滑走路 約{runway:,} m。対応空港：{tier}。",
@@ -98,6 +109,8 @@ EXTRA_TEXT = {
                   "intl": "国際空港以上", "interc": "大陸間空港"},
         "train": "{cars}両編成、全長 {length_m} m、ホーム {tiles} タイル。",
         "tilt": "{}振り子式：カーブを高速で通過。",
+        "cabin_air": "{}改装でキャビン変更：高密度 座席+15%（運賃の減少が速い）／プレミアム 座席-20%（運賃の減少が半分）。",
+        "cabin_rail": "{}改装で編成変更：全車普通車 座席+12%（運賃の減少が速い）／グリーン車増結 座席-15%（運賃の減少が半分）。",
     },
 }
 
@@ -218,10 +231,11 @@ def extra_text(lang: str, r: dict, category: str) -> str:
     if category == "aircraft":
         tier = airport_tier(r)
         text = t["aircraft"].format(runway=round(int(r["runway_m"]) / 50) * 50, tier=t["tiers"][tier])
-        return text + (t["large"] if tier != "small" else "")
+        text += t["large"] if tier != "small" else ""
+        return text + (t["cabin_air"] if "freighter" not in r["role"].split("+") else "")
     cars = int(r["cars"])
     text = t["train"].format(cars=cars, length_m=round(cars * float(r["car_length_m"])), tiles=train_tiles(r))
-    return text + (t["tilt"] if r.get("tilt") == "1" else "")
+    return text + (t["tilt"] if r.get("tilt") == "1" else "") + t["cabin_rail"]
 
 
 def series(rows: list[dict]) -> list[dict]:
@@ -247,6 +261,31 @@ def free_text(lang: str, r: dict, key: str) -> str:
     power, _ = per_car(r)
     return FREE_TEXT[lang][key].format(name=name, seats=int(r["pax_per_car"]), power=power,
                                        cars=int(r["cars"]), tiles=train_tiles(r))
+
+
+def cabin_text_switch(feature: str, prefix: str, category: str) -> list[str]:
+    """cargo_subtype_text callback: one entry per cabin layout, for passengers only."""
+    out = [f"switch ({feature}, SELF, sw_{prefix}_cabin_text_pass, cargo_subtype) {{"]
+    out += [f"    {i}: return string(STR_CABIN_{name});" for i, (name, _, _) in enumerate(CABINS[category])]
+    out += ["    return CB_RESULT_NO_TEXT;", "}",
+            f"switch ({feature}, SELF, sw_{prefix}_cabin_text, cargo_type_in_veh) {{",
+            f"    PASS: sw_{prefix}_cabin_text_pass;", "    return CB_RESULT_NO_TEXT;", "}"]
+    return out
+
+
+def cabin_switches(feature: str, rid: str, category: str, seats: int, age: int) -> list[str]:
+    """Refit capacity (callback 15) and cargo_age_period (callback 36) of one vehicle by cabin layout;
+    the comfort parameter set to 1 restores the default ageing for every layout."""
+    cabins = CABINS[category]
+    out = [f"switch ({feature}, SELF, sw_{rid}_cap, cargo_subtype) {{"]
+    out += [f"    {i}: return {max(1, round(seats * sf))};" for i, (_, sf, _) in enumerate(cabins) if i > 0]
+    out += [f"    return {seats};", "}",
+            f"switch ({feature}, SELF, sw_{rid}_age_cabin, cargo_subtype) {{"]
+    out += [f"    {i}: return {min(65535, round(age * af))};" for i, (_, _, af) in enumerate(cabins) if i > 0]
+    out += [f"    return {age};", "}",
+            f"switch ({feature}, SELF, sw_{rid}_age, param_aging) {{",
+            f"    1: return {balance.DEFAULT_AGE_PERIOD};", f"    sw_{rid}_age_cabin;", "}"]
+    return out
 
 
 def loading_switch(feature: str, prefix: str, original: int) -> list[str]:
@@ -280,6 +319,7 @@ def sound_switch(feature: str, name: str, events: dict[str, tuple[str, int]]) ->
 def gen_aircraft(rows: list[dict], badges: bool, strict: bool, missing: list[str]) -> str:
     out = ["// Generated by tools/gen_nml.py from data/aircraft.csv. Do not edit.", ""]
     out += loading_switch("FEAT_AIRCRAFT", "air", ORIGINAL_LOAD["air"])
+    out += cabin_text_switch("FEAT_AIRCRAFT", "air", "aircraft")
     for cls, wav in TAKEOFF_WAV.items():
         out += sound_switch("FEAT_AIRCRAFT", f"sw_air_sound_{cls}",
                             {"SOUND_EVENT_START": (wav, 100), "SOUND_EVENT_TOUCHDOWN": ("touchdown.wav", 80)})
@@ -295,6 +335,9 @@ def gen_aircraft(rows: list[dict], badges: bool, strict: bool, missing: list[str
         out += spriteset_blocks(f"ss_{rid}", part, gfx_rel)
         payload = float(r.get("payload_t") or 0)
         capacity = round(payload * 4) if freighter else int(r["pax"])   # freighters: mail bags of 1/4 t
+        age = balance.cargo_age_period(r, "aircraft")
+        if not freighter:
+            out += cabin_switches("FEAT_AIRCRAFT", rid, "aircraft", capacity, age)
         if freighter:
             if payload <= 0:
                 die(f"{rid}: freighter without payload_t")
@@ -318,6 +361,7 @@ def gen_aircraft(rows: list[dict], badges: bool, strict: bool, missing: list[str
             f"passenger_capacity: {capacity};",
             f"mail_capacity: {0 if freighter else int(r['mail'])};",
             f"loading_speed: {load_units(capacity)};",   # fallback when the loading-speed callback is not used
+            f"cargo_age_period: {age};",
             f"sound_effect: {SOUND[r['sound']]};",
             "range: 0;",
         ]
@@ -348,6 +392,9 @@ def gen_aircraft(rows: list[dict], badges: bool, strict: bool, missing: list[str
                f"additional_text: string(STR_EXTRA_{rid.upper()});"]
         if freighter:
             gfx.append(f"passenger_capacity: sw_{rid}_capacity;")
+        else:
+            gfx += [f"passenger_capacity: sw_{rid}_cap;", "cargo_subtype_text: sw_air_cabin_text;",
+                    f"cargo_age_period: sw_{rid}_age;"]
         gfx.append(f"ss_{rid};")
         out.append("    graphics { " + " ".join(gfx) + " }")
         out.append("}")
@@ -360,6 +407,7 @@ def gen_aircraft(rows: list[dict], badges: bool, strict: bool, missing: list[str
 def gen_trains(rows: list[dict], badges: bool, strict: bool, missing: list[str]) -> str:
     out = ["// Generated by tools/gen_nml.py from data/trains.csv. Do not edit.", ""]
     out += loading_switch("FEAT_TRAINS", "rail", ORIGINAL_LOAD["rail"])
+    out += cabin_text_switch("FEAT_TRAINS", "rail", "trains")
     for kind, wav in DEPART_WAV.items():
         out += sound_switch("FEAT_TRAINS", f"sw_rail_sound_{kind}", {"SOUND_EVENT_START": (wav, 100)})
     fixed: list[str] = []    # complete formations, one purchase each (articulated)
@@ -409,6 +457,8 @@ def gen_trains(rows: list[dict], badges: bool, strict: bool, missing: list[str])
             out += spriteset_blocks(f"ss_{rid}", body, gfx_rel)
             gfx_ref = f"ss_{rid}"
             head_ref, car_ref, car_p_ref = f"ss_{rid}", f"ss_{rid}", ""
+        age = balance.cargo_age_period(r, "trains")
+        out += cabin_switches("FEAT_TRAINS", rid, "trains", int(r["pax_per_car"]), age)
         if cars > 1:
             out += [
                 f"switch (FEAT_TRAINS, SELF, sw_{rid}_artic, extra_callback_info1) {{",
@@ -437,6 +487,7 @@ def gen_trains(rows: list[dict], badges: bool, strict: bool, missing: list[str])
             "dual_headed: 0;",
             f"cargo_capacity: {int(r['pax_per_car'])};",     # per car: every articulated part gets this
             f"loading_speed: {load_units(int(r['pax_per_car']))};",   # per car; fallback for the callback
+            f"cargo_age_period: {age};",
             f"cost_factor: {balance.train_props(r)[0]};",
             f"running_cost_factor: {balance.train_props(r)[1]};",
             "refittable_cargo_classes: bitmask(CC_PASSENGERS);",
@@ -457,11 +508,13 @@ def gen_trains(rows: list[dict], badges: bool, strict: bool, missing: list[str])
         fixed.append("    }")
         gfx = [f"articulated_part: sw_{rid}_artic;"] if cars > 1 else []
         gfx += ["loading_speed: sw_rail_loading_speed;", f"sound_effect: sw_rail_sound_{r['kind']};",
+                f"cargo_capacity: sw_{rid}_cap;", "cargo_subtype_text: sw_rail_cabin_text;",
+                f"cargo_age_period: sw_{rid}_age;",
                 f"additional_text: string(STR_EXTRA_{rid.upper()});", f"{gfx_ref};"]
         fixed.append("    graphics { " + " ".join(gfx) + " }")
         fixed.append("}")
         if rid in free_series:
-            switches, items = gen_free_train(r, badges, flags, head_ref, car_ref, car_p_ref)
+            switches, items = gen_free_train(r, badges, flags, head_ref, car_ref, car_p_ref, age)
             out += switches
             free += items
             links += [f"item(FEAT_TRAINS, {rid}_head) {{ property {{ variant_group: {rid}; }} }}"]
@@ -475,7 +528,7 @@ def gen_trains(rows: list[dict], badges: bool, strict: bool, missing: list[str])
 
 
 def gen_free_train(r: dict, badges: bool, flags: list[str], head_ref: str, car_ref: str,
-                   car_p_ref: str) -> tuple[list[str], list[str]]:
+                   car_p_ref: str, age: int) -> tuple[list[str], list[str]]:
     """Head cars (dual-headed engine, both ends drawn from the head sprites) and the intermediate car
     (a powered wagon: the livery override marks it powered, extra_power_per_wagon adds its power).
     Returns (switch blocks, item blocks): NML allows no switch inside a conditional block."""
@@ -499,6 +552,7 @@ def gen_free_train(r: dict, badges: bool, flags: list[str], head_ref: str, car_r
         f"length: {units};",
         f"cargo_capacity: {int(r['pax_per_car'])};",
         f"loading_speed: {load_units(int(r['pax_per_car']))};",
+        f"cargo_age_period: {age};",
         "refittable_cargo_classes: bitmask(CC_PASSENGERS);",
         "non_refittable_cargo_classes: NO_CARGO_CLASS;",
         f"misc_flags: bitmask({', '.join(flags)});",
@@ -521,7 +575,9 @@ def gen_free_train(r: dict, badges: bool, flags: list[str], head_ref: str, car_r
         f"running_cost_factor: {costs['car_run']};",
         "visual_effect_and_powered: visual_effect_and_powered(VISUAL_EFFECT_DISABLE, 0, ENABLE_WAGON_POWER);",
     ] + badge]
-    out += ["    }", "    graphics { loading_speed: sw_rail_loading_speed; "
+    cabin = (f"cargo_capacity: sw_{rid}_cap; cargo_subtype_text: sw_rail_cabin_text; "
+             f"cargo_age_period: sw_{rid}_age;")   # the series' cabin switches: same seats per car
+    out += ["    }", f"    graphics {{ loading_speed: sw_rail_loading_speed; {cabin} "
             f"additional_text: string(STR_EXTRA_{rid.upper()}_CAR); {car_ref}; }}", "}"]
     out += [f"item(FEAT_TRAINS, {rid}_head) {{", "    property {"]
     out += [f"        {p}" for p in [f"name: string(STR_NAME_{rid.upper()}_HEAD);"] + common + [
@@ -534,7 +590,7 @@ def gen_free_train(r: dict, badges: bool, flags: list[str], head_ref: str, car_r
         "visual_effect_and_powered: visual_effect_and_powered(VISUAL_EFFECT_DISABLE, 0, DISABLE_WAGON_POWER);",
     ] + badge]
     out += ["    }",
-            f"    graphics {{ can_attach_wagon: sw_{rid}_attach; loading_speed: sw_rail_loading_speed; "
+            f"    graphics {{ can_attach_wagon: sw_{rid}_attach; loading_speed: sw_rail_loading_speed; {cabin} "
             f"sound_effect: sw_rail_sound_{r['kind']}; additional_text: string(STR_EXTRA_{rid.upper()}_HEAD); {head_ref}; }}",
             f"    livery_override({rid}_car) {{ {car_ref}; }}", "}"]
     return switches, out

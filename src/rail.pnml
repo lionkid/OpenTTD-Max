@@ -59,7 +59,24 @@ grf {
             };
         }
     }
+    param 4 {
+        param_aging {
+            name: string(STR_PARAM_AGING_NAME);
+            desc: string(STR_PARAM_AGING_DESC);
+            type: int;
+            min_value: 0;
+            max_value: 1;
+            def_value: 0;
+            names: {
+                0: string(STR_PARAM_AGING_ON);
+                1: string(STR_PARAM_AGING_OFF);
+            };
+        }
+    }
 }
+
+// Cargo labels used by the cabin-layout callbacks (cargo_type_in_veh).
+cargotable { PASS, MAIL }
 
 // Optional: hide the original maglev locomotives (engines 84-88: Lev1-Lev4, Wizzowow Rocketeer).
 // Maglev wagons stay, and the maglev railtype is still introduced by Transrapid SMT (2004).

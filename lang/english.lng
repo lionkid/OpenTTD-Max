@@ -42,3 +42,14 @@ STR_PARAM_FORMATION_DESC        :Fixed formations are bought as one complete tra
 STR_PARAM_FORMATION_BOTH        :Fixed and free formations
 STR_PARAM_FORMATION_FIXED       :Fixed formations only
 STR_PARAM_FORMATION_FREE        :Free formations only (head cars + intermediate cars)
+
+STR_PARAM_AGING_NAME            :Passenger comfort (cargo ageing)
+STR_PARAM_AGING_DESC            :On: the fare of passengers on fast and comfortable vehicles drops slower with the time in transit (Concorde 2x, wide-body jets 1.25x, Shinkansen 1.25x, fast maglev 1.5x the default cargo ageing period), so long trips pay more; a premium cabin doubles the period again, a high-density layout shortens it. Off: the original ageing for every layout.
+STR_PARAM_AGING_ON              :On
+STR_PARAM_AGING_OFF             :Off (original cargo ageing)
+STR_CABIN_AIR_STANDARD          : (standard, two-class)
+STR_CABIN_AIR_DENSE             : (high density, all economy)
+STR_CABIN_AIR_PREMIUM           : (premium, three-class)
+STR_CABIN_RAIL_STANDARD         : (standard)
+STR_CABIN_RAIL_ORDINARY         : (all ordinary cars)
+STR_CABIN_RAIL_GREEN            : (more Green Cars)

@@ -99,6 +99,28 @@ def train_props(r: dict) -> tuple[int, int]:
     return _clamp_prop(price, TRAIN_PRICE_UNIT), _clamp_prop(running, TRAIN_RUN_UNIT)
 
 
+# Cargo ageing: cargo_age_period is the number of ticks between ageing steps (OpenTTD default 185, about
+# 2.5 days). Passengers pay 1/255 of the fare less per step in transit (2/255 per step after 24 steps),
+# so a longer period keeps more of the fare on long routes. Kept modest: at 2x a 40-day trip pays about
+# 3% more and a 100-day trip 14% more than at the default; premium cabins double the vehicle's period.
+DEFAULT_AGE_PERIOD = 185
+AGE_FACTORS = {"supersonic": 2.0, "wide_body": 1.25, "maglev_fast": 1.5, "high_speed": 1.25}
+
+
+def cargo_age_period(r: dict, category: str) -> int:
+    if category == "aircraft":
+        roles = r["role"].split("+")
+        if "freighter" in roles:
+            return DEFAULT_AGE_PERIOD
+        if "supersonic" in roles:
+            return round(DEFAULT_AGE_PERIOD * AGE_FACTORS["supersonic"])
+        return round(DEFAULT_AGE_PERIOD * (AGE_FACTORS["wide_body"] if int(r["pax"]) >= 250 else 1.0))
+    speed = int(r["speed_kmh"])
+    if speed >= 400:
+        return round(DEFAULT_AGE_PERIOD * AGE_FACTORS["maglev_fast"])
+    return round(DEFAULT_AGE_PERIOD * (AGE_FACTORS["high_speed"] if speed >= 270 else 1.0))
+
+
 # Free formations: the two head cars are one dual-headed engine priced at HEAD_PRICE_SHARE of the full
 # formation; intermediate cars are wagons, whose price OpenTTD caps at 255 wagon units (base price 2,000,
 # i.e. about 1,500 GBP at the default "low" vehicle costs), so they are cheap like every wagon in the game.

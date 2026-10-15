@@ -17,6 +17,12 @@
   each end) plus an "intermediate car" wagon, so a formation of any length can be built to fit the
   platforms. Intermediate cars are powered (livery override + extra_power_per_wagon), only the series'
   own cars can be coupled, and a parameter keeps fixed formations, free formations or both on sale.
+- Cabin layouts as passenger refit subtypes: aircraft standard (two-class) / high density (+15% seats,
+  passengers age faster) / premium (-20% seats, passengers age half as fast); trains standard / all
+  ordinary cars (+12%) / more Green Cars (-15%). Refit in a hangar or depot.
+- Cargo ageing by vehicle class (Concorde 2x, wide-body jets and Shinkansen 1.25x, fast maglev 1.5x the
+  default cargo_age_period), so long trips pay a little more on fast, comfortable vehicles; parameter
+  "Passenger comfort" to keep the original ageing.
 - Catalogue: runway / airport and platform columns.
 - NewGRF version 3 (savegames from 1.0.0 stay compatible; the new parameters read as their defaults).
 

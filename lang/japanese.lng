@@ -42,3 +42,14 @@ STR_PARAM_FORMATION_DESC        :固定編成：1回の購入で編成全体を�
 STR_PARAM_FORMATION_BOTH        :固定編成＋自由編成
 STR_PARAM_FORMATION_FIXED       :固定編成のみ
 STR_PARAM_FORMATION_FREE        :自由編成のみ（先頭車＋中間車）
+
+STR_PARAM_AGING_NAME            :乗客の快適性（貨物の劣化）
+STR_PARAM_AGING_DESC            :オン：速くて快適な車両では乗客の運賃が輸送時間とともに減りにくくなります（コンコルド2倍、ワイドボディ機1.25倍、新幹線1.25倍、高速リニア1.5倍の劣化周期）。プレミアム構成でさらに2倍、高密度構成では短くなります。オフ：すべての構成でオリジナルの劣化。
+STR_PARAM_AGING_ON              :オン
+STR_PARAM_AGING_OFF             :オフ（オリジナルの劣化）
+STR_CABIN_AIR_STANDARD          :（標準、2クラス）
+STR_CABIN_AIR_DENSE             :（高密度、全席エコノミー）
+STR_CABIN_AIR_PREMIUM           :（プレミアム、3クラス）
+STR_CABIN_RAIL_STANDARD         :（標準）
+STR_CABIN_RAIL_ORDINARY         :（全車普通車）
+STR_CABIN_RAIL_GREEN            :（グリーン車増結）

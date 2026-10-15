@@ -42,3 +42,14 @@ STR_PARAM_FORMATION_DESC        :固定編組：一次購買整列。自由編�
 STR_PARAM_FORMATION_BOTH        :固定編組 + 自由編組
 STR_PARAM_FORMATION_FIXED       :只有固定編組
 STR_PARAM_FORMATION_FREE        :只有自由編組（先頭車 + 中間車）
+
+STR_PARAM_AGING_NAME            :乘客舒適度（貨物老化）
+STR_PARAM_AGING_DESC            :開啟：快而舒適的車輛，乘客票價隨運輸時間減少得較慢（協和號 2 倍、廣體機 1.25 倍、新幹線 1.25 倍、高速磁浮 1.5 倍的老化週期），長途更賺；豪華艙等再加倍，高密度配置則縮短。關閉：所有配置都用原版老化。
+STR_PARAM_AGING_ON              :開啟
+STR_PARAM_AGING_OFF             :關閉（原版貨物老化）
+STR_CABIN_AIR_STANDARD          :（標準，兩艙等）
+STR_CABIN_AIR_DENSE             :（高密度，全經濟艙）
+STR_CABIN_AIR_PREMIUM           :（豪華，三艙等）
+STR_CABIN_RAIL_STANDARD         :（標準）
+STR_CABIN_RAIL_ORDINARY         :（全普通車）
+STR_CABIN_RAIL_GREEN            :（綠色車廂加強）

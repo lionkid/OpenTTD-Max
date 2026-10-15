@@ -21,6 +21,9 @@ Features
 - Purchase window shows the takeoff runway length and the suitable airports: aircraft
   needing up to 2,100 m are "small" and safe at Small and Commuter airports.
 - Loads a full aircraft in 8 loading steps (parameter: 8 / 4 / 2 steps or original).
+- Cabin layouts by refit: standard, high density (+15% seats) or premium (-20% seats,
+  passengers age half as fast). Wide-body jets and Concorde keep passengers fresh
+  longer (parameter: passenger comfort).
 - Synthesised takeoff and touchdown sounds (parameter: set sounds or original sounds).
 - Parameter: disable the original aircraft.
 - English, Traditional Chinese, Japanese.
