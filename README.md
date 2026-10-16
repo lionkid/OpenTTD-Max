@@ -15,12 +15,17 @@
 | [docs/BALANCE.md](docs/BALANCE.md) · [docs/TIMELINE.md](docs/TIMELINE.md) | 平衡對照表 · 可購時間軸 |
 | [docs/RELEASE.md](docs/RELEASE.md) | 發布與 BaNaNaS 上架步驟 |
 | [data/README.md](data/README.md) | CSV 欄位定義 |
+| [docs/AI.md](docs/AI.md) | MaxTransit AI 設計文件（CargoDist 客運網、安全第一、節省時間） |
 
 **目前狀態：M5 玩法更新（GRF 版本 3）**。49 款飛機與 24 款列車模型（共 80 筆車種資料）全部完成 32bpp、最高 4x 的正式算圖；成本已對照原版車輛平衡，並在 OpenTTD 15.3 跑完 1950–2050 完整一局。M5 修正了裝卸速度、依起飛跑道長度分出小型 / 大型機並在購買視窗列出適用機場，加入自製起降與發車音效。發布步驟見 docs/RELEASE.md。
 
 ![Aircraft](docs/qa/gallery_aircraft.png)
 
 ![Trains](docs/qa/gallery_trains.png)
+
+## MaxTransit AI
+
+`ai/MaxTransit/` 是一個以 CargoDist 為核心的客運 AI：公車、鐵路、飛機各自負責最適合的距離，城鎮車站 join 成轉乘樞紐，新鐵路從既有車站分岔共用。優先順序是**乘客安全**（不建平交道、單線只跑一列車、複線用單向路徑號誌、大型機不去小機場、隨機墜機開啟時預設不載客飛行），其次是**門到門時間**，最後才是收益。支援原版車輛與本套件的固定 / 自由編組。安裝：把 `ai/MaxTransit/` 複製到 OpenTTD 的 `ai/` 資料夾，或 `make ai-bundle` 產生 tar。設計與測試結果見 [docs/AI.md](docs/AI.md)。
 
 ## GRF 參數
 
