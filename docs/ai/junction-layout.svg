@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 380" width="880" height="380" role="img" aria-label="共用車站：新路線在既有出發軌的直線段分岔、匯入到達軌，並用橋跨過既有複線" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei','WenQuanYi Zen Hei',sans-serif">
+  <rect x="0.5" y="0.5" width="879" height="379" rx="10" fill="#FBFCFB" stroke="#D5DCD9"/>
+  <line x1="30" y1="40" x2="70" y2="40" fill="none" stroke="#1B2421" stroke-width="3.5" stroke-linecap="round"/>
+  <text x="80" y="45" font-size="12" font-weight="400" text-anchor="start" fill="#1B2421">既有路線（複線）</text>
+  <line x1="220" y1="40" x2="260" y2="40" fill="none" stroke="#0F6B66" stroke-width="3.5" stroke-linecap="round"/>
+  <text x="270" y="45" font-size="12" font-weight="400" text-anchor="start" fill="#1B2421">新路線</text>
+  <rect x="20" y="148" width="120" height="84" rx="4" fill="#E2EBE7" stroke="#5B6764" stroke-width="1"/>
+  <text x="80" y="188" font-size="13" font-weight="700" text-anchor="middle" fill="#1B2421">共用車站</text>
+  <line x1="140" y1="170" x2="780" y2="170" fill="none" stroke="#1B2421" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="140" y1="210" x2="780" y2="210" fill="none" stroke="#1B2421" stroke-width="3.5" stroke-linecap="round"/>
+  <polygon points="747,170 733,164.75 733,175.25" fill="#1B2421"/>
+  <polygon points="693,210 707,204.75 707,215.25" fill="#1B2421"/>
+  <text x="790" y="175" font-size="12" font-weight="400" text-anchor="start" fill="#1B2421">往 B</text>
+  <text x="790" y="215" font-size="12" font-weight="400" text-anchor="start" fill="#1B2421">從 B</text>
+  <line x1="200" y1="163" x2="200" y2="177" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="240" y1="163" x2="240" y2="177" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="280" y1="163" x2="280" y2="177" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="320" y1="163" x2="320" y2="177" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="360" y1="163" x2="360" y2="177" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="400" y1="163" x2="400" y2="177" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="340" y1="203" x2="340" y2="217" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="380" y1="203" x2="380" y2="217" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="420" y1="203" x2="420" y2="217" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="460" y1="203" x2="460" y2="217" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="500" y1="203" x2="500" y2="217" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="540" y1="203" x2="540" y2="217" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <polyline points="300,170 340,130 580,130 600,150 600,230 640,270 780,270" fill="none" stroke="#0F6B66" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="600" y1="156" x2="600" y2="224" fill="none" stroke="#FBFCFB" stroke-width="14" stroke-linecap="butt"/>
+  <line x1="600" y1="150" x2="600" y2="230" fill="none" stroke="#0F6B66" stroke-width="3.5" stroke-linecap="butt"/>
+  <rect x="591" y="148" width="18" height="84" rx="3" fill="none" stroke="#0F6B66" stroke-width="1.5"/>
+  <text x="616" y="194" font-size="12" font-weight="400" text-anchor="start" fill="#0F6B66">立體交叉（橋）</text>
+  <polyline points="780,310 540,310 440,210" fill="none" stroke="#0F6B66" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="747,270 733,264.75 733,275.25" fill="#0F6B66"/>
+  <polygon points="733,310 747,304.75 747,315.25" fill="#0F6B66"/>
+  <text x="790" y="275" font-size="12" font-weight="400" text-anchor="start" fill="#0F6B66">往 C</text>
+  <text x="790" y="315" font-size="12" font-weight="400" text-anchor="start" fill="#0F6B66">從 C</text>
+  <line x1="300" y1="158" x2="300" y2="112" fill="none" stroke="#5B6764" stroke-width="1" stroke-linecap="butt"/>
+  <text x="294" y="104" font-size="12" font-weight="400" text-anchor="middle" fill="#1B2421">分岔：道岔設在直線段，前後各 2 格直線</text>
+  <line x1="440" y1="222" x2="380" y2="272" fill="none" stroke="#5B6764" stroke-width="1" stroke-linecap="butt"/>
+  <text x="374" y="288" font-size="12" font-weight="400" text-anchor="end" fill="#1B2421">匯流：同樣的直線條件</text>
+  <text x="30" y="358" font-size="12" font-weight="400" text-anchor="start" fill="#5B6764">道岔接在彎道旁會形成 90° 轉向，列車不能通過；新路線從既有軌道旁的空地接入，要跨過既有複線時用橋。</text>
+</svg>

@@ -9,7 +9,8 @@
   unsignalled single track, one-way path signals, no large aircraft at Small/Commuter airports, no flights
   while random plane crashes are enabled unless the AI setting allows them). Trains for this set are planned
   as fixed formations or as head cars with their own series' intermediate cars, measured in a depot first.
-  `make ai-bundle` packages it; design notes and test results in docs/AI.md.
+  `make ai-bundle` packages it; design notes, station layout diagrams, in-game screenshots and test results
+  in docs/AI.md (tools/ai/station_shots.py photographs a savegame).
 - Docs: the short-strip crash risk of large aircraft is about 11-20% per landing (3276/2^22 per braking
   step, 150-290 steps per landing) and does not depend on the "Plane crashes" setting; see docs/AI.md 2.1.
 

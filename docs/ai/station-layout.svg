@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 276" width="880" height="276" role="img" aria-label="MaxTransit 兩月台端點站：出口格、咽喉兩組渡線、月台、車庫與單向路徑號誌" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei','WenQuanYi Zen Hei',sans-serif">
+  <rect x="0.5" y="0.5" width="879" height="275" rx="10" fill="#FBFCFB" stroke="#D5DCD9"/>
+  <rect x="150" y="70" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1" stroke-dasharray="3 3"/>
+  <rect x="150" y="120" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1" stroke-dasharray="3 3"/>
+  <rect x="200" y="70" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="200" y="120" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="250" y="70" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="250" y="120" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="300" y="70" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="300" y="120" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="350" y="70" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="350" y="120" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="400" y="70" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="400" y="120" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="450" y="70" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="450" y="120" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="500" y="70" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="500" y="120" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="550" y="70" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="550" y="120" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="600" y="70" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="600" y="120" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="650" y="70" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="650" y="120" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="700" y="70" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="700" y="120" width="50" height="50" rx="0" fill="none" stroke="#C9D3CF" stroke-width="1"/>
+  <rect x="400" y="74" width="300" height="92" rx="3" fill="#E2EBE7" stroke-width="1"/>
+  <rect x="200" y="70" width="550" height="100" rx="0" fill="none" stroke="#5B6764" stroke-width="1.4" stroke-dasharray="7 4"/>
+  <text x="750" y="60" font-size="12" font-weight="400" text-anchor="end" fill="#5B6764">佔地矩形：2 列 × (L+5) 格</text>
+  <line x1="30" y1="95" x2="700" y2="95" fill="none" stroke="#1B2421" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="30" y1="145" x2="698" y2="145" fill="none" stroke="#1B2421" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="698" y1="136" x2="698" y2="154" fill="none" stroke="#1B2421" stroke-width="4" stroke-linecap="butt"/>
+  <line x1="350" y1="145" x2="400" y2="95" fill="none" stroke="#1B2421" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="350" y1="145" x2="300" y2="95" fill="none" stroke="#1B2421" stroke-width="3.5" stroke-linecap="round"/>
+  <rect x="704" y="78" width="42" height="34" rx="4" fill="#CFE7E3" stroke="#0F6B66" stroke-width="1.5"/>
+  <text x="725" y="100" font-size="12" font-weight="700" text-anchor="middle" fill="#0F6B66">車庫</text>
+  <line x1="275" y1="87" x2="275" y2="61" fill="none" stroke="#1B2421" stroke-width="1.5" stroke-linecap="butt"/>
+  <rect x="269" y="47" width="12" height="14" rx="3" fill="#1B2421" stroke-width="1"/>
+  <circle cx="275" cy="54" r="3.4" fill="#C8352B"/>
+  <polygon points="269,95 281,90.5 281,99.5" fill="#C8352B"/>
+  <line x1="275" y1="153" x2="275" y2="179" fill="none" stroke="#1B2421" stroke-width="1.5" stroke-linecap="butt"/>
+  <rect x="269" y="179" width="12" height="14" rx="3" fill="#1B2421" stroke-width="1"/>
+  <circle cx="275" cy="186" r="3.4" fill="#C8352B"/>
+  <polygon points="281,145 269,140.5 269,149.5" fill="#C8352B"/>
+  <text x="289" y="48" font-size="12" font-weight="400" text-anchor="start" fill="#1B2421">單向路徑號誌（PBS）</text>
+  <text x="289" y="190" font-size="12" font-weight="400" text-anchor="start" fill="#5B6764">到達列車在此等待進站</text>
+  <polygon points="53,95 67,89.75 67,100.25" fill="#1B2421"/>
+  <polygon points="67,145 53,139.75 53,150.25" fill="#1B2421"/>
+  <text x="30" y="83" font-size="12" font-weight="400" text-anchor="start" fill="#5B6764">出發（往下一站）</text>
+  <text x="30" y="171" font-size="12" font-weight="400" text-anchor="start" fill="#5B6764">到達（從下一站）</text>
+  <text x="758" y="100" font-size="12" font-weight="400" text-anchor="start" fill="#1B2421">出發軌（row 0）</text>
+  <text x="758" y="150" font-size="12" font-weight="400" text-anchor="start" fill="#1B2421">到達軌（row 1）</text>
+  <line x1="152" y1="214" x2="248" y2="214" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="152" y1="209" x2="152" y2="214" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="248" y1="209" x2="248" y2="214" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <text x="200.0" y="232" font-size="12" font-weight="400" text-anchor="middle" fill="#5B6764">出口格</text>
+  <text x="200.0" y="248" font-size="12" font-weight="400" text-anchor="middle" fill="#5B6764">車站一蓋好就鋪佔位軌</text>
+  <line x1="252" y1="214" x2="398" y2="214" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="252" y1="209" x2="252" y2="214" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="398" y1="209" x2="398" y2="214" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <text x="325.0" y="232" font-size="12" font-weight="400" text-anchor="middle" fill="#5B6764">咽喉</text>
+  <text x="325.0" y="248" font-size="12" font-weight="400" text-anchor="middle" fill="#5B6764">兩組渡線</text>
+  <line x1="402" y1="214" x2="698" y2="214" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="402" y1="209" x2="402" y2="214" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <line x1="698" y1="209" x2="698" y2="214" fill="none" stroke="#5B6764" stroke-width="1.2" stroke-linecap="butt"/>
+  <text x="550.0" y="232" font-size="12" font-weight="400" text-anchor="middle" fill="#5B6764">月台 L 格（3–6 格，依列車長度上限）</text>
+  <text x="550.0" y="248" font-size="12" font-weight="400" text-anchor="middle" fill="#5B6764">兩個月台都能進站、出發</text>
+</svg>
