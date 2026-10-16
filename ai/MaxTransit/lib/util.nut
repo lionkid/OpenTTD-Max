@@ -178,6 +178,91 @@ Util <- {
 		return acc.GetCosts();
 	}
 
+	/* Rough rating value for the category the API reports (accurate values are GameScript only). */
+	function RatingEstimate(town) {
+		local r = AITown.GetRating(town, AICompany.COMPANY_SELF);
+		switch (r) {
+			case AITown.TOWN_RATING_NONE: return 500;
+			case AITown.TOWN_RATING_APPALLING: return -600;
+			case AITown.TOWN_RATING_VERY_POOR: return -300;
+			case AITown.TOWN_RATING_POOR: return -100;
+			case AITown.TOWN_RATING_MEDIOCRE: return 100;
+			case AITown.TOWN_RATING_GOOD: return 300;
+			case AITown.TOWN_RATING_VERY_GOOD: return 500;
+			case AITown.TOWN_RATING_EXCELLENT: return 700;
+		}
+		return 900;
+	}
+
+	/* Trees we may still cut in a town before it refuses new stations (rating must stay above -200). */
+	function TreeAllowance(town) { return max(0, (Util.RatingEstimate(town) + 150) / 35); }
+
+	/*
+	 * Plant trees on free land around a town to repair our rating (+7 per tree, up to the cap of 220 that
+	 * tree planting can reach). Returns the number of trees planted.
+	 */
+	function PlantTrees(town, count) {
+		local c = AITown.GetLocation(town);
+		local list = AITileList();
+		local x = AIMap.GetTileX(c), y = AIMap.GetTileY(c);
+		list.AddRectangle(AIMap.GetTileIndex(max(1, x - 12), max(1, y - 12)),
+			AIMap.GetTileIndex(min(AIMap.GetMapSizeX() - 2, x + 12), min(AIMap.GetMapSizeY() - 2, y + 12)));
+		list.Valuate(AITile.IsBuildable);
+		list.KeepValue(1);
+		list.Valuate(AITile.HasTreeOnTile);
+		list.KeepValue(0);
+		list.Valuate(AIRoad.IsRoadTile);
+		list.KeepValue(0);
+		local planted = 0;
+		foreach (t, _ in list) {
+			if (planted >= count) break;
+			if (AITile.PlantTree(t)) planted++;
+		}
+		return planted;
+	}
+
+	/*
+	 * Debug map of the rail around a tile, one row per y: '-' x-axis track, '|' y-axis track, '/' '\\' 'n' 'u'
+	 * corner pieces, '+' several pieces, 'S' station, 'D' depot, '=' bridge head, 'T' tunnel portal,
+	 * 'r' road, '#' level crossing, '~' water. A '!' after a tile marks a signal on it.
+	 */
+	function DumpRail(center, r) {
+		local cx = AIMap.GetTileX(center), cy = AIMap.GetTileY(center);
+		AILog.Info("RAILMAP around " + Util.TileStr(center) + " x " + (cx - r) + ".." + (cx + r));
+		for (local y = cy - r; y <= cy + r; y++) {
+			local row = "";
+			for (local x = cx - r; x <= cx + r; x++) {
+				local t = AIMap.GetTileIndex(x, y);
+				local c = ".";
+				if (!AIMap.IsValidTile(t)) c = " ";
+				else if (AIRail.IsLevelCrossingTile(t)) c = "#";
+				else if (AIRail.IsRailStationTile(t)) c = "S";
+				else if (AIRail.IsRailDepotTile(t)) c = "D";
+				else if (AIBridge.IsBridgeTile(t)) c = "=";
+				else if (AITunnel.IsTunnelTile(t)) c = "T";
+				else if (AIRail.IsRailTile(t)) {
+					local tr = AIRail.GetRailTracks(t);
+					if (tr == AIRail.RAILTRACK_NE_SW) c = "-";
+					else if (tr == AIRail.RAILTRACK_NW_SE) c = "|";
+					else if (tr == AIRail.RAILTRACK_NW_NE) c = "n";
+					else if (tr == AIRail.RAILTRACK_SW_SE) c = "u";
+					else if (tr == AIRail.RAILTRACK_NW_SW) c = "/";
+					else if (tr == AIRail.RAILTRACK_NE_SE) c = "\\";
+					else c = "+";
+				} else if (AIRoad.IsRoadTile(t)) c = "r";
+				else if (AITile.IsWaterTile(t)) c = "~";
+				local sig = false;
+				if (AIRail.IsRailTile(t) && !AIRail.IsRailStationTile(t) && !AIRail.IsRailDepotTile(t)) {
+					for (local d = 0; d < 4; d++) {
+						if (AIRail.GetSignalType(t, t + Geo.Offset(d)) != AIRail.SIGNALTYPE_NONE) sig = true;
+					}
+				}
+				row += c + (sig ? "!" : " ");
+			}
+			AILog.Info("RAILMAP " + (y < 100 ? (y < 10 ? "  " : " ") : "") + y + " " + row);
+		}
+	}
+
 	function SignAt(tile, text) {
 		if (AIController.GetSetting("debug_signs") == 1) AISign.BuildSign(tile, text);
 	}

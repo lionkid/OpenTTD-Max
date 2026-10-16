@@ -87,6 +87,7 @@ class AirBuilder {
 	function Build(tile, type, join_sid) {
 		if (!AIAirport.BuildAirport(tile, type, join_sid)) {
 			Log.Warn("BUILD", "airport at " + Util.TileStr(tile) + " failed: " + AIError.GetLastErrorString());
+			if (AIError.GetLastError() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) ::MT.planner.OnRefused(AIAirport.GetNearestTown(tile, type));
 			return -1;
 		}
 		return AIStation.GetStationID(tile);

@@ -201,9 +201,23 @@ class Fleet {
 		return load;
 	}
 
+	/* Share of the two platforms of a rail station that our trains occupy (dwell / round trip, all lines). */
+	function RailStationLoad(sid) {
+		local load = 0.0;
+		foreach (l in ::MT.network.LinesAt(sid)) {
+			if (l.mode != MODE_RAIL) continue;
+			load += this.ActiveCount(l) * ::MT.time.StopDays(MODE_RAIL, l.capacity) / fmax(4.0, l.Rtt());
+		}
+		return load;
+	}
+
 	function CanAdd(line) {
 		if (this.ActiveCount(line) >= this.MaxVehicles(line)) return false;
-		if (line.mode == MODE_RAIL && this.ActiveCount(line) >= ::MT.safety.MaxTrains(line)) return false;
+		if (line.mode == MODE_RAIL && line.VehicleCount() >= ::MT.safety.MaxTrains(line)) return false;
+		if (line.mode == MODE_RAIL) {
+			local extra = ::MT.time.StopDays(MODE_RAIL, line.capacity) / fmax(4.0, line.Rtt());
+			foreach (sid in line.sids) if (this.RailStationLoad(sid) + extra > 1.3) return false;   // 2 platforms, 65% busy
+		}
 		if (line.mode == MODE_AIR) {
 			foreach (i, sid in line.sids) {
 				local t = ::MT.air.Terminals(AIAirport.GetAirportType(line.tiles[i]));
@@ -259,6 +273,15 @@ class Fleet {
 						(line.upgrade_failed == 0 || Util.Today() - line.upgrade_failed > 730)) {
 					line.note = "upgrade";
 				}
+			}
+			/* Frequency: one train every two or three months makes passengers wait (and the rating drop). With
+			 * enough demand for a second train, double the line even before the first train is full. */
+			if (line.mode == MODE_RAIL && !line.double_track && line.note == "" && age > 180 &&
+					s.headway > 2 * hmax[MODE_RAIL] && s.util > 0.45 &&
+					(line.upgrade_failed == 0 || Util.Today() - line.upgrade_failed > 730)) {
+				line.note = "upgrade";
+				Log.Info("FLEET", line.Name() + ": headway " + s.headway.tointeger() + " d with " + (s.util * 100).tointeger() +
+					"% of the seats planned; asking for a second track");
 			}
 			if (line.lo >= 4 && Util.Today() - line.last_change >= 60) {
 				local worst = this.WorstVehicle(line);

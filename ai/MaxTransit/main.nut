@@ -44,9 +44,11 @@ class MaxTransit extends AIController {
 	loaded = null;
 	month_count = 0;
 	last_3 = 0;
+	dumped = null;
 
 	constructor() {
 		this.loaded = null;
+		this.dumped = {};
 	}
 }
 
@@ -147,7 +149,7 @@ function MaxTransit::Monthly() {
 	if (::MT.finance.trouble && ::MT.finance.Cash() > ::MT.finance.Reserve() * 2) ::MT.finance.trouble = false;
 	::MT.safety.CountDelivered();
 	::MT.safety.ServiceRound();
-	if (this.month_count % 3 == 0) ::MT.safety.Audit();
+	::MT.safety.Audit();
 	::MT.fleet.HandleSafetyFlags();
 	::MT.fleet.FinishClosures();
 	::MT.fleet.Renew();
@@ -207,8 +209,16 @@ function MaxTransit::HandleEvents() {
 			case AIEvent.ET_VEHICLE_LOST: {
 				local v = AIEventVehicleLost.Convert(e).GetVehicleID();
 				local line = ::MT.network.LineOfVehicle(v);
-				Log.Warn("FLEET", "vehicle " + AIVehicle.GetName(v) + " is lost" + (line == null ? "" : " on " + line.Name()));
+				Log.Warn("FLEET", "vehicle " + AIVehicle.GetName(v) + " is lost at " + Util.TileStr(AIVehicle.GetLocation(v)) +
+					" heading for " + Util.TileStr(AIOrder.GetOrderDestination(v, AIOrder.ORDER_CURRENT)) + (line == null ? "" : " on " + line.Name()));
 				if (line != null && line.mode == MODE_ROAD && line.state == LINE_ACTIVE) ::MT.fleet.Withdraw(v, "lost");
+				if (line != null && line.mode == MODE_RAIL) {
+					::MT.planner.CheckTracks(line);
+					if (!(line.id in ::MT.ai.dumped)) {
+						::MT.ai.dumped[line.id] <- true;
+						Util.DumpRail(AIVehicle.GetLocation(v), 14);
+					}
+				}
 				break;
 			}
 			case AIEvent.ET_VEHICLE_WAITING_IN_DEPOT: {

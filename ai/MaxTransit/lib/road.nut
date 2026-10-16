@@ -62,6 +62,7 @@ class RoadBuilder {
 		AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
 		if (!AIRoad.BuildDriveThroughRoadStation(spot.tile, spot.tile + Geo.Offset(spot.axis), AIRoad.ROADVEHTYPE_BUS, station_id)) {
 			Log.Warn("BUILD", "bus stop at " + Util.TileStr(spot.tile) + " failed: " + AIError.GetLastErrorString());
+			if (AIError.GetLastError() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) ::MT.planner.OnRefused(AITile.GetClosestTown(spot.tile));
 			return -1;
 		}
 		return AIStation.GetStationID(spot.tile);

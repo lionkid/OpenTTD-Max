@@ -24,6 +24,7 @@ class Line {
 	wagons = 0;
 	railtype = -1;
 	double_track = false;
+	branch = false;        // rail: shares a station with another line through junctions
 	signal_blocks = 0;
 	track_tiles = null;    // rail: every track tile; road: the planned road path (both for safety audits)
 	sites = null;          // rail: station frames [a, b]
@@ -47,6 +48,7 @@ class Line {
 	time_audit = null;     // samples: [moving, dwell, waiting, broken, depot, speed sum, top speed sum]
 	note = "";
 	upgrade_failed = 0;    // date of the last failed second-track attempt
+	last_check = 0;        // date of the last track verification
 
 	constructor() {
 		this.towns = [-1, -1];
@@ -87,7 +89,7 @@ class Line {
 		return {
 			id = this.id, mode = this.mode, state = this.state, towns = this.towns, sids = this.sids, tiles = this.tiles,
 			depots = this.depots, group = this.group, engine = this.engine, wagon = this.wagon, wagons = this.wagons,
-			railtype = this.railtype, double_track = this.double_track, signal_blocks = this.signal_blocks,
+			railtype = this.railtype, double_track = this.double_track, signal_blocks = this.signal_blocks, branch = this.branch,
 			track_tiles = this.track_tiles, sites = this.sites, p1 = this.p1, p2 = this.p2, dist = this.dist,
 			path_len100 = (this.path_len * 100).tointeger(), capacity = this.capacity, speed = this.speed,
 			est_rtt100 = (this.est_rtt * 100).tointeger(), meas_rtt100 = (this.meas_rtt * 100).tointeger(),
@@ -187,6 +189,24 @@ class Network {
 		if (!(town in this.hubs)) return -1;
 		local sid = this.hubs[town].sid;
 		return AIStation.IsValidStation(sid) ? sid : -1;
+	}
+
+	/*
+	 * Tiles no new track may use: every rail terminus with its throat and the two corridor tiles in front of
+	 * both rows. A single-track line's unbuilt arrival corridor ends in a throat piece pointing at it, so
+	 * another line laid there would join the two networks.
+	 */
+	function ReservedRail() {
+		local out = {};
+		foreach (l in this.lines) {
+			if (l.mode != MODE_RAIL || l.state == LINE_CLOSED) continue;
+			foreach (site in l.sites) {
+				if (site == null) continue;
+				foreach (t in ::MT.rail.Footprint(site)) out[t] <- true;
+				foreach (row in [0, 1]) out[::MT.rail.T(site, row, -5)] <- true;
+			}
+		}
+		return out;
 	}
 
 	/* Towns reachable from `town` through our lines (the CargoDist component). */

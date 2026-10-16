@@ -20,8 +20,15 @@ const SIGNAL_SPACING = 6;
 
 class RailBuilder {
 	bridges = null;
+	bad_sites = null;   // station origin tile -> date: the line could not leave this site
 
-	constructor(bridge_cache) { this.bridges = bridge_cache; }
+	constructor(bridge_cache) {
+		this.bridges = bridge_cache;
+		this.bad_sites = {};
+	}
+
+	/* The tiles just outside a terminus that the other track of the line needs (kept free for it). */
+	function OtherCorridor(site, row) { return [this.T(site, row, -4), this.T(site, row, -5)]; }
 
 	function T(site, row, k) { return site.O + k * Geo.Offset(site.din) + row * Geo.Offset(site.lat); }
 
@@ -63,13 +70,16 @@ class RailBuilder {
 		return (site.din == DIR_PX || site.din == DIR_NX) ? [site.L, 2] : [2, site.L];
 	}
 
-	/* Footprint bounding rectangle [north tile, south tile]. */
+	/*
+	 * Heightmap rectangle to level a footprint: CMD_LEVEL_LAND moves the north corner of every tile in the
+	 * area, so the far corners of the last row and column need the area to reach one tile further.
+	 */
 	function Rect(site) {
 		local x0 = 1 << 30, y0 = 1 << 30, x1 = -1, y1 = -1;
 		foreach (t in this.Footprint(site)) {
 			x0 = min(x0, Geo.X(t)); y0 = min(y0, Geo.Y(t)); x1 = max(x1, Geo.X(t)); y1 = max(y1, Geo.Y(t));
 		}
-		return [AIMap.GetTileIndex(x0, y0), AIMap.GetTileIndex(x1, y1)];
+		return [AIMap.GetTileIndex(x0, y0), AIMap.GetTileIndex(x1 + 1, y1 + 1)];
 	}
 
 	/*
@@ -98,6 +108,7 @@ class RailBuilder {
 			info[t] <- [AITile.GetMinHeight(t), AITile.GetMaxHeight(t)];
 		}
 		local o_pref = Geo.Towards(center, toward);
+		local trees_ok = Util.TreeAllowance(town);
 		local ref = AITile.GetCargoAcceptance(center, Util.pax, 2, L, 4);
 		local min_acc = max(8, ref * 30 / 100);
 		local walk = max(3, ::MT.game.station_spread - 2);
@@ -105,7 +116,7 @@ class RailBuilder {
 		foreach (o in [o_pref, Geo.Left(o_pref), Geo.Right(o_pref)]) {
 			foreach (t, hh in info) {
 				local dc = AIMap.DistanceManhattan(t, center);
-				if (dc > r) continue;
+				if (dc > r || (t in this.bad_sites)) continue;
 				local site = this.MakeSite(town, t, o, L, railtype);
 				local good = true, lo = 1000, hi = -1;
 				foreach (ft in this.Footprint(site)) {
@@ -115,6 +126,12 @@ class RailBuilder {
 					if (hi - lo > 1) { good = false; break; }
 				}
 				if (!good) continue;
+				/* the line leaves the throat straight: the first tile outside must be free as well */
+				foreach (row in [0, 1]) {
+					local ex = this.T(site, row, -5);
+					if (!AITile.IsBuildable(ex) || AIRoad.IsRoadTile(ex) || !::MT.safety.TileOk(ex) || (reserved != null && (ex in reserved))) good = false;
+				}
+				if (!good) continue;
 				local flat = hi == lo;
 				if (!flat) {
 					foreach (rt in this.Ring(site)) {
@@ -122,10 +139,13 @@ class RailBuilder {
 					}
 					if (!good) continue;
 				}
+				local trees = 0;
+				foreach (ft in this.Footprint(site)) if (AITile.HasTreeOnTile(ft)) trees++;
+				if (trees > trees_ok) continue;
 				local wh = this.StationWH(site);
 				local acc = AITile.GetCargoAcceptance(this.TopLeft(site), Util.pax, wh[0], wh[1], 4);
 				if (acc < min_acc && dc > walk) continue;
-				local score = acc * 3 - dc * 4 - (o == o_pref ? 0 : 40) - (flat ? 0 : 60);
+				local score = acc * 3 - dc * 4 - (o == o_pref ? 0 : 40) - (flat ? 0 : 60) - trees * 8;
 				/* prefer sites whose throat is on the side of the destination */
 				score -= AIMap.DistanceManhattan(this.T(site, 0, -4), toward) - AIMap.DistanceManhattan(t, toward);
 				site.level <- !flat;
@@ -184,8 +204,10 @@ class RailBuilder {
 		return false;
 	}
 
-	function Fail(what) {
+	function Fail(what, town = -1) {
+		local err = AIError.GetLastError();
 		Log.Warn("BUILD", what + " failed: " + AIError.GetLastErrorString());
+		if (err == AIError.ERR_LOCAL_AUTHORITY_REFUSES && town >= 0) ::MT.planner.OnRefused(town);
 		return false;
 	}
 
@@ -196,7 +218,7 @@ class RailBuilder {
 		local tl = this.TopLeft(site);
 		if (!AIRail.BuildRailStation(tl, this.Axis(site), 2, site.L, join_sid)) {
 			if (join_sid == AIStation.STATION_NEW || !AIRail.BuildRailStation(tl, this.Axis(site), 2, site.L, AIStation.STATION_NEW)) {
-				return this.Fail("rail station at " + Util.TileStr(tl));
+				return this.Fail("rail station at " + Util.TileStr(tl), site.town);
 			}
 		}
 		site.sid = AIStation.GetStationID(tl);
@@ -235,21 +257,152 @@ class RailBuilder {
 	 * Returns the path ([{tile, kind}]) or null.
 	 */
 	function BuildTrack(from_site, to_site, forbidden, prefer, railtype) {
+		this.trapped = false;
 		local ends = this.Ends(from_site, to_site);
 		local blocked = {};
 		foreach (t, v in forbidden) blocked[t] <- v;
 		for (local attempt = 0; attempt < 3; attempt++) {
 			local pf = RailPathFinder(this.bridges);
-			pf.max_nodes = max(60000, 450 * AIMap.DistanceManhattan(ends.start, ends.goal));
+			pf.max_nodes = min(120000, max(40000, 320 * AIMap.DistanceManhattan(ends.start, ends.goal)));
 			if (prefer != null) pf.weight = 1.5;
 			pf.forbidden = blocked;
 			if (prefer != null) pf.prefer = prefer;
 			local path = pf.FindPath(ends.start, ends.start_dir, ends.goal, ends.goal_dir);
 			Log.Info("BUILD", "rail path " + Util.TileStr(ends.start) + " -> " + Util.TileStr(ends.goal) + ": " +
 				(path == null ? "none" : path.len() + " tiles") + " (" + pf.expanded + " nodes)");
-			if (path == null) return null;
+			if (path == null) {
+				if (pf.expanded < 60) this.trapped = true;
+				return null;
+			}
 			local fail = this.BuildPath(path, railtype);
 			if (fail < 0) return path;
+			Log.Warn("BUILD", "rail build failed at " + Util.TileStr(path[fail].tile) + ": " + AIError.GetLastErrorString() + "; re-planning");
+			this.RemovePath(path, fail);
+			blocked[path[fail].tile] <- true;
+		}
+		return null;
+	}
+
+	/* ---------------- junctions on existing double track ---------------- */
+
+	/* Departure and arrival track of one end of a doubled line (decoded paths). */
+	function StationPaths(line, end) {
+		local p1 = ::MT.planner.Decode(line.p1), p2 = ::MT.planner.Decode(line.p2);
+		return end == 0 ? {dep = p1, arr = p2} : {dep = p2, arr = p1};
+	}
+
+	function FreeForTrack(t, forbidden) {
+		if (forbidden != null && (t in forbidden)) return false;
+		if (!Geo.InMap(t, 2) || !AITile.IsBuildable(t) || AIRoad.IsRoadTile(t) || !::MT.safety.TileOk(t)) return false;
+		local sl = AITile.GetSlope(t);
+		return sl == AITile.SLOPE_FLAT;
+	}
+
+	/* A plain straight tile of a path without signals, between index lo and hi. */
+	function PlainStraight(path, i) {
+		if (path[i - 1].kind != PF_KIND_NORMAL || path[i].kind != PF_KIND_NORMAL || path[i + 1].kind != PF_KIND_NORMAL) return -1;
+		local a = path[i - 1].tile, b = path[i].tile, c = path[i + 1].tile;
+		local u = Geo.DirOf(a, b);
+		if (u < 0 || u != Geo.DirOf(b, c)) return -1;
+		if (AIRail.GetSignalType(b, a) != AIRail.SIGNALTYPE_NONE || AIRail.GetSignalType(b, c) != AIRail.SIGNALTYPE_NONE) return -1;
+		local tracks = AIRail.GetRailTracks(b);
+		if (tracks != AIRail.RAILTRACK_NE_SW && tracks != AIRail.RAILTRACK_NW_SE) return -1;
+		return u;
+	}
+
+	/*
+	 * Switch on a departure track: the new line leaves tile path[i] sideways into an empty tile q.
+	 * Returns a start spec for BuildTrackSpec, or null.
+	 */
+	function BranchPoint(dep, forbidden) {
+		for (local i = 3; i < dep.len() - 3 && i < 45; i++) {
+			local u = this.PlainStraight(dep, i);
+			if (u < 0) continue;
+			local a = dep[i - 1].tile, b = dep[i].tile;
+			foreach (side in [Geo.Left(u), Geo.Right(u)]) {
+				local q = b + Geo.Offset(side);
+				if (!this.FreeForTrack(q, forbidden) || !this.FreeForTrack(q + Geo.Offset(side), forbidden)) continue;
+				local ok;
+				{
+					local tm = AITestMode();
+					ok = AIRail.BuildRail(a, b, q);
+				}
+				if (ok) return {tile = q, dir = side, opts = {free = true, prev = u}, sw = [a, b, q]};
+			}
+		}
+		return null;
+	}
+
+	/* Merge into an arrival track: the new line joins tile path[j] from the side. Returns a goal spec or null. */
+	function MergePoint(arr, forbidden) {
+		local n = arr.len();
+		for (local j = n - 4; j >= 2 && j > n - 45; j--) {
+			local w = this.PlainStraight(arr, j);
+			if (w < 0) continue;
+			local b = arr[j].tile, c = arr[j + 1].tile;
+			foreach (side in [Geo.Left(w), Geo.Right(w)]) {
+				local q = b + Geo.Offset(side);
+				if (!this.FreeForTrack(q, forbidden) || !this.FreeForTrack(q + Geo.Offset(side), forbidden)) continue;
+				local ok;
+				{
+					local tm = AITestMode();
+					ok = AIRail.BuildRail(q, b, c);
+				}
+				if (ok) return {tile = b, dir = Geo.Opp(side), next = w, merge = [q, b, c]};
+			}
+		}
+		return null;
+	}
+
+	/* Start and goal specs of a plain terminus end. */
+	function TerminusStart(site) { return {tile = this.T(site, 0, -3), dir = site.o, opts = null, sw = null}; }
+	function TerminusGoal(site) { return {tile = this.T(site, 1, -3), dir = site.din, next = -1, merge = null}; }
+
+	/*
+	 * Find and build one track between two specs (terminus or junction). Junction pieces are added to the
+	 * existing track only once the new track is laid. Returns the path or null (everything removed again).
+	 */
+	trapped = false;   // the last search died next to its start: the site has no way out
+
+	function BuildTrackSpec(start, goal, forbidden, prefer, railtype) {
+		this.trapped = false;
+		local blocked = {};
+		foreach (t, v in forbidden) blocked[t] <- v;
+		for (local attempt = 0; attempt < 3; attempt++) {
+			local pf = RailPathFinder(this.bridges);
+			pf.max_nodes = min(120000, max(40000, 320 * AIMap.DistanceManhattan(start.tile, goal.tile)));
+			if (prefer != null) { pf.prefer = prefer; pf.weight = 1.5; }
+			pf.forbidden = blocked;
+			local opts = start.opts == null ? {} : start.opts;
+			if (goal.next >= 0) opts.goal_next <- goal.next;
+			local path = pf.FindPath(start.tile, start.dir, goal.tile, goal.dir, opts);
+			Log.Info("BUILD", "rail path " + Util.TileStr(start.tile) + " -> " + Util.TileStr(goal.tile) + ": " +
+				(path == null ? "none" : path.len() + " tiles") + " (" + pf.expanded + " nodes)" +
+				(start.sw != null ? ", branching off at " + Util.TileStr(start.sw[1]) : "") +
+				(goal.merge != null ? ", merging at " + Util.TileStr(goal.merge[1]) : ""));
+			if (path == null) {
+				if (pf.expanded < 60) this.trapped = true;
+				return null;
+			}
+			if (start.sw != null) path.insert(0, {tile = start.sw[1], kind = PF_KIND_NORMAL});
+			AIRail.SetCurrentRailType(railtype);
+			local fail = this.BuildPath(path, railtype);
+			if (fail < 0) {
+				local ok = true;
+				if (start.sw != null) {
+					local sw = start.sw;
+					ok = this.Retry(function() : (sw) { return AIRail.BuildRail(sw[0], sw[1], sw[2]); });
+				}
+				if (ok && goal.merge != null) {
+					local mg = goal.merge;
+					ok = this.Retry(function() : (mg) { return AIRail.BuildRail(mg[0], mg[1], mg[2]); });
+					if (!ok && start.sw != null) AIRail.RemoveRail(start.sw[0], start.sw[1], start.sw[2]);
+				}
+				if (ok) return path;
+				Log.Warn("BUILD", "junction failed: " + AIError.GetLastErrorString());
+				this.RemovePath(path, path.len() - 1);
+				return null;
+			}
 			Log.Warn("BUILD", "rail build failed at " + Util.TileStr(path[fail].tile) + ": " + AIError.GetLastErrorString() + "; re-planning");
 			this.RemovePath(path, fail);
 			blocked[path[fail].tile] <- true;
@@ -302,6 +455,7 @@ class RailBuilder {
 	function RemovePath(path, upto) {
 		for (local i = 1; i < upto && i < path.len() - 1; i++) {
 			local t = path[i].tile;
+			if (AIRail.IsRailStationTile(t) || AIRail.IsRailDepotTile(t)) continue;   // never part of a path; never demolish
 			if (AIRail.IsRailTile(t) || AIBridge.IsBridgeTile(t) || AITunnel.IsTunnelTile(t)) AITile.DemolishTile(t);
 		}
 	}

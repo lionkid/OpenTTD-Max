@@ -19,14 +19,33 @@ class Planner {
 	failures = null;      // candidate key -> date of the last failure
 	transfer_bonus = null; // "townA:townB" -> monthly passengers changing at a hub between them
 	policy_logged = null;  // air links refused by the air policy (logged once)
+	refused = null;        // town -> date its local authority last refused us
 
 	constructor() {
 		this.failures = {};
 		this.transfer_bonus = {};
 		this.policy_logged = {};
+		this.refused = {};
 	}
 
-	function Cooldown() { return [120, 40, 12][Util.Clamp(AIController.GetSetting("expansion"), 0, 2)]; }
+	/* Called after ERR_LOCAL_AUTHORITY_REFUSES: plant trees to win the town back, wait before retrying. */
+	function OnRefused(town) {
+		if (!AITown.IsValidTown(town)) return;
+		this.refused[town] <- Util.Today();
+		local n = Util.PlantTrees(town, 30);
+		Log.Info("PLAN", Util.TownName(town) + " refused construction (rating " + Util.RatingEstimate(town) +
+			"); planted " + n + " trees to repair relations");
+	}
+
+	function Refused(town) { return (town in this.refused) && Util.Today() - this.refused[town] < 240; }
+
+	function Cooldown() {
+		local base = [120, 40, 12][Util.Clamp(AIController.GetSetting("expansion"), 0, 2)];
+		/* money in the bank does nothing for the passengers: build sooner when the reserve is large */
+		if (::MT.finance.Available() > 2000000) return base / 4;
+		if (::MT.finance.Available() > 600000) return base / 2;
+		return base;
+	}
 
 	function PlatformLength() { return Util.Clamp(::MT.game.max_train_length, 3, 6); }
 
@@ -49,9 +68,10 @@ class Planner {
 		if (this.Interchanges()) { this.last_build = Util.Today(); return; }
 		local cands = this.Candidates();
 		local tried = 0;
+		local started = Util.Today();
 		foreach (c in cands) {
 			if (!::MT.finance.CanAfford(c.cost)) continue;
-			if (++tried > 3) break;
+			if (++tried > 3 || Util.Today() - started > 45) break;   // failed searches cost game time; let the fleet catch up
 			Log.Info("PLAN", "building " + this.Describe(c));
 			local ok = false;
 			try {
@@ -105,6 +125,7 @@ class Planner {
 		for (local i = 0; i < towns.len(); i++) {
 			for (local j = i + 1; j < towns.len(); j++) {
 				local a = towns[i], b = towns[j];
+				if (this.Refused(a) || this.Refused(b)) continue;
 				local la = AITown.GetLocation(a), lb = AITown.GetLocation(b);
 				local d = AIMap.DistanceManhattan(la, lb);
 				if (d < 10) continue;
@@ -412,18 +433,63 @@ class Planner {
 
 	/* ---------------- construction: rail ---------------- */
 
+	/*
+	 * A doubled, signalled line ending in `town` whose station a new line can share (via a junction on its
+	 * tracks). Sharing puts both lines into one station, so CargoDist can route transfers through it.
+	 */
+	function SharedRailEnd(town) {
+		foreach (line in ::MT.network.Active()) {
+			if (line.mode != MODE_RAIL || !line.double_track || line.branch) continue;
+			for (local end = 0; end < 2; end++) {
+				if (line.towns[end] != town) continue;
+				if (::MT.network.LinesAt(line.sids[end]).len() >= 3) continue;
+				return {line = line, end = end, site = line.sites[end]};
+			}
+		}
+		return null;
+	}
+
+	/*
+	 * No room for a new terminal in `town`: if one of our single-track lines ends there, double it so that the
+	 * next line can share its station (and its own passengers get more trains).
+	 */
+	function UnlockSharing(town) {
+		foreach (line in ::MT.network.Active()) {
+			if (line.mode != MODE_RAIL || line.double_track || line.branch || line.note != "") continue;
+			if (line.towns[0] != town && line.towns[1] != town) continue;
+			if (line.upgrade_failed != 0 && Util.Today() - line.upgrade_failed < 730) continue;
+			line.note = "upgrade";
+			Log.Info("PLAN", "no room for another terminal in " + Util.TownName(town) + ": doubling " + line.Name() + " so new lines can share its station");
+			return true;
+		}
+		return false;
+	}
+
 	function BuildRail(c) {
+		local sa = this.SharedRailEnd(c.a), sb = this.SharedRailEnd(c.b);
+		if (sa != null || sb != null) {
+			if (this.BuildRailShared(c, sa, sb)) return true;
+			Log.Info("PLAN", "sharing an existing station did not work out; trying separate terminals");
+		}
 		local plan = c.best.plan;
 		local L = this.PlatformLength();
 		local rt = plan.railtype;
 		AIRail.SetCurrentRailType(rt);
 		local la = AITown.GetLocation(c.a), lb = AITown.GetLocation(c.b);
 		local site_a = ::MT.rail.FindSite(c.a, lb, L, rt, this.JoinId(c.a), null);
-		if (site_a == null) { Log.Warn("PLAN", "no rail station site in " + Util.TownName(c.a)); return false; }
+		if (site_a == null) {
+			Log.Warn("PLAN", "no rail station site in " + Util.TownName(c.a));
+			this.UnlockSharing(c.a);
+			return false;
+		}
 		local reserved = {};
 		foreach (t in ::MT.rail.Footprint(site_a)) reserved[t] <- true;
 		local site_b = ::MT.rail.FindSite(c.b, site_a.O, L, rt, this.JoinId(c.b), reserved);
-		if (site_b == null) { Log.Warn("PLAN", "no rail station site in " + Util.TownName(c.b)); return false; }
+		if (site_b == null) {
+			Log.Warn("PLAN", "no rail station site in " + Util.TownName(c.b));
+			this.UnlockSharing(c.b);
+			return false;
+		}
 		if (!::MT.finance.Ensure(c.first_cost.tointeger())) return false;
 		if (!::MT.rail.BuildStation(site_a, this.JoinId(c.a))) { this.Demolish(::MT.rail.Footprint(site_a)); return false; }
 		if (!::MT.rail.BuildStation(site_b, this.JoinId(c.b))) {
@@ -432,11 +498,18 @@ class Planner {
 			return false;
 		}
 		local forbidden = this.Footprints(site_a, site_b);
+		foreach (t, _ in ::MT.network.ReservedRail()) forbidden[t] <- true;
 		delete forbidden[::MT.rail.T(site_a, 0, -4)];
 		delete forbidden[::MT.rail.T(site_b, 1, -4)];
+		if (::MT.rail.T(site_a, 0, -5) in forbidden) delete forbidden[::MT.rail.T(site_a, 0, -5)];
+		if (::MT.rail.T(site_b, 1, -5) in forbidden) delete forbidden[::MT.rail.T(site_b, 1, -5)];
+		/* keep the way out of B and into A free for the second track */
+		foreach (t in ::MT.rail.OtherCorridor(site_a, 1)) forbidden[t] <- true;
+		foreach (t in ::MT.rail.OtherCorridor(site_b, 0)) forbidden[t] <- true;
 		local p1 = ::MT.rail.BuildTrack(site_a, site_b, forbidden, null, rt);
 		if (p1 == null || ::MT.rail.Verify(p1) >= 0) {
 			Log.Warn("PLAN", "no railway " + Util.TownName(c.a) + " - " + Util.TownName(c.b));
+			if (::MT.rail.trapped) ::MT.rail.bad_sites[site_a.O] <- Util.Today();
 			if (p1 != null) ::MT.rail.RemovePath(p1, p1.len() - 1);
 			this.Demolish(::MT.rail.Footprint(site_a));
 			this.Demolish(::MT.rail.Footprint(site_b));
@@ -472,6 +545,148 @@ class Planner {
 		return true;
 	}
 
+	/*
+	 * Rail line that shares the station of an existing doubled line at one or both ends. The new line is
+	 * doubled and signalled before its first train runs, because the shared tracks are one-way.
+	 */
+	function BuildRailShared(c, sa, sb) {
+		local base = sa != null ? sa.line : sb.line;
+		local rt = base.railtype;
+		if (sa != null && sb != null && sa.line.railtype != sb.line.railtype) return false;
+		local L = sa != null ? sa.site.L : sb.site.L;
+		if (sa != null && sb != null) L = min(sa.site.L, sb.site.L);
+		local tiles = c.dist * 1.2;
+		local best = ::MT.engines.BestTrain(L, tiles, c.dist, c.demand, rt);
+		if (best == null) return false;
+		local la = AITown.GetLocation(c.a), lb = AITown.GetLocation(c.b);
+		local site_a = sa != null ? sa.site : null, site_b = sb != null ? sb.site : null;
+		local reserved = {};
+		if (site_a == null) {
+			site_a = ::MT.rail.FindSite(c.a, site_b != null ? site_b.O : lb, L, rt, this.JoinId(c.a), null);
+			if (site_a == null) return false;
+		}
+		foreach (t in ::MT.rail.Footprint(site_a)) reserved[t] <- true;
+		if (site_b == null) {
+			site_b = ::MT.rail.FindSite(c.b, site_a.O, L, rt, this.JoinId(c.b), reserved);
+			if (site_b == null) return false;
+		}
+		local forbidden = this.Footprints(site_a, site_b);
+		foreach (t, _ in ::MT.network.ReservedRail()) forbidden[t] <- true;
+		/* junction specs first: they must exist before anything is built */
+		local start1 = null, goal1 = null, start2 = null, goal2 = null;
+		if (sa != null) {
+			local pa = ::MT.rail.StationPaths(sa.line, sa.end);
+			start1 = ::MT.rail.BranchPoint(pa.dep, forbidden);
+			goal2 = ::MT.rail.MergePoint(pa.arr, forbidden);
+			if (start1 == null || goal2 == null) { Log.Info("PLAN", "no junction site on " + sa.line.Name()); return false; }
+		}
+		if (sb != null) {
+			local pb = ::MT.rail.StationPaths(sb.line, sb.end);
+			start2 = ::MT.rail.BranchPoint(pb.dep, forbidden);
+			goal1 = ::MT.rail.MergePoint(pb.arr, forbidden);
+			if (start2 == null || goal1 == null) { Log.Info("PLAN", "no junction site on " + sb.line.Name()); return false; }
+		}
+		local cost = AIRail.GetBuildCost(rt, AIRail.BT_TRACK) * tiles * 2.6 + best.plan.price * 2 + 30000;
+		if (!::MT.finance.Ensure(cost.tointeger())) return false;
+		local new_a = sa == null, new_b = sb == null;
+		if (new_a && !::MT.rail.BuildStation(site_a, this.JoinId(c.a))) { this.Demolish(::MT.rail.Footprint(site_a)); return false; }
+		if (new_b && !::MT.rail.BuildStation(site_b, this.JoinId(c.b))) {
+			if (new_a) this.Demolish(::MT.rail.Footprint(site_a));
+			this.Demolish(::MT.rail.Footprint(site_b));
+			return false;
+		}
+		if (start1 == null) start1 = ::MT.rail.TerminusStart(site_a);
+		if (goal1 == null) goal1 = ::MT.rail.TerminusGoal(site_b);
+		if (start2 == null) start2 = ::MT.rail.TerminusStart(site_b);
+		if (goal2 == null) goal2 = ::MT.rail.TerminusGoal(site_a);
+		/* the throat tiles next to a terminus stay free for the line's own tracks */
+		foreach (t in [start1.tile, goal1.tile, start2.tile, goal2.tile]) if (t in forbidden) delete forbidden[t];
+		foreach (pair in [[new_a, site_a], [new_b, site_b]]) {
+			if (!pair[0]) continue;
+			foreach (row in [0, 1]) foreach (k in [-4, -5]) {
+				local t = ::MT.rail.T(pair[1], row, k);
+				if (t in forbidden) delete forbidden[t];
+			}
+		}
+		local f1 = {};
+		foreach (t, v in forbidden) f1[t] <- v;
+		if (new_a) foreach (t in ::MT.rail.OtherCorridor(site_a, 1)) f1[t] <- true;
+		if (new_b) foreach (t in ::MT.rail.OtherCorridor(site_b, 0)) f1[t] <- true;
+		if (start2.sw != null) f1[start2.tile] <- true;
+		if (goal2.merge != null) f1[goal2.merge[0]] <- true;
+		local p1 = ::MT.rail.BuildTrackSpec(start1, goal1, f1, null, rt);
+		local fail = p1 == null || ::MT.rail.Verify(p1) >= 0;
+		local p2 = null;
+		if (!fail) {
+			local f2 = {};
+			foreach (t, v in forbidden) f2[t] <- v;
+			local prefer = {};
+			foreach (t in ::MT.rail.PathTiles(p1)) {
+				f2[t] <- true;
+				for (local d = 0; d < 4; d++) prefer[t + Geo.Offset(d)] <- true;
+			}
+			p2 = ::MT.rail.BuildTrackSpec(start2, goal2, f2, prefer, rt);
+			fail = p2 == null || ::MT.rail.Verify(p2) >= 0;
+		}
+		if (fail) {
+			Log.Warn("PLAN", "no railway " + Util.TownName(c.a) + " - " + Util.TownName(c.b) + " through the shared station");
+			if (::MT.rail.trapped) {
+				if (new_a) ::MT.rail.bad_sites[site_a.O] <- Util.Today();
+				if (new_b) ::MT.rail.bad_sites[site_b.O] <- Util.Today();
+			}
+			foreach (p in [p1, p2]) {
+				if (p == null) continue;
+				::MT.rail.RemovePath(p, p.len() - 1);
+				/* take the junction pieces off the existing tracks again */
+				if (p.len() > 1 && p[0].tile != start1.tile && p[0].tile != start2.tile) AIRail.RemoveRail(p[0].tile, p[0].tile, p[1].tile);
+			}
+			if (start1.sw != null) AIRail.RemoveRail(start1.sw[0], start1.sw[1], start1.sw[2]);
+			if (start2.sw != null) AIRail.RemoveRail(start2.sw[0], start2.sw[1], start2.sw[2]);
+			if (goal1.merge != null) AIRail.RemoveRail(goal1.merge[0], goal1.merge[1], goal1.merge[2]);
+			if (goal2.merge != null) AIRail.RemoveRail(goal2.merge[0], goal2.merge[1], goal2.merge[2]);
+			if (new_a) this.Demolish(::MT.rail.Footprint(site_a));
+			if (new_b) this.Demolish(::MT.rail.Footprint(site_b));
+			return false;
+		}
+		/* signals before any train: the new tracks are one-way like the shared ones */
+		local n1 = ::MT.rail.SignalPath(p1, rt), n2 = ::MT.rail.SignalPath(p2, rt);
+		if (new_a) ::MT.rail.BuildThroatSignals(site_a);
+		if (new_b) ::MT.rail.BuildThroatSignals(site_b);
+		local line = Line();
+		line.mode = MODE_RAIL;
+		line.branch = true;
+		line.towns = [c.a, c.b];
+		line.sids = [site_a.sid, site_b.sid];
+		line.tiles = [::MT.rail.T(site_a, 0, 0), ::MT.rail.T(site_b, 0, 0)];
+		line.depots = [site_a.depot, site_b.depot];
+		line.engine = best.plan.loco;
+		line.wagon = best.plan.wagon == null ? -1 : best.plan.wagon;
+		line.wagons = best.plan.wagons;
+		line.railtype = rt;
+		line.sites = [site_a, site_b];
+		line.p1 = this.Encode(p1);
+		line.p2 = this.Encode(p2);
+		line.double_track = true;
+		line.signal_blocks = min(n1, n2);
+		line.track_tiles = ::MT.rail.PathTiles(p1);
+		line.track_tiles.extend(::MT.rail.PathTiles(p2));
+		line.capacity = best.plan.capacity;
+		line.speed = best.plan.speed;
+		line.dist = AIMap.DistanceManhattan(line.tiles[0], line.tiles[1]);
+		line.path_len = this.PathLength(p1) + 2 * L;
+		line.est_rtt = ::MT.time.RoundTrip(MODE_RAIL, line.speed, line.path_len, line.capacity);
+		::MT.network.Add(line);
+		if (new_a) this.RegisterStation(c.a, site_a.sid, MODE_RAIL);
+		if (new_b) this.RegisterStation(c.b, site_b.sid, MODE_RAIL);
+		::MT.fleet.BuildFor(line, 0);
+		::MT.fleet.BuildFor(line, 1);
+		Log.Info("BUILD", line.Name() + " opened sharing " + (sa != null ? AIStation.GetName(site_a.sid) : "") +
+			(sa != null && sb != null ? " and " : "") + (sb != null ? AIStation.GetName(site_b.sid) : "") + ": " + p1.len() + " + " + p2.len() +
+			" track tiles with " + n1 + " + " + n2 + " one-way path signals, " + AIEngine.GetName(best.plan.loco) + ", " +
+			best.plan.capacity + " seats; passengers can change trains there");
+		return true;
+	}
+
 	function Footprints(site_a, site_b) {
 		local t = {};
 		foreach (x in ::MT.rail.Footprint(site_a)) t[x] <- true;
@@ -479,9 +694,17 @@ class Planner {
 		return t;
 	}
 
+	/*
+	 * Remove what we built on these tiles. Rail station tiles are removed one by one: demolishing a single
+	 * platform tile removes every platform of that station (station_cmd.cpp RemoveRailStation), and a new
+	 * terminal is usually joined to the town's hub station, which holds the platforms of other lines.
+	 */
 	function Demolish(tiles) {
+		local me = AICompany.ResolveCompanyID(AICompany.COMPANY_SELF);
 		foreach (t in tiles) {
-			if (AITile.GetOwner(t) == AICompany.ResolveCompanyID(AICompany.COMPANY_SELF)) AITile.DemolishTile(t);
+			if (AITile.GetOwner(t) != me) continue;
+			if (AIRail.IsRailStationTile(t)) AIRail.RemoveRailStationTileRectangle(t, t, false);
+			else AITile.DemolishTile(t);
 		}
 	}
 
@@ -525,8 +748,10 @@ class Planner {
 		local rt = line.railtype;
 		local p1 = this.Decode(line.p1);
 		local forbidden = this.Footprints(site_a, site_b);
-		delete forbidden[::MT.rail.T(site_b, 0, -4)];
-		delete forbidden[::MT.rail.T(site_a, 1, -4)];
+		foreach (t, _ in ::MT.network.ReservedRail()) forbidden[t] <- true;
+		foreach (t in [::MT.rail.T(site_b, 0, -4), ::MT.rail.T(site_a, 1, -4), ::MT.rail.T(site_b, 0, -5), ::MT.rail.T(site_a, 1, -5)]) {
+			if (t in forbidden) delete forbidden[t];
+		}
 		local prefer = {};
 		foreach (t in ::MT.rail.PathTiles(p1)) {
 			forbidden[t] <- true;
@@ -590,6 +815,25 @@ class Planner {
 			if (v in ::MT.fleet.to_sell) continue;
 			if (AIVehicle.IsStoppedInDepot(v)) AIVehicle.StartStopVehicle(v);
 			else if (AIOrder.IsGotoDepotOrder(v, AIOrder.ORDER_CURRENT)) AIVehicle.SendVehicleToDepot(v);   // cancels the depot order
+		}
+	}
+
+	/* Re-verify both tracks of a line piece by piece (after a lost train) and report breaks. */
+	function CheckTracks(line) {
+		if (line.last_check > 0 && Util.Today() - line.last_check < 30) return;
+		line.last_check = Util.Today();
+		foreach (name, enc in {p1 = line.p1, p2 = line.p2}) {
+			if (enc.len() == 0) continue;
+			local p = this.Decode(enc);
+			local bad = ::MT.rail.Verify(p);
+			if (bad >= 0) {
+				Log.Error("FLEET", line.Name() + ": track " + name + " broken at " + Util.TileStr(p[bad].tile) + " (index " + bad + " of " + p.len() +
+					", tracks " + AIRail.GetRailTracks(p[bad].tile) + ", rail " + AIRail.IsRailTile(p[bad].tile) + ", owner " + AITile.GetOwner(p[bad].tile) + ")");
+			}
+		}
+		foreach (i, site in line.sites) {
+			if (site == null) continue;
+			if (!AIRail.IsRailDepotTile(site.depot)) Log.Error("FLEET", line.Name() + ": depot " + Util.TileStr(site.depot) + " is gone");
 		}
 	}
 

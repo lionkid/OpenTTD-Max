@@ -100,9 +100,16 @@ class RailPathFinder {
 		return this.InclineAlong(s, din);
 	}
 
+	/* Removing a tree inside a town's local authority zone costs 35 rating points with that town. */
+	function TreeCost(t) {
+		if (!AITile.HasTreeOnTile(t)) return 0;
+		local town = AITile.GetClosestTown(t);
+		if (AITown.IsValidTown(town) && AITown.GetDistanceManhattanToTile(town, t) <= 20) return 25;
+		return 3;
+	}
+
 	function TerrainCost(t) {
-		local c = 0;
-		if (AITile.HasTreeOnTile(t)) c += 3;
+		local c = this.TreeCost(t);
 		if (AITile.IsFarmTile(t)) c += 4;
 		if (AITile.IsRoughTile(t) || AITile.IsRockTile(t)) c += 3;
 		if (AITile.GetSlope(t) != AITile.SLOPE_FLAT) c += PF_SLOPE;
@@ -162,10 +169,16 @@ class RailPathFinder {
 	}
 
 	/*
-	 * Path from start_tile (already built, left straight in start_dir) to goal_tile (already built, must be
-	 * entered with step goal_dir). Returns [{tile, kind}] from start to goal, or null.
+	 * Path from start_tile to goal_tile (already built, must be entered with step goal_dir). Returns
+	 * [{tile, kind}] from start to goal, or null.
+	 * By default start_tile is already built and left straight in start_dir. With opts.free the start tile is
+	 * still empty (a branch: it is entered with step start_dir after a piece in direction opts.prev).
+	 * opts.goal_next is the step that leaves the goal tile (a merge), so the last turn can be checked.
 	 */
-	function FindPath(start_tile, start_dir, goal_tile, goal_dir) {
+	function FindPath(start_tile, start_dir, goal_tile, goal_dir, opts = null) {
+		local start_free = opts != null && ("free" in opts) && opts.free;
+		local start_prev = (opts != null && ("prev" in opts)) ? opts.prev : start_dir;
+		local goal_next = (opts != null && ("goal_next" in opts)) ? opts.goal_next : -1;
 		this.pass_cache = {};
 		this.g = {};
 		this.par = {};
@@ -173,7 +186,7 @@ class RailPathFinder {
 		this.open = AIPriorityQueue();
 		this.expanded = 0;
 		local closed = {};
-		local skey = this.Key(start_tile, start_dir, start_dir);
+		local skey = this.Key(start_tile, start_dir, start_prev, start_free ? 1 : 0);
 		this.g[skey] <- 0;
 		this.par[skey] <- -1;
 		this.kind[skey] <- PF_KIND_NORMAL;
@@ -188,16 +201,17 @@ class RailPathFinder {
 
 			local tile = key >> 5, turned = (key >> 4) & 1, din = (key >> 2) & 3, dprev = key & 3;
 			local kd = this.kind[key];
-			local fixed = kd != PF_KIND_NORMAL || key == skey;
+			local fixed = kd != PF_KIND_NORMAL || (key == skey && !start_free);
 			local outs = fixed ? [din] : [din, Geo.Left(din), Geo.Right(din)];
 			foreach (dout in outs) {
 				if (din != dprev && dout == Geo.Opp(dprev)) continue;        // 90 degree turn
-				if (kd == PF_KIND_NORMAL && key != skey && !this.PieceOk(tile, din, dout)) continue;
+				if (!fixed && !this.PieceOk(tile, din, dout)) continue;
 				local n = tile + Geo.Offset(dout);
 				local turn = Geo.Turn8(Geo.Dir8(dprev, din), Geo.Dir8(din, dout));
 				local cost = (din == dout ? PF_STRAIGHT : PF_DIAG) + PF_TURN * turn + (turn > 0 && turned ? PF_TURN2 : 0);
 				if (n == goal_tile) {
 					if (dout != goal_dir) continue;
+					if (goal_next >= 0 && dout != din && goal_next == Geo.Opp(din)) continue;   // 90 degree turn into a merge
 					local gkey = this.Key(n, dout, din, turn > 0 ? 1 : 0);
 					this.g[gkey] <- this.g[key] + cost;
 					this.par[gkey] <- key;
