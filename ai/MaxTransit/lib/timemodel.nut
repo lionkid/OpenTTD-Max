@@ -74,6 +74,8 @@ class TimeModel {
 		/* Frequency: add vehicles until the headway target is met while the load stays above 40%. */
 		local hmax = this.headway_max[mode];
 		while (rtt / n > hmax && o.demand / ((n + 1) * cap_month) >= 0.4) n++;
+		/* a single-track railway runs one train: demand beyond its seats is not carried */
+		if (("max_n" in o) && o.max_n > 0) n = min(n, o.max_n);
 		local load = fmin(1.0, o.demand / (n * cap_month));
 		local fare = this.Fare(o.dist, one_way);
 		local pax_year = 24.0 * n * cap_month * load;

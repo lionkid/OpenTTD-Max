@@ -9,10 +9,15 @@
 class EngineAdvisor {
 	length_cache = null;   // engine -> length in 1/16 tile, learned when a vehicle is built
 	bad_pairs = null;      // "loco:wagon" -> true when the wagon cannot be attached (NewGRF attach callback)
+	probed = null;         // "loco:wagon" -> true once built together (wagon -1: the locomotive alone)
+	series_cache = null;   // wagon -> true when it is a car of a multiple-unit series
+	series_date = 0;
 
 	constructor() {
 		this.length_cache = {};
 		this.bad_pairs = {};
+		this.probed = {};
+		this.series_cache = {};
 	}
 
 	function CarriesPax(e) {
@@ -105,7 +110,37 @@ class EngineAdvisor {
 		return i;
 	}
 
-	/* Best passenger wagon for a locomotive on rail type rt (prefers the loco's own series). */
+	/*
+	 * Two names belong to one series when they share at least six characters up to a word boundary, as the
+	 * cars of a multiple unit are usually named ("N700 Series Shinkansen head cars" / "... intermediate car").
+	 * Names without spaces (Chinese, Japanese) end the shared part at any non-ASCII character.
+	 */
+	function SameSeries(a, b) {
+		if (a == null || b == null) return false;    // GetName of an engine that is not (yet) ours
+		local p = this.CommonPrefix(a, b);
+		if (p < 6) return false;
+		if (p == a.len() || p == b.len()) return true;
+		local c = a[p - 1] & 0xFF;
+		return c == ' ' || c == '(' || c == '-' || c >= 0x80;
+	}
+
+	/* A wagon that carries the name of a locomotive series is a car of that multiple unit (cached for a year). */
+	function SeriesCar(w) {
+		if (Util.Today() - this.series_date > 365) { this.series_cache = {}; this.series_date = Util.Today(); }
+		if (w in this.series_cache) return this.series_cache[w];
+		local name = AIEngine.GetName(w), r = false;
+		foreach (e, _ in AIEngineList(AIVehicle.VT_RAIL)) {
+			if (!AIEngine.IsWagon(e) && this.SameSeries(name, AIEngine.GetName(e))) { r = true; break; }
+		}
+		this.series_cache[w] <- r;
+		return r;
+	}
+
+	/*
+	 * Best passenger wagon for a locomotive on rail type rt. A multiple unit takes the cars of its own series;
+	 * the cars of another series stay with their own head cars (NewGRF attach callbacks refuse them, and a
+	 * locomotive could not power them anyway).
+	 */
 	function BestWagon(loco, rt) {
 		local best = null, best_score = -1;
 		local lname = AIEngine.GetName(loco);
@@ -115,21 +150,70 @@ class EngineAdvisor {
 			if ((loco + ":" + w) in this.bad_pairs) continue;
 			local cap = AIEngine.GetCapacity(w);
 			if (cap <= 0) continue;
+			local own = this.SameSeries(lname, AIEngine.GetName(w));
+			if (!own && this.SeriesCar(w)) continue;
 			local spd = AIEngine.GetMaxSpeed(w);
-			local score = cap * 10 + (spd <= 0 ? 600 : min(spd, 600)) + this.CommonPrefix(lname, AIEngine.GetName(w)) * 2000;
+			local score = cap * 10 + (spd <= 0 ? 600 : min(spd, 600)) + (own ? 100000 : 0);
 			if (score > best_score) { best_score = score; best = w; }
 		}
 		return best;
 	}
 
-	function LengthOf(e) { return (e in this.length_cache) ? this.length_cache[e] : 8; }
+	/*
+	 * Length in 1/16 tile. Lengths are measured when a vehicle is built (Probe, Fleet.BuildTrain); until then an
+	 * articulated multiple unit is taken as one 8/8 car per 84 seats and anything else as one car.
+	 */
+	function LengthOf(e) {
+		if (e in this.length_cache) return this.length_cache[e];
+		if (AIEngine.IsArticulated(e) && this.CarriesPax(e)) return max(8, (AIEngine.GetCapacity(e) + 83) / 84 * 8);
+		return 8;
+	}
+
+	function PairKey(loco, wagon) { return loco + ":" + (wagon == null ? -1 : wagon); }
+
+	/* Has this locomotive (with this wagon) been built at least once? */
+	function Measured(plan) {
+		return (plan.loco in this.length_cache) && (plan.wagon == null || (this.PairKey(plan.loco, plan.wagon) in this.probed));
+	}
 
 	/*
-	 * Train plan for platforms of `plat_len` tiles: [loco, wagon, wagons, railtype, speed, capacity, price, running].
-	 * Multiple units that carry passengers themselves run without extra wagons unless wagons of their series exist.
+	 * Build the locomotive and one wagon in `depot` to measure their lengths and to learn whether the wagon can
+	 * be coupled, then sell both again on the spot (a vehicle sold the moment it is built returns its price).
 	 */
-	function PlanTrain(loco, plat_len) {
-		local rt = AIEngine.GetRailType(loco);
+	function Probe(loco, wagon, depot) {
+		local key = this.PairKey(loco, wagon);
+		if (key in this.probed) return;
+		this.probed[key] <- true;
+		if (!AIRail.IsRailDepotTile(depot) || AITile.GetOwner(depot) != AICompany.ResolveCompanyID(AICompany.COMPANY_SELF)) return;
+		local price = AIEngine.GetPrice(loco) + (wagon != null ? AIEngine.GetPrice(wagon) : 0);
+		if (!::MT.finance.Ensure(price)) return;
+		local v = AIVehicle.BuildVehicle(depot, loco);
+		if (!AIVehicle.IsValidVehicle(v)) return;
+		this.length_cache[loco] <- AIVehicle.GetLength(v);
+		if (wagon != null) {
+			local w = AIVehicle.BuildVehicle(depot, wagon);
+			if (AIVehicle.IsValidVehicle(w)) {
+				local before = AIVehicle.GetLength(v);
+				if (AIVehicle.MoveWagon(w, 0, v, 0)) {
+					this.length_cache[wagon] <- AIVehicle.GetLength(v) - before;
+				} else {
+					Log.Info("TRAIN", AIEngine.GetName(wagon) + " cannot be coupled to " + AIEngine.GetName(loco) + ": " + AIError.GetLastErrorString());
+					this.bad_pairs[loco + ":" + wagon] <- true;
+					AIVehicle.SellVehicle(w);
+				}
+			}
+		}
+		AIVehicle.SellVehicle(v);
+	}
+
+	/*
+	 * Train plan for platforms of `plat_len` tiles on rail type `rt` (-1: the locomotive's own):
+	 * {loco, wagon, wagons, railtype, speed, capacity, price, running}.
+	 * An articulated multiple unit is a complete formation and runs without extra cars. Cars of the loco's own
+	 * series are powered (their power is added per car), so only a locomotive's power limits the train length.
+	 */
+	function PlanTrain(loco, plat_len, rt = -1) {
+		if (rt < 0) rt = AIEngine.GetRailType(loco);
 		if (!AIRail.IsRailTypeAvailable(rt)) return null;
 		local self_cap = this.CarriesPax(loco) ? max(0, AIEngine.GetCapacity(loco)) : 0;
 		local can_pull = AIEngine.CanPullCargo(loco, Util.pax);
@@ -137,14 +221,17 @@ class EngineAdvisor {
 		local units = plat_len * 16;
 		local llen = this.LengthOf(loco);
 		if (llen > units) return null;
-		local wagon = can_pull || self_cap > 0 ? this.BestWagon(loco, rt) : null;
+		local fixed = self_cap > 0 && AIEngine.IsArticulated(loco);
+		local wagon = can_pull && !fixed ? this.BestWagon(loco, AIEngine.GetRailType(loco)) : null;
 		local n = 0;
 		if (wagon != null) {
 			n = (units - llen) / this.LengthOf(wagon);
-			/* Keep at least about 4 hp per tonne so the train still reaches its speed on the slopes. */
-			local power = max(1, AIEngine.GetPower(loco));
-			local wl = AIEngine.GetWeight(loco), ww = max(1, AIEngine.GetWeight(wagon) + AIEngine.GetCapacity(wagon) / 16);
-			while (n > 0 && power < (wl + n * ww) * 4) n--;
+			if (!this.SameSeries(AIEngine.GetName(loco), AIEngine.GetName(wagon))) {
+				/* Keep at least about 4 hp per tonne so the train still reaches its speed on the slopes. */
+				local power = max(1, AIEngine.GetPower(loco));
+				local wl = AIEngine.GetWeight(loco), ww = max(1, AIEngine.GetWeight(wagon) + AIEngine.GetCapacity(wagon) / 16);
+				while (n > 0 && power < (wl + n * ww) * 4) n--;
+			}
 		}
 		local speed = AIEngine.GetMaxSpeed(loco);
 		if (n > 0) {
@@ -160,21 +247,54 @@ class EngineAdvisor {
 			running = AIEngine.GetRunningCost(loco) + (n > 0 ? n * AIEngine.GetRunningCost(wagon) : 0)};
 	}
 
-	function BestTrain(plat_len, tiles, dist, demand, railtype = -1) {
+	function TrainCand(e, plat_len, tiles, dist, demand, railtype, max_n) {
+		if (AIEngine.IsWagon(e) || !AIEngine.IsBuildable(e)) return null;
+		if (railtype >= 0 && !(AIEngine.CanRunOnRail(e, railtype) && AIEngine.HasPowerOnRail(e, railtype))) return null;
+		local p = this.PlanTrain(e, plat_len, railtype);
+		if (p == null) return null;
+		local o = {speed = p.speed, capacity = p.capacity, price = p.price, running = p.running,
+			life_days = AIEngine.GetMaxAge(e), reliability = AIEngine.GetReliability(e), tiles = tiles, dist = dist, demand = demand,
+			max_n = max_n};
+		local ev = ::MT.time.Evaluate(MODE_RAIL, o);
+		/* Infrastructure for faster rail types costs more per tile; charge the extra track over 15 years. */
+		local track = AIRail.GetBuildCost(p.railtype, AIRail.BT_TRACK) * tiles * 2;
+		ev.value -= track / 15;
+		return {engine = e, eval = ev, plan = p, capacity = p.capacity, speed = p.speed};
+	}
+
+	/*
+	 * Best train for platforms of plat_len tiles. With a depot of ours, the leading plan is built there once
+	 * before it is chosen (Probe), and the next one is tried when it turns out longer than the platforms or its
+	 * wagon cannot be coupled, so the plan that is returned can really be built.
+	 * max_n limits the trains the line can run (1 on single track: there a big train beats a fast small one).
+	 * A single-track line cannot add trains as the towns and the network grow, so its train is chosen for 60%
+	 * more passengers than today's estimate; the evaluation returned is for the estimate itself.
+	 */
+	function BestTrain(plat_len, tiles, dist, demand, railtype = -1, depot = -1, max_n = 0) {
+		local best = this._BestTrain(plat_len, tiles, dist, max_n == 1 ? demand * 1.6 : demand, railtype, depot, max_n);
+		if (best != null && max_n == 1) {
+			local again = this.TrainCand(best.engine, plat_len, tiles, dist, demand, railtype, max_n);
+			if (again != null) best = again;
+		}
+		return best;
+	}
+
+	function _BestTrain(plat_len, tiles, dist, demand, railtype, depot, max_n) {
 		local cands = [];
 		foreach (e, _ in AIEngineList(AIVehicle.VT_RAIL)) {
-			if (AIEngine.IsWagon(e) || !AIEngine.IsBuildable(e)) continue;
-			if (railtype >= 0 && !(AIEngine.CanRunOnRail(e, railtype) && AIEngine.HasPowerOnRail(e, railtype))) continue;
-			local p = this.PlanTrain(e, plat_len);
-			if (p == null) continue;
-			if (railtype >= 0) p.railtype = railtype;
-			local o = {speed = p.speed, capacity = p.capacity, price = p.price, running = p.running,
-				life_days = AIEngine.GetMaxAge(e), reliability = AIEngine.GetReliability(e), tiles = tiles, dist = dist, demand = demand};
-			local ev = ::MT.time.Evaluate(MODE_RAIL, o);
-			/* Infrastructure for faster rail types costs more per tile; charge the extra track over 15 years. */
-			local track = AIRail.GetBuildCost(p.railtype, AIRail.BT_TRACK) * tiles * 2;
-			ev.value -= track / 15;
-			cands.append({engine = e, eval = ev, plan = p, capacity = p.capacity, speed = p.speed});
+			local c = this.TrainCand(e, plat_len, tiles, dist, demand, railtype, max_n);
+			if (c != null) cands.append(c);
+		}
+		if (depot < 0) return this.Pick(cands);
+		for (local tries = 0; tries < 16; tries++) {
+			local best = this.Pick(cands);
+			if (best == null || this.Measured(best.plan)) return best;
+			this.Probe(best.engine, best.plan.wagon, depot);
+			local rest = [];
+			foreach (c in cands) if (c.engine != best.engine) rest.append(c);
+			local again = this.TrainCand(best.engine, plat_len, tiles, dist, demand, railtype, max_n);
+			if (again != null) rest.append(again);
+			cands = rest;
 		}
 		return this.Pick(cands);
 	}

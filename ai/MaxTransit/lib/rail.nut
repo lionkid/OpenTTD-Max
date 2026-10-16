@@ -30,6 +30,55 @@ class RailBuilder {
 	/* The tiles just outside a terminus that the other track of the line needs (kept free for it). */
 	function OtherCorridor(site, row) { return [this.T(site, row, -4), this.T(site, row, -5)]; }
 
+	/*
+	 * From the moment a terminus is built until its tracks are laid, the two tiles where each track leaves or
+	 * enters the station hold loose rail pieces across the line (connected to nothing): a town does not build
+	 * houses on rail, so a search that takes weeks still finds its way out. The searches treat these tiles as
+	 * free (own_free) and BuildPath lifts each piece just before it lays the track there.
+	 */
+	own_free = null;   // tile -> placeholder track, for the next searches and BuildPath
+
+	function CrossTrack(site) {
+		return (site.din == DIR_PX || site.din == DIR_NX) ? AIRail.RAILTRACK_NW_SE : AIRail.RAILTRACK_NE_SW;
+	}
+
+	function IsPlaceholder(t, track) {
+		return AIRail.IsRailTile(t) && !AIRail.IsRailStationTile(t) && !AIRail.IsRailDepotTile(t) &&
+			AITile.GetOwner(t) == AICompany.ResolveCompanyID(AICompany.COMPANY_SELF) && AIRail.GetRailTracks(t) == track;
+	}
+
+	/* Placeholders at the station ends of these sites, for the searches that follow. */
+	function UsePlaceholders(sites) {
+		this.own_free = {};
+		foreach (site in sites) {
+			if (site == null) continue;
+			local track = this.CrossTrack(site);
+			foreach (row in [0, 1]) foreach (t in this.OtherCorridor(site, row)) if (this.IsPlaceholder(t, track)) this.own_free[t] <- track;
+		}
+	}
+
+	function ClearPlaceholder(t) {
+		if (this.own_free == null || !(t in this.own_free)) return;
+		if (this.IsPlaceholder(t, this.own_free[t])) AIRail.RemoveRailTrack(t, this.own_free[t]);
+		delete this.own_free[t];
+	}
+
+	function ReserveCorridor(site, row) {
+		AIRail.SetCurrentRailType(site.railtype);
+		local track = this.CrossTrack(site), out = (row == 1 ? 1 : -1) * Geo.Offset(site.lat);
+		foreach (t in this.OtherCorridor(site, row)) {
+			if (!AITile.IsBuildable(t) || AITile.GetSlope(t) != AITile.SLOPE_FLAT) continue;
+			/* the other row's track never reaches this edge; a track outside might, and would be joined */
+			if (AIRail.IsRailTile(t + out)) continue;
+			AIRail.BuildRailTrack(t, track);
+		}
+	}
+
+	function FreeCorridor(site, row) {
+		local track = this.CrossTrack(site);
+		foreach (t in this.OtherCorridor(site, row)) if (this.IsPlaceholder(t, track)) AIRail.RemoveRailTrack(t, track);
+	}
+
 	function T(site, row, k) { return site.O + k * Geo.Offset(site.din) + row * Geo.Offset(site.lat); }
 
 	function MakeSite(town, O, o, L, railtype) {
@@ -43,6 +92,57 @@ class RailBuilder {
 			for (local k = -4; k <= site.L; k++) out.append(this.T(site, row, k));
 		}
 		return out;
+	}
+
+	/*
+	 * Is there open land beyond tile t? Depth-first over tiles a track could use, away from `blocked`; `need`
+	 * tiles reached are enough. A throat that opens into a pocket between houses and roads fails this, and a
+	 * path search toward it would only exhaust its node budget.
+	 */
+	function OpenAround(t, blocked, need) {
+		if (!this.Open(t)) return false;
+		local seen = {}, stack = [t], n = 0;
+		seen[t] <- true;
+		while (stack.len() > 0 && n < need) {
+			local c = stack.pop();
+			n++;
+			for (local d = 0; d < 4; d++) {
+				local x = c + Geo.Offset(d);
+				if (x in seen) continue;
+				seen[x] <- true;
+				if (!(x in blocked) && this.Open(x)) stack.append(x);
+			}
+		}
+		return n >= need;
+	}
+
+	/*
+	 * Can a railway leave both rows of the throat? A short search from each throat end must get ten tiles away,
+	 * with the curves and slopes a real track needs (the arrival row is the same test run backwards).
+	 */
+	function CanLeave(site, blocked) {
+		foreach (row in [0, 1]) {
+			local other = this.T(site, 1 - row, -5), own = this.T(site, row, -4);
+			local was_other = other in blocked, was_own = own in blocked;
+			blocked[other] <- true;
+			if (was_own) delete blocked[own];
+			local guide = this.T(site, row, -16);
+			if (!AIMap.IsValidTile(guide)) guide = own;
+			local pf = RailPathFinder(this.bridges);
+			pf.max_nodes = 1500;
+			pf.forbidden = blocked;
+			local path = pf.FindPath(this.T(site, row, -3), site.o, guide, site.o, {escape = 10});
+			if (!was_other) delete blocked[other];
+			if (was_own) blocked[own] <- true;
+			if (path == null) return false;
+		}
+		return true;
+	}
+
+	function Open(t) {
+		if (!Geo.InMap(t, 2) || !AITile.IsBuildable(t) || AIRoad.IsRoadTile(t) || !::MT.safety.TileOk(t)) return false;
+		local sl = AITile.GetSlope(t);
+		return !AITile.IsSteepSlope(sl) && !AITile.IsHalftileSlope(sl);
 	}
 
 	/* Tiles around the footprint; levelling moves their corners too, so they must be free of buildings. */
@@ -89,9 +189,19 @@ class RailBuilder {
 	 * Catchment: at least 30% of what a station in the town centre would see (CargoDist's symmetric demand is
 	 * limited by the weaker end), unless the site is close enough for walk-in stops to bring the centre in.
 	 */
+	/*
+	 * A built-up town may have no room near its centre: then the search widens by 8 tiles and accepts half the
+	 * catchment (the station joins the town's hub through a bus shuttle).
+	 */
 	function FindSite(town, toward, L, railtype, join_sid, reserved) {
-		local center = AITown.GetLocation(town);
 		local r = 10 + min(12, (AITown.GetPopulation(town) / 400).tointeger());
+		local site = this.FindSiteR(town, toward, L, railtype, join_sid, reserved, r, 30);
+		if (site == null) site = this.FindSiteR(town, toward, L, railtype, join_sid, reserved, r + 8, 15);
+		return site;
+	}
+
+	function FindSiteR(town, toward, L, railtype, join_sid, reserved, r, acc_pct) {
+		local center = AITown.GetLocation(town);
 		local cx = Geo.X(center), cy = Geo.Y(center);
 		local x0 = max(3, cx - r - L), y0 = max(3, cy - r - L);
 		local x1 = min(AIMap.GetMapSizeX() - 4, cx + r + L), y1 = min(AIMap.GetMapSizeY() - 4, cy + r + L);
@@ -110,7 +220,7 @@ class RailBuilder {
 		local o_pref = Geo.Towards(center, toward);
 		local trees_ok = Util.TreeAllowance(town);
 		local ref = AITile.GetCargoAcceptance(center, Util.pax, 2, L, 4);
-		local min_acc = max(8, ref * 30 / 100);
+		local min_acc = max(8, ref * acc_pct / 100);
 		local walk = max(3, ::MT.game.station_spread - 2);
 		local scored = [];
 		foreach (o in [o_pref, Geo.Left(o_pref), Geo.Right(o_pref)]) {
@@ -158,6 +268,18 @@ class RailBuilder {
 		foreach (sc in scored) {
 			if (++tries > 14) break;
 			local site = sc[1];
+			local blocked = {};
+			foreach (ft in this.Footprint(site)) blocked[ft] <- true;
+			if (reserved != null) foreach (ft, _ in reserved) blocked[ft] <- true;
+			/* each row's way out, with the other row's first tile kept for that row */
+			local open = true;
+			foreach (row in [0, 1]) {
+				local other = this.T(site, 1 - row, -5);
+				blocked[other] <- true;
+				if (!this.OpenAround(this.T(site, row, -5), blocked, 80)) open = false;
+				delete blocked[other];
+			}
+			if (!open || !this.CanLeave(site, blocked)) continue;
 			local good;
 			{
 				local tm = AITestMode();
@@ -258,6 +380,7 @@ class RailBuilder {
 	 */
 	function BuildTrack(from_site, to_site, forbidden, prefer, railtype) {
 		this.trapped = false;
+		this.trapped_goal = false;
 		local ends = this.Ends(from_site, to_site);
 		local blocked = {};
 		foreach (t, v in forbidden) blocked[t] <- v;
@@ -266,12 +389,15 @@ class RailBuilder {
 			pf.max_nodes = min(120000, max(40000, 320 * AIMap.DistanceManhattan(ends.start, ends.goal)));
 			if (prefer != null) pf.weight = 1.5;
 			pf.forbidden = blocked;
+			if (this.own_free != null) pf.own_free = this.own_free;
 			if (prefer != null) pf.prefer = prefer;
-			local path = pf.FindPath(ends.start, ends.start_dir, ends.goal, ends.goal_dir);
+			local t0 = Util.Today();
+			local path = this.SearchInCorridor(pf, ends.start, ends.start_dir, ends.goal, ends.goal_dir, null);
 			Log.Info("BUILD", "rail path " + Util.TileStr(ends.start) + " -> " + Util.TileStr(ends.goal) + ": " +
-				(path == null ? "none" : path.len() + " tiles") + " (" + pf.expanded + " nodes)");
+				(path == null ? "none, " + this.corridor_note : path.len() + " tiles") + " (" + pf.expanded + " nodes, " +
+				(Util.Today() - t0) + " days)");
 			if (path == null) {
-				if (pf.expanded < 60) this.trapped = true;
+				if (AIController.GetSetting("debug") == 1) Util.DumpRail(ends.goal, 10, blocked);
 				return null;
 			}
 			local fail = this.BuildPath(path, railtype);
@@ -298,12 +424,18 @@ class RailBuilder {
 		return sl == AITile.SLOPE_FLAT;
 	}
 
-	/* A plain straight tile of a path without signals, between index lo and hi. */
+	/*
+	 * A plain straight tile of a path without signals, with straight track on both neighbours as well: a switch
+	 * there diverges by 45 degrees. Next to a curve it could make a 90 degree turn, which trains may not take
+	 * (pf.forbid_90_deg), so the new line would be unreachable and its trains lost.
+	 */
 	function PlainStraight(path, i) {
-		if (path[i - 1].kind != PF_KIND_NORMAL || path[i].kind != PF_KIND_NORMAL || path[i + 1].kind != PF_KIND_NORMAL) return -1;
+		if (i < 2 || i + 2 >= path.len()) return -1;
+		for (local k = i - 2; k <= i + 2; k++) if (path[k].kind != PF_KIND_NORMAL) return -1;
 		local a = path[i - 1].tile, b = path[i].tile, c = path[i + 1].tile;
 		local u = Geo.DirOf(a, b);
 		if (u < 0 || u != Geo.DirOf(b, c)) return -1;
+		if (Geo.DirOf(path[i - 2].tile, a) != u || Geo.DirOf(c, path[i + 2].tile) != u) return -1;
 		if (AIRail.GetSignalType(b, a) != AIRail.SIGNALTYPE_NONE || AIRail.GetSignalType(b, c) != AIRail.SIGNALTYPE_NONE) return -1;
 		local tracks = AIRail.GetRailTracks(b);
 		if (tracks != AIRail.RAILTRACK_NE_SW && tracks != AIRail.RAILTRACK_NW_SE) return -1;
@@ -362,10 +494,72 @@ class RailBuilder {
 	 * Find and build one track between two specs (terminus or junction). Junction pieces are added to the
 	 * existing track only once the new track is laid. Returns the path or null (everything removed again).
 	 */
-	trapped = false;   // the last search died next to its start: the site has no way out
+	trapped = false;        // the last search found no way out at its start
+	trapped_goal = false;   // ... or no way in at its goal
+	corridor_note = "";
+
+	/*
+	 * The full search runs inside a corridor 3 tiles to each side of a coarse route (CorridorFinder) and is
+	 * led along it. Without a coarse route there is no railway, which is known within days instead of
+	 * months; both ends are tested first, so a pocket between houses, roads and water fails in a few hundred
+	 * nodes. When the full search gets stuck (a turn or a bridge the coarse route could not foresee), the
+	 * next coarse route keeps two tiles away from that place: three rounds at most.
+	 */
+	function SearchInCorridor(pf, start, start_dir, goal, goal_dir, opts) {
+		local from = (opts != null && ("free" in opts) && opts.free) ? start : start + Geo.Offset(start_dir);
+		local to = goal - Geo.Offset(goal_dir);
+		local cf = CorridorFinder(pf);
+		cf.max_nodes = 1500;
+		if (cf.Find(from, to, 16) == null) { this.trapped = true; this.corridor_note = "no way out at the start"; return null; }
+		if (cf.Find(to, from, 16) == null) { this.trapped_goal = true; this.corridor_note = "no way in at the goal"; return null; }
+		local debug = AIController.GetSetting("debug") == 1;
+		local cap = pf.max_nodes, route = null;
+		for (local round = 0; round < 3; round++) {
+			/* the coarse search sees the whole map again (the last full search cached passability in its corridor) */
+			pf.allowed = null;
+			pf.potential = null;
+			pf.pass_cache = {};
+			cf.tight = {};
+			cf.max_nodes = min(60000, max(15000, 250 * AIMap.DistanceManhattan(from, to)));
+			local ops = Util.OpsMark();
+			route = cf.Find(from, to);
+			if (debug) Log.Info("DEBUG", "coarse search: " + cf.expanded + " nodes, " + Util.OpsSince(ops) / max(1, cf.expanded) + " ops per node");
+			if (route == null) {
+				this.corridor_note = round == 0 ? "no coarse route (" + cf.expanded + " nodes)" : "no other coarse route after " + round + " tries";
+				break;
+			}
+			pf.allowed = cf.Corridor(route, 3);
+			pf.potential = pf.allowed;
+			pf.max_nodes = min(cap, max(6000, (round == 0 ? 8 : 4) * pf.allowed.len()));
+			ops = Util.OpsMark();
+			local path = pf.FindPath(start, start_dir, goal, goal_dir, opts);
+			if (debug) Log.Info("DEBUG", "rail search in a corridor of " + pf.allowed.len() + " tiles: " + pf.expanded + " nodes, " +
+				Util.OpsSince(ops) / max(1, pf.expanded) + " ops per node" + (path == null ? ", stuck at " + Util.TileStr(pf.stuck) : ""));
+			if (path != null) return path;
+			if (pf.stuck < 0) break;
+			if (debug) {
+				local mark = {};
+				foreach (t in route) mark[t] <- "o";
+				mark[pf.stuck] <- "@";
+				Util.DumpRail(pf.stuck, 10, pf.forbidden, mark);
+			}
+			local sx = AIMap.GetTileX(pf.stuck), sy = AIMap.GetTileY(pf.stuck);
+			for (local y = sy - 2; y <= sy + 2; y++) {
+				for (local x = sx - 2; x <= sx + 2; x++) {
+					local t = AIMap.GetTileIndex(x, y);
+					if (AIMap.DistanceManhattan(t, from) > 3 && AIMap.DistanceManhattan(t, to) > 3) cf.avoid[t] <- true;
+				}
+			}
+			this.corridor_note = "none in " + (round + 1) + " corridors around coarse routes of " + route.len() + " tiles";
+		}
+		pf.allowed = null;
+		pf.potential = null;
+		return null;
+	}
 
 	function BuildTrackSpec(start, goal, forbidden, prefer, railtype) {
 		this.trapped = false;
+		this.trapped_goal = false;
 		local blocked = {};
 		foreach (t, v in forbidden) blocked[t] <- v;
 		for (local attempt = 0; attempt < 3; attempt++) {
@@ -373,17 +567,17 @@ class RailBuilder {
 			pf.max_nodes = min(120000, max(40000, 320 * AIMap.DistanceManhattan(start.tile, goal.tile)));
 			if (prefer != null) { pf.prefer = prefer; pf.weight = 1.5; }
 			pf.forbidden = blocked;
+			if (this.own_free != null) pf.own_free = this.own_free;
 			local opts = start.opts == null ? {} : start.opts;
 			if (goal.next >= 0) opts.goal_next <- goal.next;
-			local path = pf.FindPath(start.tile, start.dir, goal.tile, goal.dir, opts);
+			local t0 = Util.Today();
+			local path = this.SearchInCorridor(pf, start.tile, start.dir, goal.tile, goal.dir, opts);
 			Log.Info("BUILD", "rail path " + Util.TileStr(start.tile) + " -> " + Util.TileStr(goal.tile) + ": " +
-				(path == null ? "none" : path.len() + " tiles") + " (" + pf.expanded + " nodes)" +
+				(path == null ? "none, " + this.corridor_note : path.len() + " tiles") + " (" + pf.expanded + " nodes, " +
+				(Util.Today() - t0) + " days)" +
 				(start.sw != null ? ", branching off at " + Util.TileStr(start.sw[1]) : "") +
 				(goal.merge != null ? ", merging at " + Util.TileStr(goal.merge[1]) : ""));
-			if (path == null) {
-				if (pf.expanded < 60) this.trapped = true;
-				return null;
-			}
+			if (path == null) return null;
 			if (start.sw != null) path.insert(0, {tile = start.sw[1], kind = PF_KIND_NORMAL});
 			AIRail.SetCurrentRailType(railtype);
 			local fail = this.BuildPath(path, railtype);
@@ -418,6 +612,8 @@ class RailBuilder {
 			if (i % 40 == 0) MT_Housekeeping();
 			local cur = path[i].tile, prev = path[i - 1].tile, next = path[i + 1].tile;
 			local nk = path[i + 1].kind, ck = path[i].kind;
+			this.ClearPlaceholder(cur);
+			if (nk == PF_KIND_BRIDGE || nk == PF_KIND_TUNNEL) this.ClearPlaceholder(next);
 			if (nk == PF_KIND_BRIDGE) {
 				local len = AIMap.DistanceManhattan(cur, next) + 1;
 				local b = this.bridges.Fastest(len);

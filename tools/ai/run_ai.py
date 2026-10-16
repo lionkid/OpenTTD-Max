@@ -118,6 +118,7 @@ def main() -> int:
     ap.add_argument("--ai-settings", default="", help="e.g. 'use_air=0 frequency=2'")
     ap.add_argument("--save", action="store_true", help="save the game at the end (save/autosave/exit.sav)")
     ap.add_argument("--load", default="", help="start from this savegame instead of a new game")
+    ap.add_argument("--ai-tar", default="", help="install this AI tar (make ai-bundle) instead of ai/MaxTransit")
     ap.add_argument("--out", default=str(ROOT / "build" / "ai-test"))
     ap.add_argument("--timeout", type=float, default=3600)
     ap.add_argument("--quiet", action="store_true")
@@ -138,7 +139,10 @@ def main() -> int:
     for f in ogfx.iterdir():
         if f.suffix in (".grf", ".obg") and f.exists():
             shutil.copy(f, data / "baseset" / "opengfx" / f.name)
-    shutil.copytree(ROOT / "ai" / "MaxTransit", data / "ai" / "MaxTransit")
+    if args.ai_tar:
+        shutil.copy(args.ai_tar, data / "ai" / Path(args.ai_tar).name)   # the packaged AI, as BaNaNaS ships it
+    else:
+        shutil.copytree(ROOT / "ai" / "MaxTransit", data / "ai" / "MaxTransit")
     newgrf = ""
     if args.grf:
         for i, grf in enumerate(("max-air.grf", "max-rail.grf")):
@@ -149,7 +153,8 @@ def main() -> int:
             shutil.copy(src, data / "newgrf" / grf)
             newgrf += f"{grf} =\n"
     ticks = int(args.years * TICKS_PER_YEAR)
-    (data / "scripts" / "game_start.scr").write_text(f"start_ai MaxTransit {args.ai_settings}\n".rstrip() + "\n")
+    if not args.load:   # a loaded game resumes its own AI company; start_ai would add a second one
+        (data / "scripts" / "game_start.scr").write_text(f"start_ai MaxTransit {args.ai_settings}\n".rstrip() + "\n")
     if args.load:
         shutil.copy(args.load, data / "save" / "start.sav")
     else:

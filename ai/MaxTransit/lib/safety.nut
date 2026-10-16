@@ -10,13 +10,18 @@
  *   - an airport keeps its hangar and is never removed while aircraft fly to it (CRASH_AIRCRAFT_NO_AIRPORT);
  *   - aircraft orders stay inside the aircraft's range.
  * The only risk left is the random landing crash of a correctly matched aircraft when the game setting is not
- * "none" (43 / 2^22 per landing on "normal"); the air policy setting decides how much travel time it must save.
+ * "none". MaybeCrashAirplane rolls the dice on every movement step of the landing roll while the aircraft is
+ * faster than taxi speed (two steps per tick), about 135 steps with plane speed 1/1 and 240 with 1/4, so one
+ * landing carries roughly 0.06-0.1% ("reduced", 22 / 2^22 per step) or 0.13-0.25% ("normal", 44 / 2^22) of a
+ * crash, and a large aircraft on a short strip (3277 / 2^22 per step) crashes on about every sixth landing.
+ * The air policy setting decides whether passengers fly at all while random crashes are enabled.
  */
 
 const CRASH_DENOM = 4194304;       // 2^22, GB(Random(), 0, 22) in MaybeCrashAirplane
 const CRASH_SHORT_STRIP = 3276;    // large aircraft landing on a short strip
 
 class SafetyOfficer {
+	serviced = null;       // vehicle -> date it was last sent for service by ServiceRound
 	incidents = null;      // [{date, reason, victims, tile, vehicle, line}]
 	victims = 0;
 	vetoes = null;         // reason -> count
@@ -34,6 +39,7 @@ class SafetyOfficer {
 		this.vetoes = {};
 		this.danger_tiles = {};
 		this.flagged_lines = {};
+		this.serviced = {};
 	}
 
 	/* Record a refused plan; `key` identifies what was refused so repeated evaluations count once. */
@@ -52,8 +58,9 @@ class SafetyOfficer {
 	}
 
 	/*
-	 * Crash chance numerator (out of 2^22) for one landing of `engine` at an airport of `type`, or -1 when the
-	 * combination is forbidden (unsafe or impossible).
+	 * Crash chance numerator (out of 2^22) for one braking step of a landing of `engine` at an airport of
+	 * `type`, or -1 when the combination is forbidden (unsafe or impossible). LandingProbability turns it into
+	 * the chance for the whole landing.
 	 */
 	function LandingRisk(engine, type) {
 		local pt = AIEngine.GetPlaneType(engine);
@@ -62,6 +69,38 @@ class SafetyOfficer {
 		local pc = ::MT.game.plane_crashes;
 		if (pc <= 0) return 0;
 		return (0x4000 << pc) / 1500;
+	}
+
+	/* Movement steps of the landing roll that roll for a crash (aircraft_cmd.cpp UpdateAircraftSpeed braking). */
+	function CrashRollsPerLanding(engine) {
+		local ps = ::MT.game.plane_speed;
+		local v = min(230 * ps, max(1, AIEngine.GetMaxSpeed(engine)) * ps);
+		local thr = 50 * ps, n = 0;
+		while (v > thr && n < 2000) {
+			v -= max(1, (v * v / 16384) / ps);
+			n++;
+		}
+		return max(1, n);
+	}
+
+	/* Probability that one landing ends in a crash (float), or -1.0 when the combination is forbidden. */
+	function LandingProbability(engine, type) {
+		local num = this.LandingRisk(engine, type);
+		if (num < 0) return -1.0;
+		local p = (num + 1).tofloat() / CRASH_DENOM;     // GB(Random(), 0, 22) <= prob
+		if (num == 0) return 0.0;
+		local n = this.CrashRollsPerLanding(engine);
+		return 1.0 - pow(1.0 - p, n);
+	}
+
+	/* A large aircraft on a short strip: 3276 / 2^22 per step whatever the crash setting (only a cheat stops it). */
+	function ShortStripProbability(engine) {
+		return 1.0 - pow(1.0 - 3277.0 / CRASH_DENOM, this.CrashRollsPerLanding(engine));
+	}
+
+	function PercentText(p) {
+		local x = (p * 10000).tointeger();   // hundredths of a percent
+		return (x / 100) + "." + (x % 100 < 10 ? "0" : "") + (x % 100) + "%";
 	}
 
 	function CanUseAirports(engine, type_a, type_b) {
@@ -80,11 +119,11 @@ class SafetyOfficer {
 		return true;
 	}
 
-	/* Expected passenger victims per year for a planned air line: landings x chance x people on board. */
+	/* Expected victims per year for a planned air line: landings x crash probability x people on board. */
 	function AirRiskPerYear(engine, type_a, type_b, landings_per_year, pax_per_flight) {
-		local ra = this.LandingRisk(engine, type_a), rb = this.LandingRisk(engine, type_b);
-		if (ra < 0 || rb < 0) return -1.0;
-		return landings_per_year / 2.0 * (ra + rb).tofloat() / CRASH_DENOM * (pax_per_flight + 2);
+		local pa = this.LandingProbability(engine, type_a), pb = this.LandingProbability(engine, type_b);
+		if (pa < 0 || pb < 0) return -1.0;
+		return landings_per_year / 2.0 * (pa + pb) * (pax_per_flight + 2);
 	}
 
 	/*
@@ -174,20 +213,30 @@ class SafetyOfficer {
 
 	/* ---------------- periodic duties ---------------- */
 
-	/* Keep aged or unreliable vehicles out of service until they are serviced. */
+	/*
+	 * Send unreliable vehicles for service. Trains and buses are left out: their orders stop at a depot at both
+	 * ends ("service if needed"). Sending them as well caught old models whose best reliability is close to the
+	 * threshold in a loop between the first station and its depot, so they never reached the other end.
+	 * The threshold is three quarters of what the model reaches when new, and a vehicle is sent at most every
+	 * 120 days.
+	 */
 	function ServiceRound() {
 		if (::MT.game.breakdowns <= 0) return;
 		local list = AIVehicleList();
+		local sent = 0, today = Util.Today();
 		foreach (v, _ in list) {
 			if (!AIVehicle.IsPrimaryVehicle(v)) continue;
+			local vt = AIVehicle.GetVehicleType(v);
+			if (vt == AIVehicle.VT_RAIL || vt == AIVehicle.VT_ROAD) continue;
 			local state = AIVehicle.GetState(v);
 			if (state != AIVehicle.VS_RUNNING && state != AIVehicle.VS_AT_STATION) continue;
-			if (AIVehicle.GetReliability(v) >= 45) continue;
+			local best = AIEngine.GetReliability(AIVehicle.GetEngineType(v));
+			if (AIVehicle.GetReliability(v) >= min(45, best * 3 / 4)) continue;
+			if ((v in this.serviced) && today - this.serviced[v] < 120) continue;
 			if (AIOrder.IsGotoDepotOrder(v, AIOrder.ORDER_CURRENT)) continue;
-			if (AIVehicle.SendVehicleToDepotForServicing(v)) {
-				Log.Info("SAFETY", "vehicle " + AIVehicle.GetName(v) + " reliability " + AIVehicle.GetReliability(v) + "%: sent for service");
-			}
+			if (AIVehicle.SendVehicleToDepotForServicing(v)) { sent++; this.serviced[v] <- today; }
 		}
+		if (sent > 0) Log.Info("SAFETY", sent + " vehicle(s) below 45% reliability sent for service");
 	}
 
 	/*

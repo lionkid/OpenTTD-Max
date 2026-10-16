@@ -29,12 +29,14 @@ class MaxTransit extends AIInfo {
 			min_value = 0, max_value = 1, default_value = 1, flags = CONFIG_BOOLEAN | CONFIG_INGAME});
 		AddSetting({name = "use_air", description = "Build airports and fly passengers",
 			min_value = 0, max_value = 1, default_value = 1, flags = CONFIG_BOOLEAN | CONFIG_INGAME});
-		AddSetting({name = "air_policy", description = "Aircraft while random plane crashes are enabled",
-			min_value = 0, max_value = 2, default_value = 1, flags = CONFIG_INGAME});
+		AddSetting({name = "air_policy", description = "Passenger flights while random plane crashes are enabled (about 0.1-0.3% crash risk per landing)",
+			min_value = 0, max_value = 2, default_value = 2, flags = CONFIG_INGAME});
 		AddLabels("air_policy", {
 			_0 = "Fly where it is the best option",
 			_1 = "Fly only where it saves at least 40% of the travel time",
-			_2 = "Do not fly passengers"});
+			_2 = "Do not fly passengers (safety first)"});
+		AddSetting({name = "feeders", description = "Feeder buses from the districts of big towns into the rail hubs (more passengers served, but with CargoDist they split demand into short local trips and lower revenue)",
+			min_value = 0, max_value = 1, default_value = 0, flags = CONFIG_BOOLEAN | CONFIG_INGAME});
 		AddSetting({name = "frequency", description = "Service frequency target",
 			min_value = 0, max_value = 2, default_value = 1, flags = CONFIG_INGAME});
 		AddLabels("frequency", {_0 = "Economical", _1 = "Balanced", _2 = "Frequent"});

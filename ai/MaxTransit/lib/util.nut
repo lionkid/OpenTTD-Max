@@ -224,9 +224,14 @@ Util <- {
 	/*
 	 * Debug map of the rail around a tile, one row per y: '-' x-axis track, '|' y-axis track, '/' '\\' 'n' 'u'
 	 * corner pieces, '+' several pieces, 'S' station, 'D' depot, '=' bridge head, 'T' tunnel portal,
-	 * 'r' road, '#' level crossing, '~' water. A '!' after a tile marks a signal on it.
+	 * 'r' road, '#' level crossing, '~' water. A '!' after a tile marks a signal on it. With `blocked`, other
+	 * tiles show 'x' when forbidden to the path search, 'h' when not buildable and 's' when sloped.
 	 */
-	function DumpRail(center, r) {
+	/* Opcode accounting for profiling: a mark, then the operations used since (ticks times the budget). */
+	function OpsMark() { return [AIController.GetTick(), AIController.GetOpsTillSuspend()]; }
+	function OpsSince(m) { return (AIController.GetTick() - m[0]) * ::MT.game.opcodes + m[1] - AIController.GetOpsTillSuspend(); }
+
+	function DumpRail(center, r, blocked = null, mark = null) {
 		local cx = AIMap.GetTileX(center), cy = AIMap.GetTileY(center);
 		AILog.Info("RAILMAP around " + Util.TileStr(center) + " x " + (cx - r) + ".." + (cx + r));
 		for (local y = cy - r; y <= cy + r; y++) {
@@ -235,6 +240,7 @@ Util <- {
 				local t = AIMap.GetTileIndex(x, y);
 				local c = ".";
 				if (!AIMap.IsValidTile(t)) c = " ";
+				else if (mark != null && (t in mark)) c = mark[t];
 				else if (AIRail.IsLevelCrossingTile(t)) c = "#";
 				else if (AIRail.IsRailStationTile(t)) c = "S";
 				else if (AIRail.IsRailDepotTile(t)) c = "D";
@@ -251,6 +257,11 @@ Util <- {
 					else c = "+";
 				} else if (AIRoad.IsRoadTile(t)) c = "r";
 				else if (AITile.IsWaterTile(t)) c = "~";
+				else if (blocked != null) {
+					if (t in blocked) c = "x";
+					else if (!AITile.IsBuildable(t)) c = "h";
+					else if (AITile.GetSlope(t) != AITile.SLOPE_FLAT) c = "s";
+				}
 				local sig = false;
 				if (AIRail.IsRailTile(t) && !AIRail.IsRailStationTile(t) && !AIRail.IsRailDepotTile(t)) {
 					for (local d = 0; d < 4; d++) {

@@ -103,11 +103,22 @@ function MaxTransit::Start() {
 		Log.Warn("CDIST", "passenger distribution is manual: lines are sized from waiting passengers and ratings. " +
 			"Set Cargo distribution > passengers to symmetric to let MaxTransit plan from link flows.");
 	}
-	if (::MT.game.plane_crashes > 0) {
-		Log.Info("SAFETY", "random landing crashes are enabled (" + ::MT.safety.LandingRisk(this.AnyPlane(), AIAirport.AT_LARGE) +
-			" in 2^22 per landing); large aircraft at small airports are always refused (3276 in 2^22, any setting)");
+	local plane = this.AnyPlane();
+	if (plane >= 0) {
+		if (::MT.game.plane_crashes > 0) {
+			local policy = AIController.GetSetting("air_policy");
+			Log.Info("SAFETY", "random landing crashes are enabled: about " +
+				::MT.safety.PercentText(::MT.safety.LandingProbability(plane, AIAirport.AT_LARGE)) + " per landing. Air policy: " +
+				["fly where best", "fly only where it saves 40% of the time", "no passenger flights"][Util.Clamp(policy, 0, 2)] +
+				(policy == 2 ? ". Set 'Plane crashes' to 'None' to let aircraft join the network." : "."));
+		}
+		local big = plane;
+		foreach (e, _ in AIEngineList(AIVehicle.VT_AIR)) if (AIEngine.GetPlaneType(e) == AIAirport.PT_BIG_PLANE) { big = e; break; }
+		Log.Info("SAFETY", "large aircraft are never sent to small or commuter airports (there a crash on about one landing in " +
+			(1.0 / fmax(0.001, ::MT.safety.ShortStripProbability(big))).tointeger() + ", with any crash setting)");
 	}
 
+	if (AIController.GetSetting("debug") == 1) this.DebugEngines();
 	local last_month = -1, last_year = -1, last_15 = 0;
 	while (true) {
 		this.HandleEvents();
@@ -134,6 +145,21 @@ function MaxTransit::Start() {
 		::MT.finance.Repay();
 		this.Sleep(20);
 	}
+}
+
+function MaxTransit::DebugEngines() {
+	local L = ::MT.planner.PlatformLength();
+	foreach (e, _ in AIEngineList(AIVehicle.VT_RAIL)) {
+		if (AIEngine.IsWagon(e) || !AIEngine.IsBuildable(e)) continue;
+		local rt = AIEngine.GetRailType(e);
+		local p = ::MT.engines.PlanTrain(e, L);
+		Log.Info("DEBUG", "loco " + AIEngine.GetName(e) + " rt " + rt + " (" + AIRail.GetName(rt) + ", available " + AIRail.IsRailTypeAvailable(rt) +
+			") cap " + AIEngine.GetCapacity(e) + " pax " + ::MT.engines.CarriesPax(e) + " pull " + AIEngine.CanPullCargo(e, Util.pax) +
+			" speed " + AIEngine.GetMaxSpeed(e) + " artic " + AIEngine.IsArticulated(e) +
+			(p == null ? " -> no plan" : " -> plan " + p.capacity + " seats, " + p.wagons + " wagons of " + (p.wagon == null ? "-" : AIEngine.GetName(p.wagon)) + ", " + p.speed + " km/h"));
+	}
+	local best = ::MT.engines.BestTrain(L, 150, 120, 150);
+	Log.Info("DEBUG", "best train for 120 tiles: " + (best == null ? "none" : AIEngine.GetName(best.engine) + " value " + best.eval.value.tointeger()));
 }
 
 function MaxTransit::AnyPlane() {
@@ -214,7 +240,7 @@ function MaxTransit::HandleEvents() {
 				if (line != null && line.mode == MODE_ROAD && line.state == LINE_ACTIVE) ::MT.fleet.Withdraw(v, "lost");
 				if (line != null && line.mode == MODE_RAIL) {
 					::MT.planner.CheckTracks(line);
-					if (!(line.id in ::MT.ai.dumped)) {
+					if (AIController.GetSetting("debug") == 1 && !(line.id in ::MT.ai.dumped)) {
 						::MT.ai.dumped[line.id] <- true;
 						Util.DumpRail(AIVehicle.GetLocation(v), 14);
 					}

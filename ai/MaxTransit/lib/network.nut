@@ -180,7 +180,8 @@ class Network {
 
 	function Hub(town) {
 		if (!(town in this.hubs)) {
-			this.hubs[town] <- {sid = -1, air_sid = -1, air_tile = -1, air_type = -1, rail = 0, road_stops = [], catchment = 0, shuttle = false};
+			this.hubs[town] <- {sid = -1, air_sid = -1, air_tile = -1, air_type = -1, rail = 0, road_stops = [], catchment = 0, shuttle = false,
+				feeders = [], feeder_try = 0};
 		}
 		return this.hubs[town];
 	}

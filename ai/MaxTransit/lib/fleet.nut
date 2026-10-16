@@ -48,6 +48,7 @@ class Fleet {
 			}
 			local after = AIVehicle.GetLength(loco);
 			::MT.engines.length_cache[line.wagon] <- after - before;
+			::MT.engines.probed[::MT.engines.PairKey(line.engine, line.wagon)] <- true;
 			if (after > max_len) {
 				AIVehicle.SellWagon(loco, AIVehicle.GetNumWagons(loco) - 1);
 				break;
@@ -126,7 +127,7 @@ class Fleet {
 			best = ::MT.engines.BestAircraft(line.tiles[0], line.tiles[1], AIAirport.GetAirportType(line.tiles[0]),
 				AIAirport.GetAirportType(line.tiles[1]), 150);
 		} else {
-			best = ::MT.engines.BestTrain(line.sites[0].L, line.path_len, line.dist, 150, line.railtype);
+			best = ::MT.engines.BestTrain(line.sites[0].L, line.path_len, line.dist, 150, line.railtype, line.depots[0], line.double_track ? 0 : 1);
 			if (best != null) { line.wagon = best.plan.wagon == null ? -1 : best.plan.wagon; line.wagons = best.plan.wagons; }
 		}
 		if (best != null) {
@@ -233,6 +234,10 @@ class Fleet {
 
 	function Update() {
 		local hmax = ::MT.time.headway_max;
+		/* Money in the bank carries nobody: with more than a million spare, frequency (waiting time) is bought
+		 * down to the headway target while each vehicle still fills a quarter of its seats. */
+		local rich = ::MT.finance.Cash() - ::MT.finance.Reserve() > 1000000;
+		local min_load = rich ? 0.25 : 0.4;
 		foreach (line in ::MT.network.Active()) {
 			local n = this.ActiveCount(line);
 			if (n == 0) {
@@ -243,7 +248,7 @@ class Fleet {
 			local age = Util.Today() - line.created;
 			local next_util = s.cap_month > 0 ? s.util * n / (n + 1.0) : 0.0;
 			local more = s.util > 0.9 || s.wait_ratio > 1.5 ||
-				(s.headway > hmax[line.mode] && (s.util > 0.55 || s.wait_ratio > 0.8) && next_util > 0.4);
+				(s.headway > hmax[line.mode] && (s.util > 0.55 || s.wait_ratio > 0.8 || rich) && next_util > min_load);
 			/* With CargoDist off there is no plan, so ratings below 50% (rare pickups) also ask for service. */
 			if (!::MT.game.CargoDistOn() && s.rating_a >= 0 && s.rating_a < 45 && s.wait_ratio > 0.5) more = true;
 			local less = n > 1 && age > 120 && s.util < 0.35 && s.wait_ratio < 0.3 &&
@@ -276,8 +281,8 @@ class Fleet {
 			}
 			/* Frequency: one train every two or three months makes passengers wait (and the rating drop). With
 			 * enough demand for a second train, double the line even before the first train is full. */
-			if (line.mode == MODE_RAIL && !line.double_track && line.note == "" && age > 180 &&
-					s.headway > 2 * hmax[MODE_RAIL] && s.util > 0.45 &&
+			if (line.mode == MODE_RAIL && !line.double_track && line.note == "" && age > (rich ? 120 : 180) &&
+					s.headway > (rich ? 1 : 2) * hmax[MODE_RAIL] && s.util > (rich ? 0.3 : 0.45) &&
 					(line.upgrade_failed == 0 || Util.Today() - line.upgrade_failed > 730)) {
 				line.note = "upgrade";
 				Log.Info("FLEET", line.Name() + ": headway " + s.headway.tointeger() + " d with " + (s.util * 100).tointeger() +
@@ -365,7 +370,8 @@ class Fleet {
 				local today = Util.Today();
 				if (line.probe_date > 0) {
 					local rtt = today - line.probe_date;
-					if (rtt > 3 && rtt < 1500) {
+					/* a trip in half the time the line's length and top speed allow was not a whole trip */
+					if (rtt > 3 && rtt < 1500 && rtt > line.est_rtt * 0.5) {
 						line.meas_rtt = line.meas_rtt > 0 ? 0.7 * line.meas_rtt + 0.3 * rtt : rtt.tofloat();
 						::MT.time.Calibrate(line.mode, line.est_rtt, rtt.tofloat(), line.capacity);
 					}
@@ -407,7 +413,7 @@ class Fleet {
 				best = ::MT.engines.BestAircraft(line.tiles[0], line.tiles[1], AIAirport.GetAirportType(line.tiles[0]),
 					AIAirport.GetAirportType(line.tiles[1]), 150);
 			} else {
-				best = ::MT.engines.BestTrain(line.sites[0].L, line.path_len, line.dist, 150, line.railtype);
+				best = ::MT.engines.BestTrain(line.sites[0].L, line.path_len, line.dist, 150, line.railtype, line.depots[0], line.double_track ? 0 : 1);
 			}
 			if (best == null || best.engine == line.engine) continue;
 			if (AIEngine.GetMaxSpeed(best.engine) < AIEngine.GetMaxSpeed(line.engine) * 105 / 100 &&

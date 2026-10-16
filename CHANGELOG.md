@@ -2,6 +2,17 @@
 
 ## 1.1.0 (unreleased)
 
+- MaxTransit AI (ai/MaxTransit, Script API 15): a passenger network AI built around CargoDist, with
+  passenger safety first and door-to-door time second. Buses, railways and aircraft each take the distances
+  they serve best; town stations are joined into interchange hubs and new railways branch off existing
+  stations through junctions. Safety rules are part of construction (no level crossings, one train per
+  unsignalled single track, one-way path signals, no large aircraft at Small/Commuter airports, no flights
+  while random plane crashes are enabled unless the AI setting allows them). Trains for this set are planned
+  as fixed formations or as head cars with their own series' intermediate cars, measured in a depot first.
+  `make ai-bundle` packages it; design notes and test results in docs/AI.md.
+- Docs: the short-strip crash risk of large aircraft is about 11-20% per landing (3276/2^22 per braking
+  step, 150-290 steps per landing) and does not depend on the "Plane crashes" setting; see docs/AI.md 2.1.
+
 - Loading speed: vehicles of this set loaded one unit per loading step (the OpenTTD default for NewGRF
   vehicles without a loading_speed), so a 747 took months to board. Now a full load takes 8 steps
   (aircraft: about 2 days, trains: about 4 days) and a new parameter offers 4 steps, 2 steps or the

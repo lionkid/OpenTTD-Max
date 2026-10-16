@@ -26,6 +26,7 @@ class GameSnapshot {
 	recalc_interval = 8;
 	recalc_time = 32;
 	realistic_accel = true;
+	opcodes = 10000;         // script operations per tick before the AI is suspended
 
 	constructor() {
 		this.allow = [true, true, true];
@@ -58,6 +59,7 @@ class GameSnapshot {
 		this.recalc_interval = this.Get("linkgraph.recalc_interval", 8);
 		this.recalc_time = this.Get("linkgraph.recalc_time", 32);
 		this.realistic_accel = this.Get("vehicle.train_acceleration_model", 1) == 1;
+		this.opcodes = max(1, this.Get("script.script_max_opcode_till_suspend", 10000));
 		this.max_vehicles = [this.Get("vehicle.max_roadveh", 500), this.Get("vehicle.max_trains", 500),
 			this.Get("vehicle.max_aircraft", 200)];
 		this.allow = [

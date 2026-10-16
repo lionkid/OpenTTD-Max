@@ -67,6 +67,11 @@ class Planner {
 		}
 		if (this.Interchanges()) { this.last_build = Util.Today(); return; }
 		local cands = this.Candidates();
+		if (AIController.GetSetting("debug") == 1) {
+			for (local i = 0; i < min(8, cands.len()); i++) {
+				Log.Info("DEBUG", "candidate " + (i + 1) + ": " + this.Describe(cands[i]) + " score " + (cands[i].score * 100).tointeger() + "%");
+			}
+		}
 		local tried = 0;
 		local started = Util.Today();
 		foreach (c in cands) {
@@ -83,8 +88,29 @@ class Planner {
 				ok = false;
 			}
 			this.last_build = Util.Today();
-			if (ok) return;
+			if (ok) {
+				if (c.mode != MODE_ROAD) this.SideProject(cands);
+				return;
+			}
 			this.failures[c.key] <- Util.Today();
+		}
+	}
+
+	/*
+	 * With money to spare, a bus link is built next to each big project: it takes days, not months, and joins
+	 * a town without a station to the network (a link that adds a town scores the CargoDist bonus).
+	 */
+	function SideProject(cands) {
+		if (::MT.finance.Cash() - ::MT.finance.Reserve() < 300000) return;
+		foreach (c in cands) {
+			if (c.mode != MODE_ROAD || !::MT.finance.CanAfford(c.cost)) continue;
+			if ((c.key in this.failures) && Util.Today() - this.failures[c.key] < 730) continue;
+			if (::MT.network.HasLink(c.a, c.b, MODE_ROAD)) continue;
+			Log.Info("PLAN", "side project: " + this.Describe(c));
+			local ok = false;
+			try { ok = this.BuildRoad(c); } catch (e) { Log.Error("PLAN", "construction error: " + e); }
+			if (!ok) this.failures[c.key] <- Util.Today();
+			return;
 		}
 	}
 
@@ -115,6 +141,9 @@ class Planner {
 	function Candidates() {
 		local towns = this.Towns();
 		local out = [];
+		local budget_share = fmax(0.0, ::MT.finance.Available().tofloat()) / 6.0;
+		/* air policy "no passenger flights" while random crashes are on: no air plans at all (said once at start) */
+		local no_flying = ::MT.game.plane_crashes > 0 && AIController.GetSetting("air_policy") == 2;
 		local game = ::MT.game;
 		local in_net = {};
 		foreach (l in ::MT.network.lines) {
@@ -139,8 +168,11 @@ class Planner {
 					rail = this.EvalRail(a, b, d);
 					if (rail != null) found.append(rail);
 				}
-				if (game.allow[MODE_AIR] && d >= 60 && !::MT.network.HasLink(a, b, MODE_AIR)) {
+				if (game.allow[MODE_AIR] && !no_flying && d >= 60 && !::MT.network.HasLink(a, b, MODE_AIR)) {
 					local c = this.EvalAir(a, b, d);
+					/* Time first: no flight where the train would be as fast door to door (unless the railway failed). */
+					if (c != null && rail != null && rail.door <= c.door &&
+							!((rail.key in this.failures) && Util.Today() - this.failures[rail.key] < 730)) c = null;
 					if (c != null) {
 						/* Safety first: compare with the surface alternative the AI could build instead. */
 						local alt = rail != null ? rail.door : (game.allow[MODE_RAIL] && d <= 260 ? this.SurfaceDays(d) : -1);
@@ -160,7 +192,9 @@ class Planner {
 					else if (!na && !nb && ::MT.network.lines.len() > 0) c.value *= 0.9;
 					local tb = this.TransferBonus(a, b);
 					if (tb > 0) c.value += tb * 12 * c.fare * 0.5;
-					c.score <- c.value / fmax(1.0, c.cost);
+					/* value per pound while money is short; when it is not, building time is what is scarce, so
+					 * every project up to a sixth of the money available counts as costing that much */
+					c.score <- c.value / fmax(fmax(1.0, c.cost), budget_share);
 					if (c.value > 0) out.append(c);
 				}
 			}
@@ -171,7 +205,7 @@ class Planner {
 
 	/* Rough door-to-door days by the best train available, for the air policy when no rail plan exists. */
 	function SurfaceDays(d) {
-		local best = ::MT.engines.BestTrain(this.PlatformLength(), d * 1.2, d, 200);
+		local best = ::MT.engines.BestTrain(this.PlatformLength(), d * 1.2, d, 200, -1, -1, 1);
 		if (best == null) return -1;
 		return ::MT.time.DoorToDoor(best.eval.one_way, best.eval.headway);
 	}
@@ -194,16 +228,27 @@ class Planner {
 		local best = ::MT.engines.BestBus(d * 1.25, d, demand);
 		if (best == null) return null;
 		local rt = AIRoad.ROADTYPE_ROAD;
-		local cost = AIRoad.GetBuildCost(rt, AIRoad.BT_ROAD) * d * 0.7 + 2 * AIRoad.GetBuildCost(rt, AIRoad.BT_BUS_STOP) +
-			2 * AIRoad.GetBuildCost(rt, AIRoad.BT_DEPOT) + min(best.eval.n, 2) * AIEngine.GetPrice(best.engine);
-		return this.Cand(MODE_ROAD, a, b, d, demand, best, cost);
+		local infra = AIRoad.GetBuildCost(rt, AIRoad.BT_ROAD) * d * 0.7 + 2 * AIRoad.GetBuildCost(rt, AIRoad.BT_BUS_STOP) +
+			2 * AIRoad.GetBuildCost(rt, AIRoad.BT_DEPOT);
+		return this.ScaleToFull(this.Cand(MODE_ROAD, a, b, d, demand, best, infra + AIEngine.GetPrice(best.engine)),
+			infra + best.eval.capex);
+	}
+
+	/*
+	 * The value of a candidate counts the whole fleet it needs; the first purchase is smaller. Scale the value to
+	 * the first outlay so that the score (value per pound) is value per pound of the complete line in every mode.
+	 */
+	function ScaleToFull(c, full) {
+		c.value = c.value * c.cost / fmax(1.0, full.tofloat());
+		return c;
 	}
 
 	function EvalRail(a, b, d) {
 		local demand = this.Demand(a, b, MODE_RAIL);
 		local L = this.PlatformLength();
 		local tiles = d * 1.2;
-		local best = ::MT.engines.BestTrain(L, tiles, d, demand);
+		/* a new railway opens single track with one train */
+		local best = ::MT.engines.BestTrain(L, tiles, d, demand, -1, -1, 1);
 		if (best == null) return null;
 		local rt = best.plan.railtype;
 		local track = AIRail.GetBuildCost(rt, AIRail.BT_TRACK) * tiles * 1.2;
@@ -211,12 +256,9 @@ class Planner {
 			AIRail.GetBuildCost(rt, AIRail.BT_DEPOT));
 		local clear = AITile.GetBuildCost(AITile.BT_CLEAR_GRASS) * tiles * 2;
 		local first = track + stations + clear + best.plan.price;
-		/* the full value needs the second track and more trains */
-		local full = first + track + AIRail.GetBuildCost(rt, AIRail.BT_SIGNAL) * tiles / 3 + (best.eval.n - 1) * best.plan.price;
-		local c = this.Cand(MODE_RAIL, a, b, d, demand, best, full);
+		/* valued as what it opens with: single track, one train (doubling is decided later on the measured flows) */
+		local c = this.Cand(MODE_RAIL, a, b, d, demand, best, first);
 		c.first_cost <- first;
-		c.cost = first;
-		c.value = c.value * first / full;
 		return c;
 	}
 
@@ -228,9 +270,9 @@ class Planner {
 		local la = AITown.GetLocation(a), lb = AITown.GetLocation(b);
 		local best = ::MT.engines.BestAircraft(la, lb, ta, tb, demand);
 		if (best == null) return null;
-		local cost = (this.HasAirport(a) ? 0 : AIAirport.GetPrice(ta)) + (this.HasAirport(b) ? 0 : AIAirport.GetPrice(tb)) +
-			2 * AIEngine.GetPrice(best.engine);
-		local c = this.Cand(MODE_AIR, a, b, d, demand, best, cost);
+		local airports = (this.HasAirport(a) ? 0 : AIAirport.GetPrice(ta)) + (this.HasAirport(b) ? 0 : AIAirport.GetPrice(tb));
+		local c = this.ScaleToFull(this.Cand(MODE_AIR, a, b, d, demand, best, airports + min(best.eval.n, 2) * AIEngine.GetPrice(best.engine)),
+			airports + best.eval.capex);
 		c.type_a <- ta;
 		c.type_b <- tb;
 		/* Residual random landing risk is a cost too (only non-zero when the game setting allows crashes). */
@@ -415,7 +457,8 @@ class Planner {
 		local pt = AIEngine.GetPlaneType(best.engine);
 		Log.Info("BUILD", line.Name() + " opened: " + AIEngine.GetName(best.engine) + " (" +
 			(pt == AIAirport.PT_BIG_PLANE ? "large" : "small") + " aircraft, " + ::MT.air.TypeName(ta) + " / " + ::MT.air.TypeName(tb) +
-			" airports: landing risk " + ::MT.safety.LandingRisk(best.engine, ta) + "/2^22), " + line.dist + " tiles, round trip about " +
+			" airports: crash risk " + ::MT.safety.PercentText(fmax(::MT.safety.LandingProbability(best.engine, ta), ::MT.safety.LandingProbability(best.engine, tb))) +
+			" per landing), " + line.dist + " tiles, round trip about " +
 			line.est_rtt.tointeger() + " days");
 		return true;
 	}
@@ -497,6 +540,8 @@ class Planner {
 			this.Demolish(::MT.rail.Footprint(site_b));
 			return false;
 		}
+		foreach (site in [site_a, site_b]) foreach (row in [0, 1]) ::MT.rail.ReserveCorridor(site, row);
+		::MT.rail.UsePlaceholders([site_a, site_b]);
 		local forbidden = this.Footprints(site_a, site_b);
 		foreach (t, _ in ::MT.network.ReservedRail()) forbidden[t] <- true;
 		delete forbidden[::MT.rail.T(site_a, 0, -4)];
@@ -510,11 +555,16 @@ class Planner {
 		if (p1 == null || ::MT.rail.Verify(p1) >= 0) {
 			Log.Warn("PLAN", "no railway " + Util.TownName(c.a) + " - " + Util.TownName(c.b));
 			if (::MT.rail.trapped) ::MT.rail.bad_sites[site_a.O] <- Util.Today();
+			if (::MT.rail.trapped_goal) ::MT.rail.bad_sites[site_b.O] <- Util.Today();
 			if (p1 != null) ::MT.rail.RemovePath(p1, p1.len() - 1);
+			foreach (site in [site_a, site_b]) foreach (row in [0, 1]) ::MT.rail.FreeCorridor(site, row);
 			this.Demolish(::MT.rail.Footprint(site_a));
 			this.Demolish(::MT.rail.Footprint(site_b));
 			return false;
 		}
+		/* the estimate is checked in the new depot: the train must fit the platforms and couple */
+		local exact = ::MT.engines.BestTrain(L, c.dist * 1.2, c.dist, c.demand, rt, site_a.depot, 1);
+		if (exact != null) plan = exact.plan;
 		local line = Line();
 		line.mode = MODE_RAIL;
 		line.towns = [c.a, c.b];
@@ -536,10 +586,14 @@ class Planner {
 		::MT.network.Add(line);
 		this.RegisterStation(c.a, site_a.sid, MODE_RAIL);
 		this.RegisterStation(c.b, site_b.sid, MODE_RAIL);
+		/* With money to spare the second track goes in at once: trains in both directions from the first day,
+		 * and the way out of a growing town is still free (later it may be built over). */
+		if (::MT.finance.Cash() - ::MT.finance.Reserve() > 3 * c.first_cost + 500000) this.UpgradeRail(line);
 		local v = ::MT.fleet.BuildFor(line, 0);
 		Log.Info("BUILD", line.Name() + " opened: " + p1.len() + " track tiles, " + AIRail.GetName(rt) + ", " +
 			AIEngine.GetName(plan.loco) + (plan.wagons > 0 ? " + " + plan.wagons + " x " + AIEngine.GetName(plan.wagon) : "") +
-			", " + plan.capacity + " seats, " + plan.speed + " km/h, one train (single track, no signals needed)" +
+			", " + plan.capacity + " seats, " + plan.speed + " km/h, " +
+			(line.double_track ? "double track with path signals" : "one train (single track, no signals needed)") +
 			(v < 0 ? " - first train failed" : ""));
 		if (v < 0) ::MT.fleet.Repick(line);
 		return true;
@@ -556,7 +610,7 @@ class Planner {
 		local L = sa != null ? sa.site.L : sb.site.L;
 		if (sa != null && sb != null) L = min(sa.site.L, sb.site.L);
 		local tiles = c.dist * 1.2;
-		local best = ::MT.engines.BestTrain(L, tiles, c.dist, c.demand, rt);
+		local best = ::MT.engines.BestTrain(L, tiles, c.dist, c.demand, rt, (sa != null ? sa : sb).site.depot);
 		if (best == null) return false;
 		local la = AITown.GetLocation(c.a), lb = AITown.GetLocation(c.b);
 		local site_a = sa != null ? sa.site : null, site_b = sb != null ? sb.site : null;
@@ -595,6 +649,11 @@ class Planner {
 			this.Demolish(::MT.rail.Footprint(site_b));
 			return false;
 		}
+		local fresh = [];
+		if (new_a) fresh.append(site_a);
+		if (new_b) fresh.append(site_b);
+		foreach (site in fresh) foreach (row in [0, 1]) ::MT.rail.ReserveCorridor(site, row);
+		::MT.rail.UsePlaceholders(fresh);
 		if (start1 == null) start1 = ::MT.rail.TerminusStart(site_a);
 		if (goal1 == null) goal1 = ::MT.rail.TerminusGoal(site_b);
 		if (start2 == null) start2 = ::MT.rail.TerminusStart(site_b);
@@ -630,7 +689,7 @@ class Planner {
 		}
 		if (fail) {
 			Log.Warn("PLAN", "no railway " + Util.TownName(c.a) + " - " + Util.TownName(c.b) + " through the shared station");
-			if (::MT.rail.trapped) {
+			if (::MT.rail.trapped || ::MT.rail.trapped_goal) {
 				if (new_a) ::MT.rail.bad_sites[site_a.O] <- Util.Today();
 				if (new_b) ::MT.rail.bad_sites[site_b.O] <- Util.Today();
 			}
@@ -644,6 +703,7 @@ class Planner {
 			if (start2.sw != null) AIRail.RemoveRail(start2.sw[0], start2.sw[1], start2.sw[2]);
 			if (goal1.merge != null) AIRail.RemoveRail(goal1.merge[0], goal1.merge[1], goal1.merge[2]);
 			if (goal2.merge != null) AIRail.RemoveRail(goal2.merge[0], goal2.merge[1], goal2.merge[2]);
+			foreach (site in fresh) foreach (row in [0, 1]) ::MT.rail.FreeCorridor(site, row);
 			if (new_a) this.Demolish(::MT.rail.Footprint(site_a));
 			if (new_b) this.Demolish(::MT.rail.Footprint(site_b));
 			return false;
@@ -759,10 +819,13 @@ class Planner {
 		}
 		if (!::MT.finance.Ensure(this.UpgradeCost(line).tointeger())) return false;
 		Log.Info("PLAN", line.Name() + ": laying the second track");
+		::MT.rail.UsePlaceholders([site_a, site_b]);
 		local p2 = ::MT.rail.BuildTrack(site_b, site_a, forbidden, prefer, rt);
 		if (p2 == null || ::MT.rail.Verify(p2) >= 0) {
 			Log.Warn("PLAN", line.Name() + ": no route for a second track; stays a single-train line for now");
 			if (p2 != null) ::MT.rail.RemovePath(p2, p2.len() - 1);
+			::MT.rail.ReserveCorridor(site_a, 1);
+			::MT.rail.ReserveCorridor(site_b, 0);
 			line.note = "";
 			line.upgrade_failed = Util.Today();
 			return false;
@@ -841,17 +904,59 @@ class Planner {
 	function FixCrossings(line) {
 		foreach (t in line.track_tiles) {
 			if (!AIRail.IsLevelCrossingTile(t)) continue;
-			local done = false;
+			local done = false, axis = -1;
 			foreach (d in [DIR_PX, DIR_PY]) {
 				local a = t - Geo.Offset(d), b = t + Geo.Offset(d);
 				if (AIRoad.AreRoadTilesConnected(t, a) || AIRoad.AreRoadTilesConnected(t, b)) {
 					done = AIRoad.RemoveRoad(a, b);
+					axis = d;
 					break;
 				}
 			}
-			Log.Warn("SAFETY", line.Name() + ": level crossing at " + Util.TileStr(t) + (done ? " removed" :
+			/* the town may refuse while our rating is low: plant trees now, the next monthly audit retries */
+			if (!done && AIError.GetLastError() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) this.OnRefused(AITile.GetClosestTown(t));
+			local bridged = done && this.BridgeTownRoad(t, axis);
+			Log.Warn("SAFETY", line.Name() + ": level crossing at " + Util.TileStr(t) + (done ? " removed" +
+				(bridged ? "; the road now crosses on a bridge" : "") :
 				" could not be removed (" + AIError.GetLastErrorString() + "); consider disallowing town level crossings"));
 		}
+	}
+
+	/*
+	 * After a town-built crossing is taken out, give the road a bridge over the railway there: towns extend
+	 * their roads at dead ends, so without one the crossing comes back the next month. The heads must stand on
+	 * road or empty land (a bridge head clears its tile: never on our track, never on a house).
+	 */
+	function BridgeTownRoad(t, d) {
+		local off = Geo.Offset(d);
+		local a = t - off, b = t + off;
+		while (AIRail.IsRailTile(a) && AIMap.DistanceManhattan(a, t) < 6) a -= off;
+		while (AIRail.IsRailTile(b) && AIMap.DistanceManhattan(b, t) < 6) b += off;
+		foreach (h in [a, b]) {
+			local road = AIRoad.IsRoadTile(h) && !AIRoad.IsRoadStationTile(h) && !AIRoad.IsDriveThroughRoadStationTile(h) && !AIRoad.IsRoadDepotTile(h);
+			if (AIRail.IsRailTile(h) || AIBridge.IsBridgeTile(h) || AITunnel.IsTunnelTile(h) || (!AITile.IsBuildable(h) && !road)) {
+				Log.Info("SAFETY", "no road bridge at " + Util.TileStr(t) + ": " + Util.TileStr(h) + " cannot carry a bridge head");
+				return false;
+			}
+		}
+		local br = ::MT.rail.bridges.Fastest(AIMap.DistanceManhattan(a, b) + 1);
+		if (br < 0) return false;
+		AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
+		local ok;
+		{
+			local tm = AITestMode();
+			ok = AIBridge.BuildBridge(AIVehicle.VT_ROAD, br, a, b);
+		}
+		if (ok && ::MT.finance.Ensure(AIBridge.GetPrice(br, AIMap.DistanceManhattan(a, b) + 1) + 20000) &&
+				AIBridge.BuildBridge(AIVehicle.VT_ROAD, br, a, b)) {
+			/* join the bridge to the roads it continues (a head on empty land needs a piece of road out) */
+			foreach (pair in [[a, a - off], [b, b + off]]) {
+				if (AIRoad.IsRoadTile(pair[1]) && !AIRoad.AreRoadTilesConnected(pair[0], pair[1])) AIRoad.BuildRoad(pair[0], pair[1]);
+			}
+			return true;
+		}
+		Log.Info("SAFETY", "no road bridge at " + Util.TileStr(t) + ": " + AIError.GetLastErrorString());
+		return false;
 	}
 
 	/* ---------------- interchanges ---------------- */
@@ -876,7 +981,44 @@ class Planner {
 				hub.catchment = 99;
 			}
 		}
+		/* With money to spare: feeder buses from the districts of big towns into their rail hubs. */
+		if (AIController.GetSetting("feeders") == 1 && ::MT.finance.Cash() - ::MT.finance.Reserve() > 600000) {
+			foreach (town, hub in ::MT.network.hubs) {
+				if (!AIStation.IsValidStation(hub.sid) || hub.rail <= 0) continue;
+				local pop = AITown.GetPopulation(town);
+				if (pop < 1500) continue;
+				if (!("feeders" in hub)) { hub.feeders <- []; hub.feeder_try <- 0; }
+				if (hub.feeders.len() >= min(3, pop / 1500) || Util.Today() - hub.feeder_try < 365) continue;
+				hub.feeder_try = Util.Today();
+				if (this.TownFeeder(town, hub)) return true;
+			}
+		}
 		return false;
+	}
+
+	/*
+	 * Feeder bus inside a big town: a stop in a district beyond the hub's catchment, joined into the network at
+	 * the hub station. CargoDist routes its passengers to every destination of the network through the hub, so
+	 * the trains get the riders of the whole town, not only of the streets around the station.
+	 */
+	function TownFeeder(town, hub) {
+		local hloc = AIStation.GetLocation(hub.sid);
+		local avoid = {};
+		foreach (f in hub.feeders) {
+			local fx = AIMap.GetTileX(f), fy = AIMap.GetTileY(f);
+			for (local y = fy - 7; y <= fy + 7; y++) for (local x = fx - 7; x <= fx + 7; x++) avoid[AIMap.GetTileIndex(x, y)] <- true;
+		}
+		local r = 8 + min(14, AITown.GetPopulation(town) / 400);
+		local far = ::MT.road.FindStop(AITown.GetLocation(town), r, AIStation.STATION_NEW, avoid, hloc, 9);
+		local near = ::MT.road.FindStop(hloc, 6, hub.sid);
+		if (far == null || near == null) return false;
+		local d = AIMap.DistanceManhattan(near.tile, far.tile);
+		local best = ::MT.engines.BestBus(d + 2, d, 60);
+		if (best == null) return false;
+		Log.Info("PLAN", "feeder bus in " + Util.TownName(town) + " from the district at " + Util.TileStr(far.tile) + " to " + AIStation.GetName(hub.sid));
+		if (!this.BuildBusLine(town, town, near, far, hub.sid, AIStation.STATION_NEW, best.engine, true)) return false;
+		hub.feeders.append(far.tile);
+		return true;
 	}
 
 	/* Bus shuttle between two stations of one town so CargoDist can route through both. */
