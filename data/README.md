@@ -23,7 +23,7 @@
 | sound | `jet`、`jet_big`、`jet_fast`：原版備援音效，也決定本套件的起飛音效（sounds/jet_takeoff.wav、jet_takeoff_big.wav、concorde_takeoff.wav） |
 | length_m / wingspan_m | 建模與比例校正用 |
 | runway_m | 最大起飛重量、海平面標準大氣的起飛場地長度（公尺，依各型號公開數據，無資料者為估計值並在 notes 註明）；購買視窗顯示四捨五入到 50 m 的值與適用機場等級（≤ 2,100 全部機場、≤ 2,700 城市機場以上、≤ 3,100 國際機場以上、其餘洲際機場） |
-| airport_class | 選填：`small` 或 `large`。空白時由 runway_m 推算（≤ 2,100 m 為 small）。small 可安全使用小型 / 通勤機場；large 在這兩種機場降落有墜機風險（遊戲設定「飛機失事」非「無」時） |
+| airport_class | 選填：`small` 或 `large`。空白時由 runway_m 推算（≤ 2,100 m 為 small）。small 可安全使用小型 / 通勤機場；large 在這兩種機場降落約每 5–9 次墜毀 1 次（11–20%），與遊戲設定「飛機失事」無關（見 docs/AI.md 2.1 節） |
 | art | 圖檔目錄名（`gfx/aircraft/<art>/`），空白表示用佔位圖 |
 | notes | 備註 |
 
