@@ -1,13 +1,14 @@
 # OpenTTD-Max build. Targets:
-#   make            validate data, compile max-air.grf and max-rail.grf, bundle the MaxTransit AI
+#   make            validate data, compile max-air.grf and max-rail.grf, bundle the MaxTransit AIs
 #   make render     render every model with Blender (needs BPY_PYTHON, see tools/render.py)
 #   make gfx        post-process build/render into gfx/ sprite sheets
 #   make placeholder regenerate the placeholder sprites used for vehicles without art
 #   make sounds     synthesise sounds/*.wav (tools/make_sounds.py)
 #   make test-grf   build without badges for OpenTTD < 15 (used by tools/ingame)
 #   make bundle     BaNaNaS-style tar files in build/bundle/ (VERSION_LABEL=0.1.0-alpha)
-#   make ai-bundle  the MaxTransit AI as a BaNaNaS-style tar in build/bundle/ (see docs/AI.md)
+#   make ai-bundle  the MaxTransit and MaxTransit2 AIs as BaNaNaS-style tars in build/bundle/ (docs/AI.md, docs/AI-v2.md)
 #   make ai-test    a 5-year headless game with the AI (needs the OpenTTD build from tools/ingame)
+#   make ai2-test   the same with MaxTransit2 (on macOS the Steam build of OpenTTD is used when present)
 #   make clean
 PY         ?= python3
 BPY_PYTHON ?= /opt/bpyvenv/bin/python
@@ -19,7 +20,7 @@ GRFS   = max-air.grf max-rail.grf
 INPUTS = $(wildcard data/*.csv) $(wildcard src/*.pnml) $(wildcard src/common/*.pnml) $(wildcard lang/*.lng) \
          $(wildcard gfx/*/*/manifest.json) $(wildcard sounds/*.wav) tools/gen_nml.py VERSION
 
-.PHONY: all check nml grf render gfx placeholder sounds test-grf bundle ai-bundle ai-test clean
+.PHONY: all check nml grf render gfx placeholder sounds test-grf bundle ai-bundle ai-test ai2-test clean
 
 all: check grf ai-bundle
 
@@ -68,6 +69,9 @@ ai-bundle:
 
 ai-test:
 	$(PY) tools/ai/run_ai.py --years 5
+
+ai2-test:
+	$(PY) tools/ai/run_ai.py --ai MaxTransit2 --years 5 --industries 4
 
 clean:
 	rm -rf build $(GRFS) .nmlcache
