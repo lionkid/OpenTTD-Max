@@ -1,5 +1,5 @@
 # OpenTTD-Max build. Targets:
-#   make            validate data, generate NML, compile max-air.grf and max-rail.grf
+#   make            validate data, compile max-air.grf and max-rail.grf, bundle the MaxTransit AI
 #   make render     render every model with Blender (needs BPY_PYTHON, see tools/render.py)
 #   make gfx        post-process build/render into gfx/ sprite sheets
 #   make placeholder regenerate the placeholder sprites used for vehicles without art
@@ -21,7 +21,7 @@ INPUTS = $(wildcard data/*.csv) $(wildcard src/*.pnml) $(wildcard src/common/*.p
 
 .PHONY: all check nml grf render gfx placeholder sounds test-grf bundle ai-bundle ai-test clean
 
-all: check grf
+all: check grf ai-bundle
 
 check:
 	$(PY) tools/validate.py
