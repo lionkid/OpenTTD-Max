@@ -823,9 +823,10 @@ class Planner {
 		}
 		if (!this.CommitDock(da)) { Log.Warn("PLAN", "dock at " + Util.TileStr(da.tile) + " not built"); return false; }
 		if (!this.CommitDock(db)) { Log.Warn("PLAN", "dock at " + Util.TileStr(db.tile) + " not built"); this.DropDock(da); return false; }
-		/* the depot off the route, a few tiles from the first dock, so that ships leave it towards the line */
-		local depot = ::TY.marine.BuildDepotNear(path[min(3, path.len() - 1)]);
-		if (depot < 0) depot = ::TY.marine.BuildDepotNear(path[max(0, path.len() - 4)]);
+		/* the depot off the route, a few tiles from the first dock and clear of both docks' berths */
+		local clear = [da.water, db.water];
+		local depot = ::TY.marine.BuildDepotNear(path[min(4, path.len() - 1)], clear);
+		if (depot < 0) depot = ::TY.marine.BuildDepotNear(path[max(0, path.len() - 5)], clear);
 		if (depot < 0) {
 			Log.Warn("PLAN", "no ship depot site");
 			this.DropDock(da);
@@ -853,8 +854,8 @@ class Planner {
 		::TY.network.Add(line);
 		if (da.built) this.RegisterStation(c.ends[0], da.sid, MODE_WATER);
 		if (db.built) this.RegisterStation(c.ends[1], db.sid, MODE_WATER);
+		/* one ship first: the fleet manager adds more once it has sailed the route (a bad route costs one ship) */
 		local v = ::TY.fleet.BuildFor(line, 0);
-		if (!line.IsFreight()) ::TY.fleet.BuildFor(line, 1);
 		Log.Info("BUILD", line.Name() + " opened: " + path.len() + " water tiles between the docks at " + Util.TileStr(da.tile) + " and " + Util.TileStr(db.tile) +
 			", " + line.buoys.len() + " buoys, depot " + Util.TileStr(depot) + ", " + AIEngine.GetName(best.engine) + " (" + line.capacity + " units), round trip about " + line.est_rtt.tointeger() +
 			" days" + (v < 0 ? " - first ship failed" : ""));

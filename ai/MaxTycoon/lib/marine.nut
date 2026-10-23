@@ -135,8 +135,13 @@ class MarineBuilder {
 		return AIStation.GetStationID(site.tile);
 	}
 
-	/* Ship depot on two flat water tiles reachable from `water`, within a few tiles. Returns the depot tile or -1. */
-	function BuildDepotNear(water) {
+	/*
+	 * Ship depot on two flat water tiles reachable from `water`, within a few tiles, and at least three tiles
+	 * from the tiles ships dock on (`keep_clear`): a ship that leaves its depot straight onto a docking tile
+	 * loads there at once and then asks the game's pathfinder for a route from inside the depot, which it
+	 * answers with "lost". Returns the depot tile or -1.
+	 */
+	function BuildDepotNear(water, keep_clear = null) {
 		local pf = WaterPathFinder();
 		water = this.Berth(water);
 		if (water < 0) return -1;
@@ -149,6 +154,7 @@ class MarineBuilder {
 					local t2 = t + Geo.Offset(axis);
 					if (!pf.Sailable(t2) || AIMarine.IsBuoyTile(t2) || AIMarine.IsLockTile(t2)) continue;
 					if (AIMarine.IsBuoyTile(t) || AIMarine.IsLockTile(t)) continue;
+					if (keep_clear != null && (this.NearAny(t, keep_clear, 3) || this.NearAny(t2, keep_clear, 3))) continue;
 					local front = t - Geo.Offset(axis);
 					if (!pf.Sailable(front)) front = t2 + Geo.Offset(axis);
 					if (!pf.Sailable(front)) continue;
@@ -169,6 +175,11 @@ class MarineBuilder {
 			}
 		}
 		return -1;
+	}
+
+	function NearAny(t, tiles, r) {
+		foreach (x in tiles) if (AIMap.DistanceManhattan(t, x) < r) return true;
+		return false;
 	}
 
 	/* A sailable tile next to a dock's water part (that part is a station tile ships stop beside, not on). */
@@ -210,11 +221,12 @@ class MarineBuilder {
 		local out = [];
 		for (local i = BUOY_SPACING; i < path.len() - BUOY_SPACING / 2; i += BUOY_SPACING) {
 			local placed = -1;
-			foreach (k in [0, 1, -1, 2, -2]) {
+			foreach (k in [0, 1, -1, 2, -2, 3, -3]) {
 				local j = i + k;
 				if (j < 1 || j >= path.len() - 1) continue;
 				local t = path[j];
 				if (AIMarine.IsBuoyTile(t)) { placed = t; break; }
+				if (!Geo.InMap(t, 3)) continue;   // the game's pathfinder is unhappy next to the map edge
 				if (pf.Kind(t) != 1 || AITile.IsStationTile(t) || AIMarine.IsWaterDepotTile(t) || AIMarine.IsLockTile(t)) continue;
 				if (AIMarine.BuildBuoy(t)) { placed = t; break; }
 			}
