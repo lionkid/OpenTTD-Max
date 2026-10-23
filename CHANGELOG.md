@@ -2,6 +2,19 @@
 
 ## 1.1.0 (unreleased)
 
+- MaxTycoon AI (ai/MaxTycoon, Script API 15): plays for the highest company performance rating at the
+  ending year. Every vehicle type (buses, trucks, trams when a NewGRF provides them, trains, aircraft,
+  ships), whole industry chains with optional funding of missing processing industries, town growth (five
+  served stations, funded buildings, statues, advertising) and road grids laid out on the town's own grid.
+  The nine score components are computed quarterly the way economy.cpp does; lines are valued by profit
+  plus the points they add, weak vehicles are replaced before their second birthday, the fleet is completed
+  the year before the ranking and the ending year keeps cash and repays the loan. Settings: Intelligence
+  (search effort, score awareness, mistakes) and Development (cadence, network size, town spending).
+  Ship lines find both dock sites and a water route before building (water bodies are cached), steer by
+  buoys every 16 tiles so the game's own ship pathfinder never gives up, and road depots are only placed on
+  road the vehicles can reach. `make ai-bundle AI=MaxTycoon` packages it; tools/ai/run_ai.py gained --ai,
+  --ending-year, --economy, --industries and --cargodist-freight. Design notes and test results in
+  docs/TYCOON.md.
 - MaxTransit AI (ai/MaxTransit, Script API 15): a passenger network AI built around CargoDist, with
   passenger safety first and door-to-door time second. Buses, railways and aircraft each take the distances
   they serve best; town stations are joined into interchange hubs and new railways branch off existing

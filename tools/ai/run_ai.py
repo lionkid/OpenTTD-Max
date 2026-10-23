@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Run the MaxTransit AI headless (null video, sound and music drivers) for a number of game years and
-summarise its log: construction, CargoDist reports, safety incidents and script errors.
+"""Run one of the repository's AIs headless (null video, sound and music drivers) for a number of game years
+and summarise its log: construction, CargoDist reports, safety incidents, score and script errors.
 
-    python3 tools/ai/run_ai.py --years 10                         # vanilla vehicles, CargoDist symmetric
+    python3 tools/ai/run_ai.py --years 10                         # MaxTransit, vanilla vehicles, CargoDist symmetric
+    python3 tools/ai/run_ai.py --ai MaxTycoon --years 20 --ending-year 2010 --start-year 1990
     python3 tools/ai/run_ai.py --years 10 --grf --start-year 2016 # with max-air.grf and max-rail.grf
     python3 tools/ai/run_ai.py --cargodist manual --crashes 2 --breakdowns 2
 
@@ -32,6 +33,7 @@ autosave_on_exit = {save}
 [game_creation]
 landscape = {landscape}
 starting_year = {start_year}
+ending_year = {ending_year}
 map_x = {map}
 map_y = {map}
 land_generator = 1
@@ -44,15 +46,16 @@ town_name = english
 [difficulty]
 max_no_competitors = 1
 number_towns = {towns}
-industry_density = 2
+industry_density = {industries}
 max_loan = {loan}
 vehicle_breakdowns = {breakdowns}
 disasters = {disasters}
-economy = 0
+economy = {economy}
 
 [linkgraph]
 distribution_pax = {dist}
 distribution_mail = {dist}
+distribution_default = {dist_freight}
 
 [script]
 script_max_opcode_till_suspend = {opcodes}
@@ -104,6 +107,11 @@ def main() -> int:
     ap.add_argument("--terrain", type=int, default=1, help="0 very flat .. 4 mountainous")
     ap.add_argument("--sea", type=int, default=1, help="0 very low .. 4 high")
     ap.add_argument("--landscape", default="temperate")
+    ap.add_argument("--ai", default="MaxTransit", help="AI directory under ai/ (MaxTransit, MaxTycoon)")
+    ap.add_argument("--ending-year", type=int, default=2050, help="game_creation.ending_year (the high score year)")
+    ap.add_argument("--economy", type=int, default=0, help="difficulty.economy: 0 original, 1 smooth, 2 frozen")
+    ap.add_argument("--industries", type=int, default=2, help="industry density 0 funding only .. 5 very high")
+    ap.add_argument("--cargodist-freight", choices=DIST, default="manual")
     ap.add_argument("--loan", type=int, default=500000)
     ap.add_argument("--cargodist", choices=DIST, default="symmetric")
     ap.add_argument("--crashes", type=int, default=2)
@@ -115,10 +123,10 @@ def main() -> int:
     ap.add_argument("--opcodes", type=int, default=10000)
     ap.add_argument("--seed", type=int, default=20261016)
     ap.add_argument("--grf", action="store_true", help="load max-air.grf and max-rail.grf from the repo root")
-    ap.add_argument("--ai-settings", default="", help="e.g. 'use_air=0 frequency=2'")
+    ap.add_argument("--ai-settings", default="", help="e.g. 'use_air=0 frequency=2' (passed to start_ai comma-separated)")
     ap.add_argument("--save", action="store_true", help="save the game at the end (save/autosave/exit.sav)")
     ap.add_argument("--load", default="", help="start from this savegame instead of a new game")
-    ap.add_argument("--ai-tar", default="", help="install this AI tar (make ai-bundle) instead of ai/MaxTransit")
+    ap.add_argument("--ai-tar", default="", help="install this AI tar (make ai-bundle) instead of the ai/ directory")
     ap.add_argument("--out", default=str(ROOT / "build" / "ai-test"))
     ap.add_argument("--timeout", type=float, default=3600)
     ap.add_argument("--quiet", action="store_true")
@@ -142,7 +150,7 @@ def main() -> int:
     if args.ai_tar:
         shutil.copy(args.ai_tar, data / "ai" / Path(args.ai_tar).name)   # the packaged AI, as BaNaNaS ships it
     else:
-        shutil.copytree(ROOT / "ai" / "MaxTransit", data / "ai" / "MaxTransit")
+        shutil.copytree(ROOT / "ai" / args.ai, data / "ai" / args.ai)
     newgrf = ""
     if args.grf:
         for i, grf in enumerate(("max-air.grf", "max-rail.grf")):
@@ -154,14 +162,17 @@ def main() -> int:
             newgrf += f"{grf} =\n"
     ticks = int(args.years * TICKS_PER_YEAR)
     if not args.load:   # a loaded game resumes its own AI company; start_ai would add a second one
-        (data / "scripts" / "game_start.scr").write_text(f"start_ai MaxTransit {args.ai_settings}\n".rstrip() + "\n")
+        # start_ai takes the settings as one comma-separated word: "use_air=0,frequency=2"
+        settings = ",".join(args.ai_settings.replace(",", " ").split())
+        (data / "scripts" / "game_start.scr").write_text(f"start_ai {args.ai} {settings}\n".rstrip() + "\n")
     if args.load:
         shutil.copy(args.load, data / "save" / "start.sav")
     else:
         (data / "scripts" / "autoexec.scr").write_text(f"newgame {args.seed}\n")
     cfg = home / "openttd.cfg"
     cfg.write_text(CFG.format(
-        landscape=args.landscape, start_year=args.start_year, map=args.map, terrain=args.terrain, sea=args.sea,
+        landscape=args.landscape, start_year=args.start_year, ending_year=args.ending_year, map=args.map, terrain=args.terrain, sea=args.sea,
+        industries=args.industries, economy=args.economy, dist_freight=DIST[args.cargodist_freight],
         towns=args.towns, loan=args.loan, breakdowns=args.breakdowns, disasters="true" if args.disasters else "false",
         dist=DIST[args.cargodist], opcodes=args.opcodes, train_length=args.train_length, plane_speed=args.plane_speed,
         crashes=args.crashes, town_crossings="false" if args.no_town_crossings else "true", newgrf=newgrf,
@@ -191,7 +202,7 @@ def summarise(text: str, quiet: bool) -> int:
     errors = [l for l in lines if "Your script made an error" in l or "*FUNCTION" in l or "died unexpectedly" in l]
     logged = [l for l in lines if "[E]" in l]
     crash = [l for l in lines if "INCIDENT" in l]
-    keep = re.compile(r"\[(REPORT|BUILD|SAFETY|CDIST|PLAN|BANK|MAIN)\]")
+    keep = re.compile(r"\[(REPORT|BUILD|SAFETY|CDIST|PLAN|BANK|MAIN|SCORE|TOWN|INDUSTRY)\]")
     if not quiet:
         for l in lines:
             if keep.search(l):

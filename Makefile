@@ -6,7 +6,7 @@
 #   make sounds     synthesise sounds/*.wav (tools/make_sounds.py)
 #   make test-grf   build without badges for OpenTTD < 15 (used by tools/ingame)
 #   make bundle     BaNaNaS-style tar files in build/bundle/ (VERSION_LABEL=0.1.0-alpha)
-#   make ai-bundle  the MaxTransit AI as a BaNaNaS-style tar in build/bundle/ (see docs/AI.md)
+#   make ai-bundle  the MaxTransit AI as a BaNaNaS-style tar in build/bundle/ (see docs/AI.md); AI=MaxTycoon for the other one
 #   make ai-test    a 5-year headless game with the AI (needs the OpenTTD build from tools/ingame)
 #   make clean
 PY         ?= python3
@@ -63,11 +63,13 @@ test-grf:
 bundle: grf
 	$(PY) tools/bundle.py $(if $(VERSION_LABEL),--version $(VERSION_LABEL),)
 
+AI ?= MaxTransit
+
 ai-bundle:
-	$(PY) tools/bundle.py --ai $(if $(VERSION_LABEL),--version $(VERSION_LABEL),)
+	$(PY) tools/bundle.py --ai --name $(AI) $(if $(VERSION_LABEL),--version $(VERSION_LABEL),)
 
 ai-test:
-	$(PY) tools/ai/run_ai.py --years 5
+	$(PY) tools/ai/run_ai.py --ai $(AI) --years 5
 
 clean:
 	rm -rf build $(GRFS) .nmlcache
