@@ -603,9 +603,10 @@ class Fleet {
 						/* a single-track line gets its new train once the old one is sold (Update builds for an empty line) */
 						this.Withdraw(v, "replaced before its second birthday (profit " + Util.Money(AIVehicle.GetProfitLastYear(v)) + ")");
 						replaced++;
-					} else if (decisive) {
-						/* no new vehicle to be had (money, limits): a weak old vehicle at the ranking costs the whole
-						 * minimum-profit component, a missing one costs a vehicle point at most */
+					} else if (::TY.score.phase == PHASE_HARVEST) {
+						/* the last chance (January to June of the ending year) and no new vehicle to be had: a weak
+						 * old vehicle at the ranking costs the whole minimum-profit component, a missing one costs a
+						 * vehicle point at most. Earlier, the next quarter tries the replacement again. */
 						this.Withdraw(v, "weak (profit " + Util.Money(AIVehicle.GetProfitLastYear(v)) + ") and no replacement to be had");
 						n--;
 						sold++;

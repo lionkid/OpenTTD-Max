@@ -120,7 +120,7 @@ class GameSnapshot {
 			this.DistName(this.dist[Util.pax]) + (freight >= 0 ? ", freight " + this.DistName(freight) : "") +
 			"; economy " + ["original", "smooth", "frozen"][Util.Clamp(this.economy, 0, 2)] +
 			", raw industry construction " + ["off", "prospecting", "allowed"][Util.Clamp(this.raw_industry, 0, 2)] +
-			", plane crashes " + ["none", "reduced", "normal"][Util.Clamp(this.plane_crashes, 0, 2)] +
+			", AI speed " + this.ai_speed + ", plane crashes " + ["none", "reduced", "normal"][Util.Clamp(this.plane_crashes, 0, 2)] +
 			", breakdowns " + ["none", "reduced", "normal"][Util.Clamp(this.breakdowns, 0, 2)] +
 			", inflation " + (this.inflation ? "on" : "off") + ", infrastructure maintenance " + (this.infrastructure ? "on" : "off") +
 			", town growth rate " + this.town_growth_rate + ", vehicles allowed road/rail/air/water " +
