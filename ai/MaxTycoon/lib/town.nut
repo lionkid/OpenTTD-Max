@@ -143,11 +143,13 @@ class TownCare {
 			if (rec.loop < 0 && pop >= 900 && Util.Today() - rec.loop_try > 400 && ::TY.network.ServedStationsOfTown(town) < 5) {
 				rec.loop_try = Util.Today();
 				this.last_project = Util.Today();
+				::TY.planner.doing = "town circle line in " + Util.TownName(town);
 				if (this.BuildLoop(town, rec)) return true;
 			}
 			if (::TY.levels.grid_roads && pop >= 600 && Util.Today() - rec.grid_try > 365 && worth > 40000) {
 				rec.grid_try = Util.Today();
 				this.last_project = Util.Today();
+				::TY.planner.doing = "road grid in " + Util.TownName(town);
 				if (this.BuildGrid(town, rec)) return true;
 			}
 		}

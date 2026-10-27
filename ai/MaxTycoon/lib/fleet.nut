@@ -33,6 +33,7 @@ class Fleet {
 			v = AIVehicle.BuildVehicle(depot, engine);
 		}
 		if (!AIVehicle.IsValidVehicle(v)) return -1;
+		this.Forget(v);   // the game reuses vehicle ids: a sold or crashed vehicle's entries must not follow the new one
 		::TY.engines.cap_cache[engine + ":" + cargo] <- AIVehicle.GetCapacity(v, cargo);
 		return v;
 	}
@@ -122,6 +123,8 @@ class Fleet {
 		if (depot < 0) { end = 1 - end; depot = line.depots[end]; }
 		if (depot < 0) return -1;
 		local price = AIEngine.GetPrice(line.engine) + (line.wagon >= 0 ? line.wagons * AIEngine.GetPrice(line.wagon) : 0);
+		/* bought by the monthly routines while a planner step is building: leave that construction its money */
+		if (::TY.planner.in_step && ::TY.ai.in_periodic && ::TY.finance.Cash() - price < ::TY.finance.Reserve() + 200000) return -1;
 		if (!::TY.finance.Ensure(price)) return -1;
 		if (!AIEngine.IsBuildable(line.engine)) this.Repick(line);
 		local v = line.mode == MODE_RAIL ? this.BuildTrain(line, depot) : this.BuildBasic(depot, line.engine, line.cargo);
@@ -172,9 +175,17 @@ class Fleet {
 
 	/* ---------------- withdrawing ---------------- */
 
+	/* Drop a vehicle from the sale bookkeeping (it was sold, or its id now names a new vehicle). */
+	function Forget(v) {
+		if (v in this.to_sell) delete this.to_sell[v];
+		if (v in this.sell_since) delete this.sell_since[v];
+		if (this.retargeted != null && (v in this.retargeted)) delete this.retargeted[v];
+	}
+
 	function Withdraw(v, reason) {
 		if (!AIVehicle.IsValidVehicle(v) || (v in this.to_sell)) return;
 		this.to_sell[v] <- reason;
+		this.sell_since[v] <- Util.Today();
 		if (!AIVehicle.IsStoppedInDepot(v) && !AIOrder.IsGotoDepotOrder(v, AIOrder.ORDER_CURRENT)) AIVehicle.SendVehicleToDepot(v);
 		Log.Info("FLEET", "withdrawing " + AIVehicle.GetName(v) + ": " + reason);
 	}
@@ -194,14 +205,29 @@ class Fleet {
 		return n;
 	}
 
+	selling = false;   // SellParked is running (it may build a road, whose pathfinder runs housekeeping)
+
 	function SellParked() {
+		if (this.selling) return;
+		this.selling = true;
+		try {
+			this._SellParked();
+		} catch (e) {
+			this.selling = false;
+			throw e;
+		}
+		this.selling = false;
+	}
+
+	function _SellParked() {
 		local keys = [];
 		foreach (v, _ in this.to_sell) keys.append(v);
 		foreach (v in keys) {
-			if (!AIVehicle.IsValidVehicle(v)) { delete this.to_sell[v]; if (v in this.sell_since) delete this.sell_since[v]; continue; }
+			if (!(v in this.to_sell)) continue;   // sold meanwhile
+			if (!AIVehicle.IsValidVehicle(v)) { this.Forget(v); continue; }
 			if (AIVehicle.IsStoppedInDepot(v)) {
 				AIVehicle.SellVehicle(v);
-				if (!AIVehicle.IsValidVehicle(v)) { delete this.to_sell[v]; if (v in this.sell_since) delete this.sell_since[v]; }
+				if (!AIVehicle.IsValidVehicle(v)) this.Forget(v);
 				continue;
 			}
 			if (!(v in this.sell_since)) this.sell_since[v] <- Util.Today();
@@ -218,9 +244,84 @@ class Fleet {
 					AIVehicle.GetState(v) + "): no depot site and no road to one");
 				if (AIController.GetSetting("debug") == 1) Util.DumpRoad(loc, 6);
 				this.sell_since[v] <- Util.Today();
+				if (!AIVehicle.IsValidVehicle(v)) continue;
 			}
-			if (!AIOrder.IsGotoDepotOrder(v, AIOrder.ORDER_CURRENT)) AIVehicle.SendVehicleToDepot(v);
+			if (Util.Today() - this.sell_since[v] > 120 && AIVehicle.GetVehicleType(v) != AIVehicle.VT_ROAD) {
+				local cur = AIOrder.ResolveOrderPosition(v, AIOrder.ORDER_CURRENT);
+				local dest = AIOrder.GetOrderDestination(v, AIOrder.ORDER_CURRENT);
+				Log.Warn("FLEET", AIVehicle.GetName(v) + " not sold after " + (Util.Today() - this.sell_since[v]) + " days: type " +
+					AIVehicle.GetVehicleType(v) + ", state " + AIVehicle.GetState(v) + ", at " + Util.TileStr(AIVehicle.GetLocation(v)) +
+					", in depot " + AIVehicle.IsInDepot(v) + ", stopped in depot " + AIVehicle.IsStoppedInDepot(v) + ", order " + cur + "/" +
+					AIOrder.GetOrderCount(v) + " to " + Util.TileStr(dest) + ", depot order " + AIOrder.IsGotoDepotOrder(v, AIOrder.ORDER_CURRENT) +
+					", current is in list " + AIOrder.IsCurrentOrderPartOfOrderList(v) + ", speed " + AIVehicle.GetCurrentSpeed(v));
+				this.sell_since[v] <- Util.Today() - 30;   // report again in three months
+				if (AIController.GetSetting("debug") == 1 && AIVehicle.GetVehicleType(v) == AIVehicle.VT_AIR && AIMap.IsValidTile(dest)) {
+					this.AirportCensus(AIStation.GetStationID(dest));
+				}
+			}
+			if (AIVehicle.GetVehicleType(v) == AIVehicle.VT_AIR && Util.Today() - this.sell_since[v] > 90 && this.Retarget(v)) continue;
+			if (!AIOrder.IsGotoDepotOrder(v, AIOrder.ORDER_CURRENT)) {
+				if (!AIVehicle.SendVehicleToDepot(v) && AIController.GetSetting("debug") == 1) {
+					Log.Info("DEBUG", "send " + AIVehicle.GetName(v) + " to depot failed: " + AIError.GetLastErrorString());
+				}
+			}
 		}
+	}
+
+	/* Debug: where our aircraft are at an airport (on its tiles: in the hangar, at a terminal, waiting, moving; or above it). */
+	function AirportCensus(sid) {
+		if (!AIStation.IsValidStation(sid) || !AIStation.HasStationType(sid, AIStation.STATION_AIRPORT)) return;
+		local tiles = AITileList_StationType(sid, AIStation.STATION_AIRPORT);
+		local c = {hangar = 0, terminal = 0, waiting = 0, moving = 0, broken = 0, near = 0, stopped = 0};
+		local slow = "";
+		foreach (v, _ in AIVehicleList()) {
+			if (AIVehicle.GetVehicleType(v) != AIVehicle.VT_AIR) continue;
+			local loc = AIVehicle.GetLocation(v);
+			if (!tiles.HasItem(loc)) {
+				if (AIMap.DistanceManhattan(loc, AIStation.GetLocation(sid)) < 12) c.near++;
+				continue;
+			}
+			local st = AIVehicle.GetState(v);
+			if (AIVehicle.IsStoppedInDepot(v)) c.hangar++;
+			else if (st == AIVehicle.VS_STOPPED) c.stopped++;
+			else if (st == AIVehicle.VS_AT_STATION) c.terminal++;
+			else if (st == AIVehicle.VS_BROKEN) c.broken++;
+			else if (AIVehicle.GetCurrentSpeed(v) == 0) { c.waiting++; if (slow.len() < 200) slow += " " + AIVehicle.GetName(v) + "@" + Util.TileStr(loc); }
+			else c.moving++;
+		}
+		Log.Warn("FLEET", "airport " + AIStation.GetName(sid) + " (" + ::TY.air.TypeName(AIAirport.GetAirportType(AIStation.GetLocation(sid))) + "): on the ground " +
+			"in hangar " + c.hangar + ", at terminals " + c.terminal + ", waiting " + c.waiting + ", moving " + c.moving + ", broken " + c.broken + ", stopped " +
+			c.stopped + "; within 12 tiles in the air " + c.near + "; load " + this.AirportLoad(sid) + "/month;" + slow);
+	}
+
+	retargeted = null;   // aircraft sent to the hangar at the other end of their line (once each)
+
+	/*
+	 * A withdrawn aircraft still circling after three months: the airport whose hangar it was sent to is jammed
+	 * (a crash on the runway, too many aircraft). Send it to the hangar at the other end of its line instead,
+	 * with an order list of its own holding just that depot. Returns true when the aircraft was redirected.
+	 */
+	function Retarget(v) {
+		if (this.retargeted == null) this.retargeted = {};
+		if ((v in this.retargeted) || AIVehicle.IsInDepot(v)) return false;
+		this.retargeted[v] <- true;
+		local line = ::TY.network.LineOfVehicle(v);
+		if (line == null || line.mode != MODE_AIR) return false;
+		local dest = AIOrder.GetOrderDestination(v, AIOrder.ORDER_CURRENT);
+		local ds = AIMap.IsValidTile(dest) ? AIStation.GetStationID(dest) : -1;
+		local hangar = line.depots[ds == line.sids[0] ? 1 : 0];
+		if (!AIMap.IsValidTile(hangar) || !AIAirport.IsHangarTile(hangar)) return false;
+		AIOrder.UnshareOrders(v);                                                           // an empty list of its own
+		if (AIOrder.IsGotoDepotOrder(v, AIOrder.ORDER_CURRENT)) AIVehicle.SendVehicleToDepot(v);   // cancels the old trip to the hangar
+		if (!AIOrder.AppendOrder(v, hangar, AIOrder.OF_STOP_IN_DEPOT)) {
+			Log.Warn("FLEET", AIVehicle.GetName(v) + ": no order to the hangar at " + Util.TileStr(hangar) + ": " + AIError.GetLastErrorString());
+			AIVehicle.SendVehicleToDepot(v);
+			return false;
+		}
+		AIOrder.SkipToOrder(v, 0);
+		Log.Warn("FLEET", AIVehicle.GetName(v) + " could not reach the hangar at " + Util.TileStr(dest) + " in " + (Util.Today() - this.sell_since[v]) +
+			" days; sent to the hangar at " + Util.TileStr(hangar) + " instead");
+		return true;
 	}
 
 	/* A vehicle that cannot find its way: road vehicles and ships are withdrawn, railways re-checked. */
@@ -282,11 +383,24 @@ class Fleet {
 	}
 
 	/* Landings per month at an airport over all our air lines (runway and terminal load). */
+	/*
+	 * Landings a month an airport can still take (each terminal turns about four aircraft round a month). An
+	 * airport over its capacity makes aircraft circle for weeks; a withdrawn aircraft circling it cannot reach the
+	 * hangar to be sold, and an old unsold aircraft costs the minimum-profit component.
+	 */
+	function AirportRoom(sid, type) {
+		return ::TY.air.Terminals(type) * AIR_TURNS - (AIStation.IsValidStation(sid) ? this.AirportLoad(sid) : 0.0);
+	}
+
+	/*
+	 * Landings a month our aircraft ask of an airport, from the planned round trips: the measured ones grow when
+	 * the airport is congested (aircraft circle), which would make a jammed airport look lighter.
+	 */
 	function AirportLoad(sid) {
 		local load = 0.0;
 		foreach (l in ::TY.network.LinesAt(sid)) {
 			if (l.mode != MODE_AIR) continue;
-			load += this.ActiveCount(l) * 30.0 / fmax(4.0, l.Rtt());
+			load += this.ActiveCount(l) * 30.0 / fmax(4.0, l.est_rtt);
 		}
 		return load;
 	}
@@ -311,7 +425,7 @@ class Fleet {
 		if (line.mode == MODE_AIR) {
 			foreach (i, sid in line.sids) {
 				local t = ::TY.air.Terminals(AIAirport.GetAirportType(line.tiles[i]));
-				if (this.AirportLoad(sid) + 30.0 / fmax(4.0, line.Rtt()) > t * 4.0) return false;
+				if (this.AirportLoad(sid) + 30.0 / fmax(4.0, line.est_rtt) > t * AIR_TURNS) return false;
 			}
 		}
 		local count = AIVehicleList();
@@ -328,6 +442,7 @@ class Fleet {
 		local min_load = rich ? 0.25 : 0.4;
 		local phase = ::TY.score.phase;
 		foreach (line in ::TY.network.Active()) {
+			if (::TY.planner.IsBusy(line)) continue;   // being rebuilt
 			local n = this.ActiveCount(line);
 			if (n == 0) {
 				this.BuildFor(line, 0);
@@ -348,6 +463,8 @@ class Fleet {
 					per_vehicle > 2 * AIEngine.GetRunningCost(line.engine) && s.util > 0.45 && ::TY.finance.Cash() > 300000) more = true;
 			if (!::TY.game.CargoDistOn(line.cargo) && !line.IsFreight() && s.rating_a >= 0 && s.rating_a < 45 && s.wait_ratio > 0.5 && earning) more = true;
 			local less = n > 1 && age > 120 && ((s.util < 0.35 && s.wait_ratio < 0.3) || (age > 400 && per_vehicle < 2000 && s.util < 0.6));
+			/* aircraft whose round trip takes half as long again as planned spend it circling a congested airport */
+			if (line.mode == MODE_AIR && line.meas_rtt > 1.5 * line.est_rtt && age > 180) { more = false; if (n > 1) less = true; }
 			/* in the ending year a new vehicle earns no vehicle points: only clear shortfalls get one */
 			if (phase == PHASE_HARVEST && !(s.util > 1.2 || s.wait_ratio > 3.0)) more = false;
 			if (more) { line.hi++; line.lo = 0; }
@@ -434,6 +551,7 @@ class Fleet {
 		local horizon = decisive ? 540 : 100000;
 		local sold = 0, replaced = 0, closed = 0;
 		foreach (line in ::TY.network.Active()) {
+			if (::TY.planner.IsBusy(line)) continue;   // being rebuilt
 			local total = 0, n = 0, weak = [];
 			foreach (v, _ in line.Vehicles()) {
 				if (v in this.to_sell) continue;
@@ -485,6 +603,12 @@ class Fleet {
 						/* a single-track line gets its new train once the old one is sold (Update builds for an empty line) */
 						this.Withdraw(v, "replaced before its second birthday (profit " + Util.Money(AIVehicle.GetProfitLastYear(v)) + ")");
 						replaced++;
+					} else if (decisive) {
+						/* no new vehicle to be had (money, limits): a weak old vehicle at the ranking costs the whole
+						 * minimum-profit component, a missing one costs a vehicle point at most */
+						this.Withdraw(v, "weak (profit " + Util.Money(AIVehicle.GetProfitLastYear(v)) + ") and no replacement to be had");
+						n--;
+						sold++;
 					}
 				}
 			}
@@ -529,6 +653,7 @@ class Fleet {
 	/* Round trip measurement on one probe vehicle per line (feeds the time model). */
 	function MeasureTrips() {
 		foreach (line in ::TY.network.Active()) {
+			if (::TY.planner.IsBusy(line)) continue;   // being rebuilt
 			this.SampleTime(line);
 			if (!AIVehicle.IsValidVehicle(line.probe) || ::TY.network.LineOfVehicle(line.probe) != line || (line.probe in this.to_sell)) {
 				line.probe = -1;
@@ -564,6 +689,7 @@ class Fleet {
 		/* in the ending year a new vehicle has no profit last year: the old one keeps counting until the ranking */
 		if (::TY.score.phase == PHASE_HARVEST) return;
 		foreach (line in ::TY.network.Active()) {
+			if (::TY.planner.IsBusy(line)) continue;   // being rebuilt
 			foreach (v, _ in line.Vehicles()) {
 				if (v in this.to_sell) continue;
 				if (AIVehicle.GetAgeLeft(v) > 180 && AIVehicle.GetEngineType(v) == line.engine) continue;
@@ -584,6 +710,7 @@ class Fleet {
 	function Modernise() {
 		if (::TY.score.phase >= PHASE_PREPARE) return;
 		foreach (line in ::TY.network.Active()) {
+			if (::TY.planner.IsBusy(line)) continue;   // being rebuilt
 			local best = this.BestFor(line);
 			if (best == null || best.engine == line.engine) continue;
 			if (AIEngine.GetMaxSpeed(best.engine) < AIEngine.GetMaxSpeed(line.engine) * 105 / 100 &&

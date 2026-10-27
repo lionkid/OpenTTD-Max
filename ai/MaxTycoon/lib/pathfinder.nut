@@ -285,7 +285,7 @@ class RailPathFinder {
 			if (key in closed) continue;
 			closed[key] <- true;
 			if (++this.expanded > this.max_nodes) break;
-			if (this.expanded % 2000 == 0) { this.stats.housekeeping++; TY_Housekeeping(); }
+			if (this.expanded % 400 == 0) { this.stats.housekeeping++; TY_Housekeeping(); }   // about every two game days
 
 			local tile = key >> 5, turned = (key >> 4) & 1, din = (key >> 2) & 3, dprev = key & 3;
 			local tx = tile % mx, ty = tile / mx;
@@ -436,7 +436,7 @@ class CorridorFinder {
 			closed[t] <- true;
 			if (t == goal || (escape > 0 && AIMap.DistanceManhattan(t, start) >= escape)) return this.Build(par, t);
 			if (++this.expanded > this.max_nodes) return null;
-			if (this.expanded % 3000 == 0) TY_Housekeeping();
+			if (this.expanded % 800 == 0) TY_Housekeeping();
 			local gt = g[t];
 			local st = this.SlopeOf(t);
 			local ld = (t in landed) ? landed[t] : -1;
@@ -596,6 +596,7 @@ class RoadPathFinder {
 			if (key in closed) continue;
 			closed[key] <- true;
 			if (++this.expanded > this.max_nodes) break;
+			if (this.expanded % 800 == 0) TY_Housekeeping();
 			local tile = key >> 2, din = key & 3;
 			if (tile in goal_set) return this.Trace(key, par);
 			local cls = this.Class(tile);
@@ -765,7 +766,7 @@ class WaterPathFinder {
 				return out;
 			}
 			if (++this.expanded > this.max_nodes) { this.capped = true; return null; }
-			if (this.expanded % 4000 == 0) TY_Housekeeping();
+			if (this.expanded % 1500 == 0) TY_Housekeeping();
 			local kt;
 			if (t in kinds) kt = kinds[t];
 			else { kt = this.Kind(t); kinds[t] <- kt; }

@@ -132,7 +132,7 @@ class RailBuilder {
 			local guide = this.T(site, row, -16);
 			if (!AIMap.IsValidTile(guide)) guide = own;
 			local pf = RailPathFinder(this.bridges);
-			pf.max_nodes = 400;   // ten tiles out takes a few dozen nodes in open country; a site that needs more is a pocket
+			pf.max_nodes = 150;   // ten tiles out takes a few dozen nodes in open country; a site that needs more is a pocket
 			pf.forbidden = blocked;
 			local path = pf.FindPath(this.T(site, row, -3), site.o, guide, site.o, {escape = 10});
 			if (!was_other) delete blocked[other];

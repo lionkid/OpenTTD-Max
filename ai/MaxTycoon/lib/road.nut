@@ -225,6 +225,9 @@ class RoadBuilder {
 	function Connect(stop_a, stop_b) {
 		local pf = RoadPathFinder(this.bridges);
 		local path = pf.FindPath([stop_a], [stop_b]);
+		/* a route through a crossing is at least the Manhattan distance long: when the safe route is within three
+		 * tiles of that, no crossing route can be clearly shorter and the second search is skipped */
+		if (path != null && path.len() <= AIMap.DistanceManhattan(stop_a, stop_b) + 4) return {path = path, crossing_risk = false};
 		local pf2 = RoadPathFinder(this.bridges);
 		pf2.allow_crossings = true;
 		local fast = pf2.FindPath([stop_a], [stop_b]);

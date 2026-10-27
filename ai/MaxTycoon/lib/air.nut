@@ -6,6 +6,8 @@
  * available or affordable, and then the SafetyOfficer lets only small aircraft fly there.
  */
 
+const AIR_TURNS = 3.0;   // aircraft a terminal turns round in a month (landings measured at a saturated metropolitan airport: 3.5-4)
+
 class AirBuilder {
 	/* Types in order of preference that are available now and have a hangar. */
 	function Candidates() {
@@ -94,6 +96,7 @@ class AirBuilder {
 	}
 
 	/* Terminals limit how many aircraft one airport serves without holding patterns. */
+	/* Terminals of an airport type; each turns about AIR_TURNS aircraft a month once servicing and breakdowns are counted. */
 	function Terminals(type) {
 		switch (type) {
 			case AIAirport.AT_SMALL: return 2;

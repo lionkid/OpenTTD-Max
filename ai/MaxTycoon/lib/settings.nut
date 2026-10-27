@@ -33,6 +33,7 @@ class GameSnapshot {
 	recalc_time = 32;
 	realistic_accel = true;
 	opcodes = 10000;         // script operations per tick before the AI is suspended
+	ai_speed = 2;          // difficulty.competitor_speed
 	ending_year = 2050;      // the year the game ranks the companies (game_creation.ending_year)
 	economy = 1;             // 0 original, 1 smooth, 2 frozen
 	raw_industry = 0;        // construction.raw_industry_construction: 0 none, 1 prospecting, 2 as other industries
@@ -79,6 +80,7 @@ class GameSnapshot {
 		this.recalc_time = this.Get("linkgraph.recalc_time", 32);
 		this.realistic_accel = this.Get("vehicle.train_acceleration_model", 1) == 1;
 		this.opcodes = max(1, this.Get("script.script_max_opcode_till_suspend", 10000));
+		this.ai_speed = this.Get("difficulty.competitor_speed", 2);   // the AI runs every 2^(4-n) ticks
 		this.ending_year = this.Get("game_creation.ending_year", 2050);
 		this.economy = this.Get("economy.type", 1);
 		this.raw_industry = this.Get("construction.raw_industry_construction", 0);

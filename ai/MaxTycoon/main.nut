@@ -33,20 +33,34 @@ TY <- {};
 
 /* Called from long construction loops so that events and sales are not delayed by pathfinding. */
 TY_last_housekeeping <- 0;
+TY_in_housekeeping <- false;   // housekeeping can build (a depot, a road): the pathfinders it runs call back here
 function TY_Housekeeping() {
 	local today = AIDate.GetCurrentDate();
-	if (today == ::TY_last_housekeeping || !("ai" in ::TY)) return;
+	if (::TY_in_housekeeping || today == ::TY_last_housekeeping || !("ai" in ::TY)) return;
 	::TY_last_housekeeping = today;
-	::TY.ai.HandleEvents();
-	::TY.fleet.SellParked();
-	if (today - ::TY.ai.last_3 >= 3) {
-		::TY.fleet.MeasureTrips();
-		::TY.ai.last_3 = today;
+	::TY_in_housekeeping = true;
+	try {
+		::TY.ai.HandleEvents();
+		::TY.fleet.SellParked();
+		if (today - ::TY.ai.last_3 >= 3) {
+			::TY.fleet.MeasureTrips();
+			::TY.ai.last_3 = today;
+		}
+		::TY.ai.Periodic();
+	} catch (e) {
+		::TY_in_housekeeping = false;
+		throw e;
 	}
+	::TY_in_housekeeping = false;
 }
 
 class MaxTycoon extends AIController {
 	loaded = null;
+	in_events = false;
+	in_periodic = false;   // the calendar routines are running (housekeeping may call them from inside a long step)
+	p_month = -1;
+	p_year = -1;
+	p_15 = 0;
 	month_count = 0;
 	last_3 = 0;
 	last_quarter = -1;
@@ -133,37 +147,62 @@ function MaxTycoon::Start() {
 	Log.Info("INDUSTRY", ::TY.industry.Describe());
 	if (AIController.GetSetting("debug") == 1) ::TY.engines.DebugDump();
 
-	local last_month = -1, last_year = -1, last_15 = 0;
 	this.last_quarter = Util.Quarter();
 	while (true) {
 		this.HandleEvents();
 		local today = AIDate.GetCurrentDate();
-		local month = AIDate.GetMonth(today), year = AIDate.GetYear(today);
 		if (today - this.last_3 >= 3) {
 			::TY.fleet.MeasureTrips();
 			::TY.fleet.SellParked();
 			this.last_3 = today;
 		}
-		if (month != last_month) {
-			if (last_month != -1) this.Monthly();
-			last_month = month;
-			local q = Util.Quarter(today);
-			if (q != this.last_quarter) {
-				this.last_quarter = q;
-				this.Quarterly();
-			}
-		}
-		if (today - last_15 >= 15) {
-			::TY.fleet.Update();
-			last_15 = today;
-		}
-		if (year != last_year) {
-			if (last_year != -1) this.Yearly();
-			last_year = year;
-		}
+		this.Periodic();
+		::TY.planner.doing = "";
+		local t_step = AIDate.GetCurrentDate();
 		::TY.planner.Step();
+		local took = AIDate.GetCurrentDate() - t_step;
+		if (took > 45) Log.Warn("MAIN", "a planner step took " + took + " days (" + (::TY.planner.doing == "" ? "town or network work" : ::TY.planner.doing) + ")");
 		::TY.finance.Repay();
 		this.Sleep(20);
+	}
+}
+
+/*
+ * The calendar routines: monthly upkeep, the quarter's score and culling, the fleet's sizing every 15 days and
+ * the yearly modernisation. The main loop runs them between planner steps and housekeeping runs them from inside
+ * long searches, so that a railway that takes four months to plan does not stop the fleet being managed.
+ */
+function MaxTycoon::Periodic() {
+	if (this.in_periodic) return;
+	this.in_periodic = true;
+	try {
+		this._Periodic();
+	} catch (e) {
+		this.in_periodic = false;
+		throw e;
+	}
+	this.in_periodic = false;
+}
+
+function MaxTycoon::_Periodic() {
+	local today = AIDate.GetCurrentDate();
+	local month = AIDate.GetMonth(today), year = AIDate.GetYear(today);
+	if (month != this.p_month) {
+		if (this.p_month != -1) this.Monthly();
+		this.p_month = month;
+		local q = Util.Quarter(today);
+		if (q != this.last_quarter) {
+			this.last_quarter = q;
+			this.Quarterly();
+		}
+	}
+	if (today - this.p_15 >= 15) {
+		::TY.fleet.Update();
+		this.p_15 = today;
+	}
+	if (year != this.p_year) {
+		if (this.p_year != -1) this.Yearly();
+		this.p_year = year;
 	}
 }
 
@@ -179,7 +218,7 @@ function MaxTycoon::Monthly() {
 	::TY.fleet.HandleSafetyFlags();
 	::TY.fleet.FinishClosures();
 	::TY.fleet.Renew();
-	::TY.towns.Monthly();
+	if (!::TY.planner.in_step) ::TY.towns.Monthly();   // town spending waits until a running construction is paid for
 	if (this.month_count % 2 == 0) ::TY.industry.Refresh();
 }
 
@@ -219,7 +258,20 @@ function MaxTycoon::Report() {
 	}
 }
 
+/* Events can lead to construction (a lost bus mends its road) whose pathfinder runs housekeeping: no nesting. */
 function MaxTycoon::HandleEvents() {
+	if (this.in_events) return;
+	this.in_events = true;
+	try {
+		this._HandleEvents();
+	} catch (e) {
+		this.in_events = false;
+		throw e;
+	}
+	this.in_events = false;
+}
+
+function MaxTycoon::_HandleEvents() {
 	while (AIEventController.IsEventWaiting()) {
 		local e = AIEventController.GetNextEvent();
 		switch (e.GetEventType()) {
@@ -238,7 +290,7 @@ function MaxTycoon::HandleEvents() {
 				local v = AIEventVehicleWaitingInDepot.Convert(e).GetVehicleID();
 				if (v in ::TY.fleet.to_sell) {
 					AIVehicle.SellVehicle(v);
-					if (!AIVehicle.IsValidVehicle(v)) delete ::TY.fleet.to_sell[v];
+					if (!AIVehicle.IsValidVehicle(v)) ::TY.fleet.Forget(v);
 				}
 				break;
 			}

@@ -12,9 +12,13 @@
   (search effort, score awareness, mistakes) and Development (cadence, network size, town spending).
   Ship lines find both dock sites and a water route before building (water bodies are cached), steer by
   buoys every 16 tiles so the game's own ship pathfinder never gives up, and road depots are only placed on
-  road the vehicles can reach. `make ai-bundle AI=MaxTycoon` packages it; tools/ai/run_ai.py gained --ai,
-  --ending-year, --economy, --industries and --cargodist-freight. Design notes and test results in
-  docs/TYCOON.md.
+  road the vehicles can reach. The calendar routines (monthly upkeep, the quarter's score and culling, fleet
+  sizing) also run from inside long railway searches, so a line that takes months to plan no longer leaves
+  the fleet unmanaged or skips a quarter; airports are planned within their capacity and withdrawn aircraft
+  that cannot land are sent to the other end's hangar; weak old vehicles that cannot be replaced before the
+  ranking are sold. `make ai-bundle AI=MaxTycoon` packages it; tools/ai/run_ai.py gained --ai,
+  --ending-year, --economy, --industries, --cargodist-freight and --ai-speed. Design notes and test results
+  in docs/TYCOON.md.
 - MaxTransit AI (ai/MaxTransit, Script API 15): a passenger network AI built around CargoDist, with
   passenger safety first and door-to-door time second. Buses, railways and aircraft each take the distances
   they serve best; town stations are joined into interchange hubs and new railways branch off existing

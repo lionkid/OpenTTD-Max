@@ -60,7 +60,32 @@ class Planner {
 
 	function PlatformLength() { return Util.Clamp(::TY.game.max_train_length, 3, 6); }
 
+	/* What the planner is doing (for the main loop's report of a step that took months). */
+	doing = "";
+	in_step = false;   // a step is running: the routines housekeeping runs meanwhile keep money for its construction
+	busy = null;       // line id -> true while the planner rebuilds that line (second track, signals)
+
+	function SetBusy(line, on) {
+		if (this.busy == null) this.busy = {};
+		if (on) this.busy[line.id] <- true;
+		else if (line.id in this.busy) delete this.busy[line.id];
+	}
+
+	function IsBusy(line) { return this.busy != null && (line.id in this.busy); }
+
 	function Step() {
+		this.in_step = true;
+		try {
+			this._Step();
+		} catch (e) {
+			this.in_step = false;
+			throw e;
+		}
+		this.in_step = false;
+	}
+
+	function _Step() {
+		::TY.score.UpdatePhase();   // the phase follows the date even when a long step skipped the quarter's update
 		if (Util.Today() - this.last_build < this.Cooldown()) return;
 		if (::TY.finance.trouble) return;
 		foreach (line in ::TY.network.Active()) {
@@ -111,6 +136,7 @@ class Planner {
 			if (phase == PHASE_HARVEST && (c.mode != MODE_ROAD || ::TY.score.CargoDelivered(c.cargo))) continue;
 			if (++tried > ::TY.levels.patience || Util.Today() - started > 45) break;
 			Log.Info("PLAN", "building " + this.Describe(c));
+			this.doing = "building " + this.Describe(c);
 			local t_start = Util.Today();
 			local ok = false;
 			try {
@@ -162,6 +188,7 @@ class Planner {
 			if ((c.key in this.failures) && Util.Today() - this.failures[c.key] < 730) continue;
 			if (::TY.network.HasLink(c.ends[0][0], c.ends[0][1], c.ends[1][0], c.ends[1][1], c.cargo, MODE_ROAD)) continue;
 			Log.Info("PLAN", "side project: " + this.Describe(c));
+			this.doing = "side project " + this.Describe(c);
 			local ok = false;
 			try { ok = this.BuildRoad(c); } catch (e) { Log.Error("PLAN", "construction error: " + e); }
 			if (ok) this.built_modes[MODE_ROAD]++;
@@ -186,6 +213,7 @@ class Planner {
 			if ((c.key in this.failures) && Util.Today() - this.failures[c.key] < 730) continue;
 			if (::TY.network.HasLink(c.ends[0][0], c.ends[0][1], c.ends[1][0], c.ends[1][1], c.cargo, MODE_ROAD)) continue;
 			Log.Info("PLAN", "quick road line: " + this.Describe(c));
+			this.doing = "quick road line " + this.Describe(c);
 			local ok = false;
 			try { ok = this.BuildRoad(c); } catch (e) { Log.Error("PLAN", "construction error: " + e); }
 			if (ok) { built++; this.built_modes[MODE_ROAD]++; this.cands_date = -10000; }
@@ -341,6 +369,21 @@ class Planner {
 		}
 		/* freight from industries */
 		foreach (c in this.FreightCandidates()) out.append(c);
+		/*
+		 * Quality floor: an aircraft, a train or a ship costs too much to be replaced before its second birthday,
+		 * so its line must pay the minimum-profit floor per vehicle on its own (buses and trucks are cheap and
+		 * are swapped when weak). Only with time to spare (AI speed 3 or 4): the planner then digs deep into
+		 * marginal candidates and ends the game with no cash and weak old vehicles. At the default speed it
+		 * only gets to the top of the list, whose lines earn more than planned; the floor would cost it them.
+		 */
+		local floor = (::TY.levels.score_aware && ::TY.game.ai_speed >= 3) ? ::TY.score.needed[SCORE_MIN_PROFIT] : 0;
+		local good = [];
+		foreach (c in out) {
+			local per_vehicle = c.best.eval.profit / fmax(1.0, c.best.eval.n);
+			if (c.mode != MODE_ROAD && per_vehicle < floor) continue;
+			good.append(c);
+		}
+		out = good;
 		/* score bonuses, mistakes, ranking */
 		local ppp = this.PoundsPerPoint();
 		foreach (c in out) {
@@ -509,6 +552,16 @@ class Planner {
 		local la = AITown.GetLocation(a), lb = AITown.GetLocation(b);
 		local best = ::TY.engines.BestAircraft(Util.pax, la, lb, ta, tb, demand);
 		if (best == null) return null;
+		/* the landings the new line needs must fit in what both airports have left; plan fewer aircraft or none */
+		local room = fmin(::TY.fleet.AirportRoom(this.HasAirport(a) ? ::TY.network.Hub(a).air_sid : -1, ta),
+			::TY.fleet.AirportRoom(this.HasAirport(b) ? ::TY.network.Hub(b).air_sid : -1, tb));
+		local per_aircraft = 30.0 / fmax(4.0, best.eval.rtt);
+		local fit = (room / per_aircraft).tointeger();
+		if (fit < 1) return null;
+		if (fit < best.eval.n) {
+			best = ::TY.engines.BestAircraft(Util.pax, la, lb, ta, tb, demand * fit / best.eval.n);
+			if (best == null) return null;
+		}
 		local airports = (this.HasAirport(a) ? 0 : AIAirport.GetPrice(ta)) + (this.HasAirport(b) ? 0 : AIAirport.GetPrice(tb));
 		local c = this.ScaleToFull(this.Cand(MODE_AIR, Util.pax, ea, eb, d, demand, best, airports + min(best.eval.n, 2) * AIEngine.GetPrice(best.engine)),
 			airports + best.eval.capex);
@@ -602,7 +655,10 @@ class Planner {
 		local sb = ::TY.road.BuildStop(spot_b, join_b);
 		if (sb < 0 && join_b != AIStation.STATION_NEW) sb = ::TY.road.BuildStop(spot_b, AIStation.STATION_NEW);
 		if (sb < 0) { AIRoad.RemoveRoadStation(spot_a.tile); return false; }
+		local t0 = Util.Today();
 		local conn = ::TY.road.Connect(spot_a.tile, spot_b.tile);
+		local t1 = Util.Today();
+		if (t1 - t0 > 20) Log.Warn("PLAN", "road route search " + Util.TileStr(spot_a.tile) + " - " + Util.TileStr(spot_b.tile) + " took " + (t1 - t0) + " days");
 		if (conn == null) {
 			Log.Warn("PLAN", "no road route " + Util.TileStr(spot_a.tile) + " - " + Util.TileStr(spot_b.tile));
 			AIRoad.RemoveRoadStation(spot_a.tile);
@@ -612,7 +668,9 @@ class Planner {
 		if (conn.crossing_risk) ::TY.safety.Veto("road route past a level crossing (accepted)", c.key);
 		local pieces = ::TY.road.NewPieces(conn.path);
 		::TY.finance.Ensure(pieces * AIRoad.GetBuildCost(rt, AIRoad.BT_ROAD) * 2 + 20000);
-		if (!::TY.road.BuildPath(conn.path)) {
+		local built = ::TY.road.BuildPath(conn.path);
+		if (Util.Today() - t1 > 20) Log.Warn("PLAN", "building " + pieces + " road pieces took " + (Util.Today() - t1) + " days");
+		if (!built) {
 			AIRoad.RemoveRoadStation(spot_a.tile);
 			AIRoad.RemoveRoadStation(spot_b.tile);
 			return false;
@@ -714,7 +772,7 @@ class Planner {
 		line.est_rtt = ::TY.time.RoundTrip(MODE_AIR, line.speed, line.path_len, line.capacity);
 		::TY.network.Add(line);
 		::TY.fleet.BuildFor(line, 0);
-		::TY.fleet.BuildFor(line, 1);
+		if (::TY.fleet.CanAdd(line)) ::TY.fleet.BuildFor(line, 1);
 		local pt = AIEngine.GetPlaneType(best.engine);
 		Log.Info("BUILD", line.Name() + " opened: " + AIEngine.GetName(best.engine) + " (" + (pt == AIAirport.PT_BIG_PLANE ? "large" : "small") +
 			" aircraft, " + ::TY.air.TypeName(ta) + " / " + ::TY.air.TypeName(tb) + " airports), " + line.dist + " tiles, round trip about " +
@@ -1186,6 +1244,19 @@ class Planner {
 	}
 
 	function UpgradeRail(line) {
+		this.SetBusy(line, true);
+		local ok = false;
+		try {
+			ok = this._UpgradeRail(line);
+		} catch (e) {
+			this.SetBusy(line, false);
+			throw e;
+		}
+		this.SetBusy(line, false);
+		return ok;
+	}
+
+	function _UpgradeRail(line) {
 		local site_a = line.sites[0], site_b = line.sites[1];
 		local rt = line.railtype;
 		local p1 = this.Decode(line.p1);
@@ -1218,6 +1289,20 @@ class Planner {
 	}
 
 	function InstallSignals(line, p2) {
+		local was = this.IsBusy(line);
+		this.SetBusy(line, true);
+		local ok = false;
+		try {
+			ok = this._InstallSignals(line, p2);
+		} catch (e) {
+			if (!was) this.SetBusy(line, false);
+			throw e;
+		}
+		if (!was) this.SetBusy(line, false);
+		return ok;
+	}
+
+	function _InstallSignals(line, p2) {
 		local site_a = line.sites[0], site_b = line.sites[1];
 		local rt = line.railtype;
 		local p1 = this.Decode(line.p1);
@@ -1249,6 +1334,7 @@ class Planner {
 			foreach (v, _ in line.Vehicles()) if (!AIVehicle.IsStoppedInDepot(v)) { all = false; break; }
 			if (all) return true;
 			AIController.Sleep(DAY_TICKS);
+			TY_Housekeeping();
 		}
 		return false;
 	}

@@ -51,6 +51,7 @@ max_loan = {loan}
 vehicle_breakdowns = {breakdowns}
 disasters = {disasters}
 economy = {economy}
+competitor_speed = {ai_speed}
 
 [linkgraph]
 distribution_pax = {dist}
@@ -121,6 +122,8 @@ def main() -> int:
     ap.add_argument("--train-length", type=int, default=7)
     ap.add_argument("--no-town-crossings", action="store_true")
     ap.add_argument("--opcodes", type=int, default=10000)
+    ap.add_argument("--ai-speed", type=int, default=2, choices=range(5),
+                    help="difficulty.competitor_speed: the AI runs every 2^(4-n) ticks (2 = every 4th, the game's default; 4 = every tick)")
     ap.add_argument("--seed", type=int, default=20261016)
     ap.add_argument("--grf", action="store_true", help="load max-air.grf and max-rail.grf from the repo root")
     ap.add_argument("--ai-settings", default="", help="e.g. 'use_air=0 frequency=2' (passed to start_ai comma-separated)")
@@ -175,7 +178,7 @@ def main() -> int:
         industries=args.industries, economy=args.economy, dist_freight=DIST[args.cargodist_freight],
         towns=args.towns, loan=args.loan, breakdowns=args.breakdowns, disasters="true" if args.disasters else "false",
         dist=DIST[args.cargodist], opcodes=args.opcodes, train_length=args.train_length, plane_speed=args.plane_speed,
-        crashes=args.crashes, town_crossings="false" if args.no_town_crossings else "true", newgrf=newgrf,
+        crashes=args.crashes, town_crossings="false" if args.no_town_crossings else "true", newgrf=newgrf, ai_speed=args.ai_speed,
         save="true" if args.save else "false"))
     log = out / "openttd.log"
     env = {"HOME": str(home), "XDG_DATA_HOME": str(home / ".local" / "share"), "XDG_CONFIG_HOME": str(home / ".config"),
