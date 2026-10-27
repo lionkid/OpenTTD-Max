@@ -16,9 +16,24 @@
   sizing) also run from inside long railway searches, so a line that takes months to plan no longer leaves
   the fleet unmanaged or skips a quarter; airports are planned within their capacity and withdrawn aircraft
   that cannot land are sent to the other end's hangar; weak old vehicles that cannot be replaced before the
-  ranking are sold. `make ai-bundle AI=MaxTycoon` packages it; tools/ai/run_ai.py gained --ai,
-  --ending-year, --economy, --industries, --cargodist-freight and --ai-speed. Design notes and test results
-  in docs/TYCOON.md.
+  ranking are sold. `make ai-bundle` packages it with the other AIs (`AI=MaxTycoon` for it alone);
+  `make tycoon-test`. The test harness gained `--ending-year`, `--economy`, `--cargodist-freight` (CargoDist
+  for freight) and `--ai-speed`. Design notes and test results in docs/TYCOON.md.
+- MaxTransit2 AI (ai/MaxTransit2, Script API 15), a second AI next to MaxTransit: freight and passengers by
+  rail, road, air and water, ranked by yearly profit against the money and the construction time they need,
+  with every route's real profit correcting later estimates; a fleet only grows while its vehicles earn their
+  price back at the capital rate. It never takes a town, an industry or a route
+  another company serves (scripts cannot tell humans from AIs, so this applies to every company), keeps a
+  buffer around their stations and never lays track along theirs. Railways are laid out as an ideal
+  alignment and only searched around obstacles; the second track follows the first (sharing its diagonal
+  tiles), signals are paired, bridges match the line speed, trees are replanted and closed routes removed.
+  Design notes and test results in docs/AI-v2.md.
+- AI test harness (tools/ai/run_ai.py): `--ai` picks the AI, `--competitor` starts another company first,
+  `--industries` sets the industry density; uses the Steam build of OpenTTD on macOS. Fixed: `--ai-settings`
+  is passed to `start_ai` as one comma-separated argument (with spaces the AI did not start), and
+  `--terrain` / `--sea` are written as difficulty settings, only when given (default maps unchanged).
+  tools/ai/render_map.py draws the map dump of MaxTransit2 (`dump_map=1`), since the null video driver
+  cannot take screenshots. `make ai-bundle` packages both AIs; `make ai2-test`.
 - MaxTransit AI (ai/MaxTransit, Script API 15): a passenger network AI built around CargoDist, with
   passenger safety first and door-to-door time second. Buses, railways and aircraft each take the distances
   they serve best; town stations are joined into interchange hubs and new railways branch off existing
