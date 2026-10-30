@@ -3,7 +3,8 @@
 and license.txt. Output: build/bundle/<name>-<version>.tar
 
     python3 tools/bundle.py [--version 0.1.0-alpha]
-    python3 tools/bundle.py --ai      # the AIs: build/bundle/MaxTransit-<v>.tar and MaxTransit2-<v>.tar
+    python3 tools/bundle.py --ai                   # the AIs: build/bundle/<AI>-<AI version>.tar for each of them
+    python3 tools/bundle.py --ai --name MaxTycoon   # one AI only
 """
 import argparse
 import re
@@ -14,12 +15,15 @@ ROOT = Path(__file__).resolve().parents[1]
 SETS = {"max-air": "docs/bananas/readme_air.txt", "max-rail": "docs/bananas/readme_rail.txt"}
 
 
-AIS = {"MaxTransit": "docs/bananas/readme_ai.txt", "MaxTransit2": "docs/bananas/readme_ai2.txt"}
+AIS = {"MaxTransit": "docs/bananas/readme_ai.txt", "MaxTransit2": "docs/bananas/readme_ai2.txt",
+       "MaxTycoon": "docs/bananas/readme_tycoon.txt"}
 
 
 def bundle_ai(out: Path, label: str | None, name: str = "MaxTransit") -> None:
     """The AI folder as OpenTTD loads it (info.nut, main.nut, lib/), plus readme, changelog and licence."""
     ai_dir = ROOT / "ai" / name
+    if name not in AIS or not ai_dir.is_dir():
+        raise SystemExit(f"unknown AI {name}: one of {', '.join(AIS)}")
     m = re.search(r"GetVersion\(\)\s*\{\s*return\s+(\d+);", (ai_dir / "info.nut").read_text())
     if not m:
         raise SystemExit(f"ai/{name}/info.nut: no GetVersion()")
@@ -37,12 +41,13 @@ def bundle_ai(out: Path, label: str | None, name: str = "MaxTransit") -> None:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--version", default=None, help="label for the file names (default: VERSION file)")
-    ap.add_argument("--ai", action="store_true", help="package the AIs (MaxTransit, MaxTransit2) instead of the NewGRFs")
+    ap.add_argument("--ai", action="store_true", help="package the AIs (MaxTransit, MaxTransit2, MaxTycoon) instead of the NewGRFs")
+    ap.add_argument("--name", default=None, help="with --ai: package only this AI")
     args = ap.parse_args()
     out = ROOT / "build" / "bundle"
     out.mkdir(parents=True, exist_ok=True)
     if args.ai:
-        for name in AIS:
+        for name in ([args.name] if args.name else AIS):
             bundle_ai(out, args.version, name)
         return
     version = args.version or (ROOT / "VERSION").read_text().strip()

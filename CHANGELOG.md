@@ -2,6 +2,23 @@
 
 ## 1.1.0 (unreleased)
 
+- MaxTycoon AI (ai/MaxTycoon, Script API 15): plays for the highest company performance rating at the
+  ending year. Every vehicle type (buses, trucks, trams when a NewGRF provides them, trains, aircraft,
+  ships), whole industry chains with optional funding of missing processing industries, town growth (five
+  served stations, funded buildings, statues, advertising) and road grids laid out on the town's own grid.
+  The nine score components are computed quarterly the way economy.cpp does; lines are valued by profit
+  plus the points they add, weak vehicles are replaced before their second birthday, the fleet is completed
+  the year before the ranking and the ending year keeps cash and repays the loan. Settings: Intelligence
+  (search effort, score awareness, mistakes) and Development (cadence, network size, town spending).
+  Ship lines find both dock sites and a water route before building (water bodies are cached), steer by
+  buoys every 16 tiles so the game's own ship pathfinder never gives up, and road depots are only placed on
+  road the vehicles can reach. The calendar routines (monthly upkeep, the quarter's score and culling, fleet
+  sizing) also run from inside long railway searches, so a line that takes months to plan no longer leaves
+  the fleet unmanaged or skips a quarter; airports are planned within their capacity and withdrawn aircraft
+  that cannot land are sent to the other end's hangar; weak old vehicles that cannot be replaced before the
+  ranking are sold. `make ai-bundle` packages it with the other AIs (`AI=MaxTycoon` for it alone);
+  `make tycoon-test`. The test harness gained `--ending-year`, `--economy`, `--cargodist-freight` (CargoDist
+  for freight) and `--ai-speed`. Design notes and test results in docs/TYCOON.md.
 - MaxTransit2 AI (ai/MaxTransit2, Script API 15), a second AI next to MaxTransit: freight and passengers by
   rail, road, air and water, ranked by yearly profit against the money and the construction time they need,
   with every route's real profit correcting later estimates; a fleet only grows while its vehicles earn their
